@@ -64,11 +64,14 @@ function install (where, what, family, entry) {
   }
 }
 
-var target = process.argv[2]
-if (target) {
-  resolve(target, target.split('@')[1] || '*', function (err, what) {
-    if (err) throw err
-    install(path.join(__dirname, 'node_modules', what.name), what, [])
+var targets = process.argv.slice(2)
+
+if (targets.length) {
+  targets.forEach(function (target) {
+    resolve(target, target.split('@')[1] || '*', function (err, what) {
+      if (err) throw err
+      install(path.join(__dirname, 'node_modules', what.name), what, [])
+    })
   })
 } else {
   var entry = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')))
