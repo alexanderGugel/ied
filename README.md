@@ -1,3 +1,5 @@
+[![experimental](http://hughsk.github.io/stability-badges/dist/experimental.svg)](http://github.com/hughsk/stability-badges)
+
 mpm
 ===
 
@@ -8,6 +10,8 @@ A *roughly* [**npm install**](https://www.npmjs.com/)-compatible package manager
 * supports [semver](http://semver.org/)
 * correctly deals with `devDependencies`
 * interfaces with the [npm registry](https://www.npmjs.org/)
+* bootstrapping - installs its own dependencies
+* **fast** - about twice as fast when installing [express](https://www.npmjs.com/package/express). Benchmarks are flawed. Try yourself.
 
 Installation
 ------------
@@ -47,6 +51,11 @@ The dependencies are checked into the repo. `mpm` does not rely on `npm` to inst
 * [`mkdirp`](https://www.npmjs.com/package/mkdirp)
 * [`gunzip-maybe`](https://www.npmjs.com/package/gunzip-maybe)
 * [`tar-fs`](https://www.npmjs.com/package/tar-fs)
+
+Trivia
+------
+
+`mpm` stands for "**m**ad **p**eople **m**atter".
 
 License
 -------
