@@ -20,7 +20,7 @@ function resolve (dep, version, cb) {
 }
 
 function fetch (where, what) {
-  console.info('fetching', what.name + '@' + what.version, 'into', path.relative(__dirname, where))
+  console.info('fetching', what.name + '@' + what.version, 'into', path.relative(process.cwd(), where))
   http.get(what.dist.tarball, function (res) {
     res.pipe(gunzip()).pipe(tar.extract(where, {
       map: function (header) {
@@ -35,7 +35,7 @@ function fetch (where, what) {
 }
 
 function install (where, what, family, entry) {
-  console.info('installing', what.name + '@' + what.version, 'into', path.relative(__dirname, where))
+  console.info('installing', what.name + '@' + what.version, 'into', path.relative(process.cwd(), where))
   family = family.slice()
   mkdirp.sync(where)
   var deps = []
@@ -64,16 +64,23 @@ function install (where, what, family, entry) {
   }
 }
 
-var targets = process.argv.slice(2)
+var flags = {}
+var targets = process.argv.slice(2).filter(function (target) {
+  var match = /^--?(.*)$/.exec(target)
+  if (!match) return true
+  flags[match[1]] = true
+})
 
-if (targets.length) {
+if (flags.help || flags.h) {
+  fs.createReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
+} else if (targets.length) {
   targets.forEach(function (target) {
     resolve(target, target.split('@')[1] || '*', function (err, what) {
       if (err) throw err
-      install(path.join(__dirname, 'node_modules', what.name), what, [])
+      install(path.join(process.cwd(), 'node_modules', what.name), what, [])
     })
   })
 } else {
-  var entry = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')))
-  install(__dirname, entry, [], true)
+  var entry = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json')))
+  install(process.cwd(), entry, [], true)
 }

@@ -1,7 +1,7 @@
 mpm
 ===
 
-A *roughly* [**npm install**](https://www.npmjs.com/)-compatible package manager for Node.JS in **~100** lines of code.
+A *roughly* [**npm install**](https://www.npmjs.com/)-compatible package manager for Node.JS in **~80** lines of code.
 
 * implements `npm`'s basic [install algorithm](https://docs.npmjs.com/cli/install#algorithm)
 * correctly resolves (circular) dependencies
@@ -19,7 +19,24 @@ Installation
 Usage
 -----
 
-TODO
+```
+  mpm - An alternative package manager for Node.js
+
+  Usage:
+    mpm
+    mpm <pkg>
+    mpm <pkg>@<version>
+    mpm <pkg>@<version range>
+
+    Can specify one or more: mpm install semver@^5.0.1 tape
+    If no argument is supplied, installs dependencies from package.json.
+
+  Flags:
+    -h, --help  Show usage information and exit
+
+  README:  https://github.com/alexanderGugel/mpm
+  ISSUES:  https://github.com/alexanderGugel/mpm/issues
+```
 
 Dependencies
 ------------

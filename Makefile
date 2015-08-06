@@ -14,11 +14,11 @@ preinstall:
 
 link: preinstall
 	ln -s $(CURRENT_DIR) $(INSTALL_DIR)/$(BIN); \
-	ln -s $(INSTALL_DIR)/mpm/cli.js $(BIN_DIR)/mpm
+	ln -s $(INSTALL_DIR)/mpm/cmd.js $(BIN_DIR)/mpm
 
 install: preinstall
 	cp -R $(CURRENT_DIR) $(INSTALL_DIR)/$(BIN); \
-	ln -s $(INSTALL_DIR)/mpm/cli.js $(BIN_DIR)/mpm
+	ln -s $(INSTALL_DIR)/mpm/cmd.js $(BIN_DIR)/mpm
 
 uninstall:
 	rm -rf $(INSTALL_DIR)/$(BIN); \
