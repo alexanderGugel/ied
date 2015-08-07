@@ -14,7 +14,7 @@ function resolve (dep, version, cb) {
     res.on('data', function (chunk) { raw += chunk }).on('end', function () {
       var parsed = JSON.parse(raw)
       var resolved = parsed.versions[semver.maxSatisfying(Object.keys(parsed.versions), version)]
-      cb(resolved ? null : new Error('No satisfying target found for ' + dep + '@' + version), resolved)
+      cb(resolved ? null : new Error('no satisfying target found for ' + dep + '@' + version), resolved)
     }).on('error', cb)
   }).on('error', cb)
 }
@@ -40,9 +40,8 @@ function install (where, what, family, entry) {
   mkdirp.sync(where)
   var deps = []
   function onResolved (err, resolved) {
-    if (err) throw err
     deps.push(resolved)
-    if (deps.length === Object.keys(what.dependencies).length) onResolvedAll()
+    if (deps.length === Object.keys(what.dependencies).length + (entry ? Object.keys(what.devDependencies || {}).length : 0)) onResolvedAll()
   }
   function onResolvedAll () {
     deps.forEach(function (dep) {
@@ -59,16 +58,16 @@ function install (where, what, family, entry) {
     for (dep in what.devDependencies)
       resolve(dep, what.devDependencies[dep], onResolved)
   } else {
-    fs.writeFile(path.join(where, 'package.json'), JSON.stringify(what, null, 2))
+    fs.writeFileSync(path.join(where, 'package.json'), JSON.stringify(what, null, 2))
     fetch(where, what)
   }
 }
 
 var flags = {}
-var targets = process.argv.slice(2).filter(function (target) {
+var targets = process.argv.slice(2).filter(function (target, i, arr) {
   var match = /^--?(.*)$/.exec(target)
   if (!match) return true
-  flags[match[1]] = true
+  flags[match[1]] = arr.slice(i + 1)
 })
 
 if (flags.help || flags.h) {

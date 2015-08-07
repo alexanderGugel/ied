@@ -45,7 +45,7 @@ Usage
 Dependencies
 ------------
 
-The dependencies are checked into the repo. `mpm` does not rely on `npm` to install its dependencies.
+The dependencies are checked into the repo. `mpm` it fully bootstrapping and does not rely on `npm` to install its dependencies.
 
 * [`semver`](https://www.npmjs.com/package/semver)
 * [`mkdirp`](https://www.npmjs.com/package/mkdirp)
