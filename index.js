@@ -6,6 +6,16 @@ var gunzip = require('gunzip-maybe')
 var mkdirp = require('mkdirp')
 var tar = require('tar-fs')
 
+/**
+ * Resolves a dependency to an exact version.
+ *
+ * @param  {String}   dep     The name of the dependency to be resolved, e.g.
+ *                            `tape`.
+ * @param  {String}   version The [semver](http://semver.org/) compatible
+ *                            version string of the dependency, e.g. ``^5.0.1`.
+ * @param  {Function} cb      Callback function to be executed on (successful)
+ *                            resolution to an exact version number.
+ */
 function resolve (dep, version, cb) {
   cb = cb || function () {}
   console.info('resolving', dep + '@' + version)
@@ -21,6 +31,15 @@ function resolve (dep, version, cb) {
   }).on('error', cb)
 }
 
+/**
+ * Downloads and decodes a dependency.
+ *
+ * @param  {String}   where Pathname of directory where to put downloaded
+ *                          dependency into.
+ * @param  {Object}   what  `package.json` of dependency encoded as an object.
+ * @param  {Function} cb    Callback function to be executed when download is
+ *                          complete.
+ */
 function fetch (where, what, cb) {
   cb = cb || function () {}
   console.info('fetching', what.name + '@' + what.version, 'into', path.relative(process.cwd(), where))
@@ -35,6 +54,18 @@ function fetch (where, what, cb) {
   }).on('error', cb)
 }
 
+/**
+ * Recursively installs a dependency.
+ *
+ * @param {String}          where   Pathname of installation destination.
+ * @param {Object}          what    `package.json` of initial dependency
+ *                                  encoded as an object.
+ * @param {Array.<String>}  family  shasums of [available](https://nodejs.org/api/modules.html#modules_loading_from_node_modules_folders)
+ *                                  dependencies.
+ * @param {Boolean}         entry   If this is the entry point of the
+ *                                  installation process (installs
+ *                                  `devDependencies`).
+ */
 function install (where, what, family, entry) {
   console.info('installing', what.name + '@' + what.version, 'into', path.relative(process.cwd(), where))
   family = family.slice()

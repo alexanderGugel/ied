@@ -1,3 +1,4 @@
+- [ ] install() should take callback
 - [ ] Tests
 - [ ] Better error handling
 - [ ] `install -g`

@@ -3,7 +3,7 @@
 mpm
 ===
 
-A *roughly* [**npm install**](https://www.npmjs.com/)-compatible package manager for Node.JS in **~80** lines of code.
+A *roughly* [**npm install**](https://www.npmjs.com/)-compatible package manager for Node.JS in **~80** lines of code (eLOC).
 
 * implements `npm`'s basic [install algorithm](https://docs.npmjs.com/cli/install#algorithm)
 * correctly resolves (circular) dependencies
