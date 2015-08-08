@@ -48,9 +48,7 @@ function install (where, what, family, entry) {
     deps.forEach(function (dep) {
       if (family.indexOf(dep.dist.shasum) > -1) return
       family.push(dep.dist.shasum)
-      // `entry ? [] : family` ensures that uninstalling a single "immediate"
-      // dependency doesn't break subsequent dependencies.
-      process.nextTick(install.bind(null, path.join(where, 'node_modules', dep.name), dep, entry ? [] : family))
+      process.nextTick(install.bind(null, path.join(where, 'node_modules', dep.name), dep, family))
     })
   }
   for (var dep in what.dependencies)
