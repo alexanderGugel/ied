@@ -8,8 +8,10 @@ var mkdirp = require('mkdirp')
 var tar = require('tar-fs')
 
 function resolve (dep, version, cb) {
+  cb = cb || function () {}
   console.info('resolving', dep + '@' + version)
   http.get('http://registry.npmjs.org/' + dep, function (res) {
+    if (res.statusCode !== 200) return cb(new Error('non 200 statusCode from resgitry: ' + res.statusCode))
     var raw = ''
     res.on('data', function (chunk) { raw += chunk }).on('end', function () {
       var parsed = JSON.parse(raw)
@@ -19,19 +21,18 @@ function resolve (dep, version, cb) {
   }).on('error', cb)
 }
 
-function fetch (where, what) {
+function fetch (where, what, cb) {
+  cb = cb || function () {}
   console.info('fetching', what.name + '@' + what.version, 'into', path.relative(process.cwd(), where))
   http.get(what.dist.tarball, function (res) {
+    if (res.statusCode !== 200) return cb(new Error('non 200 statusCode from resgitry: ' + res.statusCode))
     res.pipe(gunzip()).pipe(tar.extract(where, {
       map: function (header) {
-        header.name = header.name.substr('package/'.length)
+        header.name = header.name.split('/').slice(1).join('/')
         return header
-      },
-      ignore: function (name) {
-        return name === path.join(where, 'package.json')
       }
-    }))
-  })
+    })).on('finish', cb).on('error', cb)
+  }).on('error', cb)
 }
 
 function install (where, what, family, entry) {
@@ -58,8 +59,10 @@ function install (where, what, family, entry) {
     for (dep in what.devDependencies)
       resolve(dep, what.devDependencies[dep], onResolved)
   } else {
-    fs.writeFileSync(path.join(where, 'package.json'), JSON.stringify(what, null, 2))
-    fetch(where, what)
+    fetch(where, what, function (err) {
+      if (err) throw err
+      fs.writeFile(path.join(where, 'package.json'), JSON.stringify(what, null, 2))
+    })
   }
 }
 
