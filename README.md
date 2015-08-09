@@ -46,12 +46,30 @@ Usage
 Dependencies
 ------------
 
-The dependencies are checked into the repo. `mpm` it fully bootstrapping and does not rely on `npm` to install its dependencies.
+The dependencies are checked into the repo. `mpm` is fully bootstrapping and does not rely on `npm` to install its dependencies.
+
+* [`acc`](https://www.npmjs.com/package/acc)
+
+  used for simple flow control
+* [`gunzip-maybe`](https://www.npmjs.com/package/gunzip-maybe)
+
+  used for decompressing the package tarballs from the npm registry
+
+* [`mkdirp`](https://www.npmjs.com/package/mkdirp)
+
+  used for creating installation destinations.
+
+* [`rimraf`](https://www.npmjs.com/package/rimraf)
+
+  used for bootstrapping.
 
 * [`semver`](https://www.npmjs.com/package/semver)
-* [`mkdirp`](https://www.npmjs.com/package/mkdirp)
-* [`gunzip-maybe`](https://www.npmjs.com/package/gunzip-maybe)
+
+  used for correctly resolving dependencies to the right version number.
+
 * [`tar-fs`](https://www.npmjs.com/package/tar-fs)
+
+  used for fetching tarballs from the regitry.
 
 Trivia
 ------
