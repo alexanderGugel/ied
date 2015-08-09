@@ -20,7 +20,7 @@ function identity (a) { return a }
  *                            resolution to an exact version number.
  */
 function resolve (dep, version, cb) {
-  // console.info('resolving', dep + '@' + version)
+  console.info('resolving', dep + '@' + version)
   cb = cb || function () {}
   http.get('http://registry.npmjs.org/' + dep, function (res) {
     if (res.statusCode !== 200) return cb(new Error('non 200 statusCode from registry', res.statusCode))
@@ -44,7 +44,7 @@ function resolve (dep, version, cb) {
  *                          complete.
  */
 function fetch (where, what, cb) {
-  // console.info('fetching', what.name + '@' + what.version, 'into', path.relative(process.cwd(), where))
+  console.info('fetching', what.name + '@' + what.version, 'into', path.relative(process.cwd(), where))
   cb = cb || function () {}
   http.get(what.dist.tarball, function (res) {
     if (res.statusCode !== 200) return cb(new Error('non 200 statusCode from registry', res.statusCode))
@@ -67,25 +67,25 @@ function fetch (where, what, cb) {
  *                          dependencies as keys and arbitrary truthy values.
  * @param {Boolean} devDeps Whether or not to install devDependencies.
  * @param {Boolean} noFetch Whether or not to fetch `what`.
+ * @param {Function} cb     Callback function to be executed when installation
+ *                          of `what` and all consecutive dependencies is
+ *                          complete.
  */
 function install (where, what, family, devDeps, noFetch, cb) {
-  cb = cb || function () {}
-
   console.info('installing', what.name + '@' + what.version, 'into', path.relative(process.cwd(), where))
+  cb = cb || function () {}
 
   mkdirp(where, function (err) {
     if (err) return cb(err)
 
-    var onInstalled = acc((noFetch ? 0 : 1) + 1, function (errs) {
+    var onInstalled = acc((!noFetch | 0) + 1, function (errs) {
       if ((errs || []).filter(identity).length) return cb(errs[0])
       if (noFetch) return cb()
       fs.writeFile(path.join(where, 'package.json'), JSON.stringify(what, null, 2), cb)
     })
 
     var numDeps = Object.keys(what.dependencies || {}).length + (devDeps ? Object.keys(what.devDependencies || {}).length : 0)
-    if (numDeps) onInstalled.count++
-
-    onInstalled()
+    if (!numDeps) onInstalled()
 
     var onResolved = acc(numDeps, function (errs, deps) {
       if (errs.filter(identity).length) return cb(errs[0])
@@ -103,7 +103,7 @@ function install (where, what, family, devDeps, noFetch, cb) {
     for (var dep in what.dependencies)
       resolve(dep, what.dependencies[dep], onResolved)
 
-    for (dep in devDeps ? what.devDependencies : {})
+    for (dep in (devDeps ? what.devDependencies : {}))
       resolve(dep, what.devDependencies[dep], onResolved)
 
     if (!noFetch) fetch(where, what, onInstalled)
