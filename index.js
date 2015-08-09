@@ -4,7 +4,10 @@ var fs = require('fs')
 var semver = require('semver')
 var gunzip = require('gunzip-maybe')
 var mkdirp = require('mkdirp')
+var acc = require('acc')
 var tar = require('tar-fs')
+
+function identity (a) { return a }
 
 /**
  * Resolves a dependency to an exact version.
@@ -17,8 +20,8 @@ var tar = require('tar-fs')
  *                            resolution to an exact version number.
  */
 function resolve (dep, version, cb) {
+  // console.info('resolving', dep + '@' + version)
   cb = cb || function () {}
-  console.info('resolving', dep + '@' + version)
   http.get('http://registry.npmjs.org/' + dep, function (res) {
     if (res.statusCode !== 200) return cb(new Error('non 200 statusCode from registry', res.statusCode))
     var raw = ''
@@ -41,8 +44,8 @@ function resolve (dep, version, cb) {
  *                          complete.
  */
 function fetch (where, what, cb) {
+  // console.info('fetching', what.name + '@' + what.version, 'into', path.relative(process.cwd(), where))
   cb = cb || function () {}
-  console.info('fetching', what.name + '@' + what.version, 'into', path.relative(process.cwd(), where))
   http.get(what.dist.tarball, function (res) {
     if (res.statusCode !== 200) return cb(new Error('non 200 statusCode from registry', res.statusCode))
     res.pipe(gunzip()).pipe(tar.extract(where, {
@@ -57,42 +60,54 @@ function fetch (where, what, cb) {
 /**
  * Recursively installs a dependency.
  *
- * @param {String}          where   Pathname of installation destination.
- * @param {Object}          what    `package.json` of initial dependency
- *                                  encoded as an object.
- * @param {Array.<String>}  family  shasums of [available](https://nodejs.org/api/modules.html#modules_loading_from_node_modules_folders)
- *                                  dependencies.
- * @param {Boolean}         entry   If this is the entry point of the
- *                                  installation process (installs
- *                                  `devDependencies`).
+ * @param {String}  where   Pathname of installation destination.
+ * @param {Object}  what    `package.json` of initial dependency
+ *                          encoded as an object.
+ * @param {Object}  family  object with shasums of [available](https://nodejs.org/api/modules.html#modules_loading_from_node_modules_folders)
+ *                          dependencies as keys and arbitrary truthy values.
+ * @param {Boolean} devDeps Whether or not to install devDependencies.
+ * @param {Boolean} noFetch Whether or not to fetch `what`.
  */
-function install (where, what, family, entry) {
+function install (where, what, family, devDeps, noFetch, cb) {
+  cb = cb || function () {}
+
   console.info('installing', what.name + '@' + what.version, 'into', path.relative(process.cwd(), where))
-  family = family.slice()
-  mkdirp.sync(where)
-  var deps = []
-  function onResolved (err, resolved) {
-    deps.push(resolved)
-    if (deps.length === Object.keys(what.dependencies).length + (entry ? Object.keys(what.devDependencies || {}).length : 0)) onResolvedAll()
-  }
-  function onResolvedAll () {
-    deps.forEach(function (dep) {
-      if (family.indexOf(dep.dist.shasum) > -1) return
-      family.push(dep.dist.shasum)
-      process.nextTick(install.bind(null, path.join(where, 'node_modules', dep.name), dep, family))
+
+  mkdirp(where, function (err) {
+    if (err) return cb(err)
+
+    var onInstalled = acc((noFetch ? 0 : 1) + 1, function (errs) {
+      if ((errs || []).filter(identity).length) return cb(errs[0])
+      if (noFetch) return cb()
+      fs.writeFile(path.join(where, 'package.json'), JSON.stringify(what, null, 2), cb)
     })
-  }
-  for (var dep in what.dependencies)
-    resolve(dep, what.dependencies[dep], onResolved)
-  if (entry) {
-    for (dep in what.devDependencies)
+
+    var numDeps = Object.keys(what.dependencies || {}).length + (devDeps ? Object.keys(what.devDependencies || {}).length : 0)
+    if (numDeps) onInstalled.count++
+
+    onInstalled()
+
+    var onResolved = acc(numDeps, function (errs, deps) {
+      if (errs.filter(identity).length) return cb(errs[0])
+
+      deps.forEach(function (dep) {
+        if (family[dep.dist.shasum]) return
+        family[dep.dist.shasum] = true
+        onInstalled.count++
+        install(path.join(where, 'node_modules', dep.name), dep, Object.create(family), false, false, onInstalled)
+      })
+
+      onInstalled()
+    })
+
+    for (var dep in what.dependencies)
+      resolve(dep, what.dependencies[dep], onResolved)
+
+    for (dep in devDeps ? what.devDependencies : {})
       resolve(dep, what.devDependencies[dep], onResolved)
-  } else {
-    fetch(where, what, function (err) {
-      if (err) throw err
-      fs.writeFile(path.join(where, 'package.json'), JSON.stringify(what, null, 2))
-    })
-  }
+
+    if (!noFetch) fetch(where, what, onInstalled)
+  })
 }
 
 module.exports = {
