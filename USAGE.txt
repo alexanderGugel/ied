@@ -11,7 +11,7 @@
 
   Flags:
     -h, --help      Show usage information and exit
-    -b, --bootstrap Bootstraps the PM and exists
+    -b, --bootstrap Bootstrap the PM and exit
 
   README:  https://github.com/alexanderGugel/mpm
   ISSUES:  https://github.com/alexanderGugel/mpm/issues
