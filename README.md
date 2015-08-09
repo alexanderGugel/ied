@@ -36,7 +36,8 @@ Usage
     If no argument is supplied, installs dependencies from package.json.
 
   Flags:
-    -h, --help  Show usage information and exit
+    -h, --help      Show usage information and exit
+    -b, --bootstrap Bootstraps the PM and exists
 
   README:  https://github.com/alexanderGugel/mpm
   ISSUES:  https://github.com/alexanderGugel/mpm/issues
