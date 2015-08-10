@@ -1,0 +1,51 @@
+@require './node_modules/normalize.css/normalize.css'
+
+html
+  font: normal 400 14px/1.5 'Futura', 'Helvetica Neue', Helvetica, Arial, sans-serif
+  background: #eee
+  box-sizing: border-box
+  color: #333
+
+*, *:before, *:after
+  box-sizing: inherit
+
+.cover
+  height: 100vh
+  position: relative
+  background: linear-gradient(90deg, #606c88 10%, #3f4c6b 90%)
+  text-align: center
+
+  &, a
+    color: #fff
+
+nav
+  float: right
+
+  a
+    padding: 1em 0.5em
+    text-decoration: none
+    display: inline-block
+
+    &:last-child
+      padding-right: 1em
+
+    &:first-child
+      padding-left: 1em
+
+header
+  position: absolute
+  top: 50%
+  left: 50%
+  transform: translateY(-50%) translateX(-50%)
+  -webkit-transform: translateY(-50%) translateX(-50%)
+
+
+  h1, p
+    margin: 0
+    padding: 0
+
+  h1
+    font-size: 10em
+    text-shadow: 5px 5px rgba(255, 255, 255, 0.5),
+                 10px 10px rgba(255, 255, 255, 0.25),
+                 15px 15px rgba(255, 255, 255, 0.125)

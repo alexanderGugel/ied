@@ -1,0 +1,24 @@
+{
+  "devDependencies": {
+    "babelify": "^6.1.3",
+    "browserify": "^11.0.1",
+    "myth": "^1.5.0",
+    "st": "^0.5.5",
+    "stylus": "^0.52.0",
+    "uglify-js": "^2.4.24",
+    "watchify": "^3.3.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "stylus -w --include-css styl/index.styl -o dist/bundle.css & watchify js/index.js -d -v -o dist/bundle.js & st -nc",
+    "build": "stylus --include-css styl/index.styl -o dist/bundle.css && myth dist/bundle.css dist/bundle.css && browserify js/index.js | uglifyjs -c > dist/bundle.js"
+  },
+  "dependencies": {
+    "normalize.css": "^3.0.3"
+  },
+  "browserify": {
+    "transform": [
+      "babelify"
+    ]
+  }
+}
