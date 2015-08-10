@@ -106,7 +106,30 @@ function install (where, what, family, devDeps, noFetch, cb) {
     for (dep in (devDeps ? what.devDependencies : {}))
       resolve(dep, what.devDependencies[dep], onResolved)
 
-    if (!noFetch) fetch(where, what, onInstalled)
+    if (!noFetch) {
+      fetch(where, what, function (err) {
+        if (what.bin) {
+          mkdirp(path.join(where, '.bin'), function (err) {
+            if (err) return onInstalled(err)
+
+            var bin = what.bin
+            if (typeof bin === 'string') {
+              bin = {}
+              bin[what.name] = what.bin
+            }
+
+            for (var name in bin) {
+              onInstalled.count++
+              fs.symlink(path.join(where, bin[name]), path.join(where, '.bin', name), onInstalled)
+            }
+
+            onInstalled()
+          })
+        } else {
+          onInstalled(err)
+        }
+      })
+    }
   })
 }
 
