@@ -26,9 +26,9 @@ if (flags.help || flags.h) {
   entry = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json')))
   install(path.join(process.cwd(), '__bootstrap__'), entry, {}, true, true, function (err) {
     handleError(err)
-    rimraf.sync(path.join(__dirname, '__bootstrap__'))
     rimraf.sync(path.join(__dirname, 'node_modules'))
     fs.renameSync(path.join(process.cwd(), '__bootstrap__', 'node_modules'), path.join(process.cwd(), 'node_modules'))
+    rimraf.sync(path.join(__dirname, '__bootstrap__'))
   })
 } else if (targets.length) {
   targets.forEach(function (target) {
