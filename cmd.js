@@ -23,7 +23,7 @@ var entry
 if (flags.help || flags.h) {
   fs.createReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
 } else if (flags.bootstrap || flags.b) {
-  entry = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json')))
+  entry = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')))
   rimraf.sync(path.join(__dirname, 'node_modules'))
   install(__dirname, entry, {}, true, 0, handleError)
 } else if (targets.length) {
