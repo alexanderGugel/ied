@@ -66,21 +66,23 @@ function fetch (where, what, cb) {
  * @param {Object}  family  object with shasums of [available](https://nodejs.org/api/modules.html#modules_loading_from_node_modules_folders)
  *                          dependencies as keys and arbitrary truthy values.
  * @param {Boolean} devDeps Whether or not to install devDependencies.
- * @param {Boolean} noFetch Whether or not to fetch `what`.
+ * @param {Number} depth    Depth of the current dependency.
+ *                          Dependencies with a depth of 0 won't be fetched,
+ *                          binaries of dependencies with a depth of 1 will be
+ *                          symlinked into `node_modules/.bin`.
  * @param {Function} cb     Callback function to be executed when installation
  *                          of `what` and all consecutive dependencies is
  *                          complete.
  */
-function install (where, what, family, devDeps, noFetch, cb) {
+function install (where, what, family, devDeps, depth, cb) {
   console.info('installing', what.name + '@' + what.version, 'into', path.relative(process.cwd(), where))
   cb = cb || function () {}
-
   mkdirp(where, function (err) {
     if (err) return cb(err)
 
-    var onInstalled = acc((!noFetch | 0) + 1, function (errs) {
+    var onInstalled = acc((depth === 0 ? 0 : 1) + 1, function (errs) {
       if ((errs || []).filter(identity).length) return cb(errs[0])
-      if (noFetch) return cb()
+      if (depth === 0) return cb()
       fs.writeFile(path.join(where, 'package.json'), JSON.stringify(what, null, 2), cb)
     })
 
@@ -94,7 +96,7 @@ function install (where, what, family, devDeps, noFetch, cb) {
         if (family[dep.dist.shasum]) return
         family[dep.dist.shasum] = true
         onInstalled.count++
-        install(path.join(where, 'node_modules', dep.name), dep, Object.create(family), false, false, onInstalled)
+        install(path.join(where, 'node_modules', dep.name), dep, Object.create(family), false, depth + 1, onInstalled)
       })
 
       onInstalled()
@@ -106,35 +108,53 @@ function install (where, what, family, devDeps, noFetch, cb) {
     for (dep in (devDeps ? what.devDependencies : {}))
       resolve(dep, what.devDependencies[dep], onResolved)
 
-    if (!noFetch) {
+    if (depth > 0) {
       fetch(where, what, function (err) {
-        if (what.bin) {
-          mkdirp(path.join(where, '.bin'), function (err) {
-            if (err) return onInstalled(err)
+        onInstalled(err)
 
-            var bin = what.bin
-            if (typeof bin === 'string') {
-              bin = {}
-              bin[what.name] = what.bin
-            }
-
-            for (var name in bin) {
-              onInstalled.count++
-              fs.symlink(path.join(where, bin[name]), path.join(where, '.bin', name), onInstalled)
-            }
-
-            onInstalled()
-          })
-        } else {
-          onInstalled(err)
-        }
+        if (depth === 1) linkBin(where, what, path.join(where, '..', '.bin'))
       })
     }
+  })
+}
+
+/**
+ * Symlinks the scripts exported via `what`'s `bin` field.
+ *
+ * @param {String}  where             Pathname of current installation.
+ * @param {Object}  what              `package.json` of module to be symlinked.
+ * @param {Object|String}  what.bin   Mapping of scripts to their pathname.
+ * @param  {String}   to              Destination directory of symlinks.
+ * @param  {Function} cb              Callback to be executed one all scripts
+ *                                    have been symlinked into the given
+ *                                    directory.
+ */
+function linkBin (where, what, to, cb) {
+  cb = cb || function () {}
+  mkdirp(to, function (err) {
+    if (err) return cb(err)
+
+    var bin = what.bin
+    if (typeof bin === 'string') {
+      bin = {}
+      bin[what.name] = what.bin
+    }
+    bin = bin || {}
+
+    var onLinked = acc(Object.keys(bin).length + 1, function (errs) {
+      if ((errs || []).filter(identity).length) return cb(errs[0])
+      cb()
+    })
+    onLinked()
+
+    for (var name in bin)
+      fs.symlink(path.join(where, bin[name]), path.join(to, name), onLinked)
   })
 }
 
 module.exports = {
   resolve: resolve,
   fetch: fetch,
-  install: install
+  install: install,
+  linkBin: linkBin
 }

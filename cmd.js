@@ -24,20 +24,16 @@ if (flags.help || flags.h) {
   fs.createReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
 } else if (flags.bootstrap || flags.b) {
   entry = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json')))
-  install(path.join(process.cwd(), '__bootstrap__'), entry, {}, true, true, function (err) {
-    handleError(err)
-    rimraf.sync(path.join(__dirname, 'node_modules'))
-    fs.renameSync(path.join(process.cwd(), '__bootstrap__', 'node_modules'), path.join(process.cwd(), 'node_modules'))
-    rimraf.sync(path.join(__dirname, '__bootstrap__'))
-  })
+  rimraf.sync(path.join(__dirname, 'node_modules'))
+  install(__dirname, entry, {}, true, 0, handleError)
 } else if (targets.length) {
   targets.forEach(function (target) {
     resolve(target, target.split('@')[1] || '*', function (err, what) {
       handleError(err)
-      install(path.join(process.cwd(), 'node_modules', what.name), what, {}, handleError)
+      install(path.join(process.cwd(), 'node_modules', what.name), what, {}, false, 1, handleError)
     })
   })
 } else {
   entry = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json')))
-  install(process.cwd(), entry, {}, true, true, handleError)
+  install(process.cwd(), entry, {}, true, 0, handleError)
 }
