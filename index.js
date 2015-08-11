@@ -148,7 +148,7 @@ function linkBin (where, what, to, cb) {
     onLinked()
 
     for (var name in bin)
-      fs.symlink(path.join(where, bin[name]), path.join(to, name), onLinked)
+      fs.symlink(path.join(path.relative(to, where), bin[name]), path.join(to, name), onLinked)
   })
 }
 
