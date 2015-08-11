@@ -110,9 +110,9 @@ function install (where, what, family, devDeps, depth, cb) {
 
     if (depth > 0) {
       fetch(where, what, function (err) {
-        onInstalled(err)
-
-        if (depth === 1) linkBin(where, what, path.join(where, '..', '.bin'))
+        if (err) return cb(err)
+        if (depth > 1) return onInstalled()
+        linkBin(where, what, path.join(where, '..', '.bin'), onInstalled)
       })
     }
   })
