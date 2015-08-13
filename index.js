@@ -6,6 +6,8 @@ var gunzip = require('gunzip-maybe')
 var mkdirp = require('mkdirp')
 var acc = require('acc')
 var tar = require('tar-fs')
+// var async = require('async')
+var assign = require('object-assign')
 
 function identity (a) { return a }
 
@@ -80,17 +82,18 @@ function install (where, what, family, devDeps, depth, cb) {
   mkdirp(where, function (err) {
     if (err) return cb(err)
 
+    var deps = assign({}, what.dependencies, devDeps ? what.devDependencies : {})
+    var numDeps = Object.keys(deps).length
+
     var onInstalled = acc((depth === 0 ? 0 : 1) + 1, function (errs) {
-      if ((errs || []).filter(identity).length) return cb(errs[0])
+      if ((errs || []).filter(identity).length) return cb(errs.filter(identity)[0])
       if (depth === 0) return cb()
       fs.writeFile(path.join(where, 'package.json'), JSON.stringify(what, null, 2), cb)
     })
 
-    var numDeps = Object.keys(what.dependencies || {}).length + (devDeps ? Object.keys(what.devDependencies || {}).length : 0)
-    if (!numDeps) onInstalled()
-
     var onResolved = acc(numDeps, function (errs, deps) {
-      if (errs.filter(identity).length) return cb(errs[0])
+      // TODO WRONG! errs[0] might be undefined, and errs[1] might be set
+      if (errs.filter(identity).length) return cb(errs.filter(identity)[0])
 
       deps.forEach(function (dep) {
         if (family[dep.dist.shasum]) return
@@ -102,11 +105,8 @@ function install (where, what, family, devDeps, depth, cb) {
       onInstalled()
     })
 
-    for (var dep in what.dependencies)
-      resolve(dep, what.dependencies[dep], onResolved)
-
-    for (dep in (devDeps ? what.devDependencies : {}))
-      resolve(dep, what.devDependencies[dep], onResolved)
+    if (!numDeps) onInstalled()
+    for (var dep in deps) resolve(dep, what.dependencies[dep], onResolved)
 
     if (depth > 0) {
       fetch(where, what, function (err) {
@@ -115,6 +115,7 @@ function install (where, what, family, devDeps, depth, cb) {
         linkBin(where, what, path.join(where, '..', '.bin'), onInstalled)
       })
     }
+
   })
 }
 
@@ -142,7 +143,7 @@ function linkBin (where, what, to, cb) {
     bin = bin || {}
 
     var onLinked = acc(Object.keys(bin).length + 1, function (errs) {
-      if ((errs || []).filter(identity).length) return cb(errs[0])
+      if ((errs || []).filter(identity).length) return cb(errs.filter(identity)[0])
       cb()
     })
     onLinked()
