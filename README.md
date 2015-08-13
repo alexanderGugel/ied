@@ -10,8 +10,8 @@ A *roughly* [**npm install**](https://www.npmjs.com/)-compatible package manager
 * supports [semver](http://semver.org/)
 * correctly deals with `devDependencies`
 * interfaces with the [npm registry](https://www.npmjs.org/)
-* bootstrapping - installs its own dependencies
-* **fast** - about twice as fast when installing [express](https://www.npmjs.com/package/express). Benchmarks are flawed. Try yourself.
+* **bootstrapping** - That's why `node_modules` is checked in. It's fine, [**really**](https://github.com/npm/npm-www/tree/b166b9c2cda1b49e0d5eb671d660fb0bc9e3683b#design-philosophy).
+* **fast** - About twice as fast when installing [express](https://www.npmjs.com/package/express). Benchmarks are flawed. Try yourself and don't blame me.
 
 Installation
 ------------
@@ -70,6 +70,8 @@ The dependencies are checked into the repo. `mpm` is fully bootstrapping and doe
 * [`tar-fs`](https://www.npmjs.com/package/tar-fs)
 
   used for fetching tarballs from the regitry.
+
+
 
 Trivia
 ------
