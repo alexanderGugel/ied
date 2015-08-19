@@ -1,4 +1,6 @@
 {
+  "name": "mpm",
+  "version": "0.0.0",
   "dependencies": {
     "a-logger": "^0.1.0",
     "async": "^1.4.2",
@@ -8,5 +10,20 @@
     "semver": "^5.0.1",
     "tar-fs": "^1.8.1",
     "rimraf": "^2.4.2"
-  }
+  },
+  "main": "cmd.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexanderGugel/mpm.git"
+  },
+  "author": "Alexander Gugel <alexander.gugel@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/alexanderGugel/mpm/issues"
+  },
+  "homepage": "https://github.com/alexanderGugel/mpm#readme"
 }
