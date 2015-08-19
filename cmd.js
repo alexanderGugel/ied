@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 
+'use strict'
+
 var path = require('path')
 var fs = require('fs')
-var rimraf = require('rimraf')
-var resolve = require('./').resolve
-var install = require('./').install
+var async = require('async')
+var install = require('./install')
+var init = require('./init')
+var log = require('a-logger')
 
 var flags = {}
 var targets = process.argv.slice(2).filter(function (target, i, arr) {
@@ -13,27 +16,37 @@ var targets = process.argv.slice(2).filter(function (target, i, arr) {
   flags[match[1]] = arr.slice(i + 1)
 })
 
-function handleError (err) {
-  if (!err) return
-  throw err
+if (flags.help || flags.h) {
+  return fs.createReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
 }
 
-var entry
+function handleError (msg, err) {
+  if (err) log.error(msg, err)
+}
 
-if (flags.help || flags.h) {
-  fs.createReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
-} else if (flags.bootstrap || flags.b) {
-  entry = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json')))
-  rimraf.sync(path.join(__dirname, 'node_modules'))
-  install(__dirname, entry, {}, true, 0, handleError)
-} else if (targets.length) {
-  targets.forEach(function (target) {
-    resolve(target, target.split('@')[1] || '*', function (err, what) {
-      handleError(err)
-      install(path.join(process.cwd(), 'node_modules', what.name), what, {}, false, 1, handleError)
-    })
+function installDeps (dir, deps, cb) {
+  init(dir, function (err) {
+    if (err) return cb(err)
+
+    async.forEachOf(deps, function (version, name, cb) {
+      install(name, version, path.join(dir, 'node_modules'), true, cb)
+    }, cb)
   })
+}
+
+var deps
+
+if (targets.length) {
+  deps = targets.reduce(function (deps, target) {
+    target = target.split('@')
+    var name = target[0]
+    var version = target[1] || '*'
+
+    deps[name] = version
+    return deps
+  }, {})
+  installDeps(process.cwd(), deps, handleError.bind(null, 'failed to install dependencies'))
 } else {
-  entry = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json')))
-  install(process.cwd(), entry, {}, true, 0, handleError)
+  deps = require(path.join(process.cwd(), 'package.json')).dependencies
+  installDeps(process.cwd(), deps, handleError.bind(null, 'failed to install dependencies'))
 }
