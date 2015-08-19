@@ -45,8 +45,15 @@ if (targets.length) {
     deps[name] = version
     return deps
   }, {})
-  installDeps(process.cwd(), deps, handleError.bind(null, 'failed to install dependencies'))
+  installDeps(process.cwd(), deps, handleError.bind(null, 'Failed to install dependencies'))
 } else {
-  deps = require(path.join(process.cwd(), 'package.json')).dependencies
-  installDeps(process.cwd(), deps, handleError.bind(null, 'failed to install dependencies'))
+  try {
+    deps = JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8')
+    ).dependencies
+  } catch (e) {
+    log.error('Failed to load package.json', e)
+    process.exit(1)
+  }
+  installDeps(process.cwd(), deps, handleError.bind(null, 'Failed to install dependencies'))
 }
