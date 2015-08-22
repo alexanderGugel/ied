@@ -23,7 +23,7 @@ var assign = require('object-assign')
  *                            installation of the package and all consecutive
  *                            dependencies has been completed.
  */
-function install (name, version, dir, entry, cb) {
+function install (dir, name, version, entry, cb) {
   log.info('Installing', name + '@' + version, 'into', path.relative(process.cwd(), dir))
 
   cb = cb || function () {}
@@ -62,7 +62,7 @@ function install (name, version, dir, entry, cb) {
               null,
               assign({}, pkg.dependencies, pkg.peerDependencies),
               function (version, name, cb) {
-                install(name, version, dir, false, function (err, dep) {
+                install(dir, name, version, false, function (err, dep) {
                   if (err) return cb(err)
                   var srcPath = path.join('..', '..', dep.dist.shasum)
                   var dstPath = path.join(dir, pkg.dist.shasum, 'node_modules', dep.name)

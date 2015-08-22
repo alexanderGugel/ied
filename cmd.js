@@ -29,7 +29,7 @@ function installDeps (dir, deps, cb) {
     if (err) return cb(err)
 
     async.forEachOf(deps, function (version, name, cb) {
-      install(name, version, path.join(dir, 'node_modules'), true, cb)
+      install(path.join(dir, 'node_modules'), name, version, true, cb)
     }, cb)
   })
 }
