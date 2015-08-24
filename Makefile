@@ -37,8 +37,10 @@ uninstall:
 	cp package.json .bootstrap/package.json
 	cd .bootstrap; node ../cmd.js
 
-bootstrap: .bootstrap
+bootstrap: clean .bootstrap
 	rm -rf node_modules
 	mv .bootstrap/node_modules node_modules
 	rm -rf .bootstrap
 
+clean:
+	rm -rf .bootstrap
