@@ -3,7 +3,7 @@
 mpm
 ===
 
-A *roughly* [**npm install**](https://www.npmjs.com/)-compatible package manager for Node.JS in **~200** lines of code (eLOC).
+A *roughly* [**npm install**](https://www.npmjs.com/)-compatible package manager for Node.JS in **~200**<sup id="a1">[1](#f1)</sup> lines of code (eLOC).
 
 * implements `npm`'s basic [install algorithm](https://docs.npmjs.com/cli/install#algorithm)
 * correctly resolves (circular) dependencies
@@ -12,6 +12,10 @@ A *roughly* [**npm install**](https://www.npmjs.com/)-compatible package manager
 * interfaces with the [npm registry](https://www.npmjs.org/)
 * **bootstrapping** - That's why `node_modules` is checked in. It's fine, [**really**](https://github.com/npm/npm-www/tree/b166b9c2cda1b49e0d5eb671d660fb0bc9e3683b#design-philosophy).
 * **fast** - About twice as fast when installing [express](https://www.npmjs.com/package/express). Benchmarks are flawed. Try yourself and don't blame me.
+
+<small>
+  <strong id="f1">1</strong> Well, at least originally [c4ba56f](https://github.com/alexanderGugel/mpm/tree/c4ba56f7dece738db5b8cb28c20c7f6aa1e64d1d_. [↩](#a1)
+</small>
 
 Installation
 ------------

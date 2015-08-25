@@ -5,8 +5,8 @@
 var path = require('path')
 var fs = require('fs')
 var async = require('async')
-var install = require('./install')
-var init = require('./init')
+var install = require('../lib/install')
+var init = require('../lib/init')
 var log = require('a-logger')
 
 var flags = {}
@@ -29,7 +29,7 @@ function installDeps (dir, deps, cb) {
     if (err) return cb(err)
 
     async.forEachOf(deps, function (version, name, cb) {
-      install(name, version, path.join(dir, 'node_modules'), true, cb)
+      install(path.join(dir, 'node_modules'), name, version, true, cb)
     }, cb)
   })
 }
