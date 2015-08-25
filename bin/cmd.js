@@ -5,8 +5,8 @@
 var path = require('path')
 var fs = require('fs')
 var async = require('async')
-var install = require('./install')
-var init = require('./init')
+var install = require('../lib/install')
+var init = require('../lib/init')
 var log = require('a-logger')
 
 var flags = {}
