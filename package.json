@@ -1,6 +1,10 @@
 {
   "name": "mpm",
   "version": "0.0.0",
+  "main": "lib/index.js",
+  "bin": {
+    "mpm": "bin/cmd.js"
+  },
   "dependencies": {
     "a-logger": "^0.1.0",
     "async": "^1.4.2",
@@ -11,7 +15,6 @@
     "tar-fs": "^1.8.1",
     "rimraf": "^2.4.2"
   },
-  "main": "cmd.js",
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
