@@ -14,7 +14,7 @@ A *roughly* [**npm install**](https://www.npmjs.com/)-compatible package manager
 * **fast** - About twice as fast when installing [express](https://www.npmjs.com/package/express). Benchmarks are flawed. Try yourself and don't blame me.
 
 <small>
-  <strong id="f1">1</strong> Well, at least originally [c4ba56f](https://github.com/alexanderGugel/mpm/tree/c4ba56f7dece738db5b8cb28c20c7f6aa1e64d1d_. [↩](#a1)
+  <strong id="f1">1</strong> Well, at least originally [c4ba56f](https://github.com/alexanderGugel/mpm/tree/c4ba56f7dece738db5b8cb28c20c7f6aa1e64d1d). [↩](#a1)
 </small>
 
 Installation
