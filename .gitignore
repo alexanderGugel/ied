@@ -27,5 +27,5 @@ build/Release
 # https://docs.npmjs.com/misc/faq#should-i-check-my-node-modules-folder-into-git
 node_modules
 
-# .bootstrap dir for self-hoising installation
+# .bootstrap dir for self-hoisting installation
 .bootstrap
