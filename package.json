@@ -15,9 +15,19 @@
     "tar-fs": "^1.8.1",
     "rimraf": "^2.4.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "istanbul": "^0.4.0",
+    "mocha": "^2.3.3",
+    "mockmock": "0.0.2",
+    "npm-registry-mock": "^1.0.1",
+    "proxyquire": "^1.7.3",
+    "sinon": "^1.17.1",
+    "tap": "^2.1.1"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha",
+    "dev": "mocha -w --reporter dot",
+    "cover": "istanbul cover node_modules/mocha/bin/_mocha"
   },
   "repository": {
     "type": "git",
