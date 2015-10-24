@@ -3,72 +3,96 @@
 var proxyquire = require('proxyquire')
 var assert = require('assert')
 var mock = require('mockmock')
+var EventEmitter = require('events').EventEmitter
 
-describe('download', function () {
-  var httpOn
+describe('resolve', function () {
+  var resolve
   var http
-  var gunzip
-  var tar
-  var download
-  var dir = '/1/2/3'
-  var tarball = 'http://example.com/test.tar'
+  var log
+  var cb
+  var httpResp
+  var httpGet
 
   beforeEach(function () {
-    httpOn = mock()
-    http = {
-      get: mock(function () {
-        return {
-          on: httpOn
-        }
-      })
-    }
+    log = { info: mock() }
+    httpResp = new EventEmitter()
+    httpGet = new EventEmitter()
+    http = { get: mock(httpGet) }
+    cb = mock()
 
-    gunzip = mock('gunzip')
-    tar = { extract: mock('tar.extract') }
-
-    download = proxyquire('../lib/download', {
+    resolve = proxyquire('../lib/resolve', {
       http: http,
-      'gunzip-maybe': gunzip,
-      'tar-fs': tar
+      'a-logger': log
     })
   })
 
-  it('should create tar stream', function () {
-    var cb = mock()
-    download(dir, tarball, cb)
+  it('should fetch from correct endpoint', function () {
+    var name = 'some-package'
+    var version = '~1.0.0'
+    resolve(name, version, cb)
 
-    assert(tar.extract.called)
-    assert.equal(tar.extract.args[0][0], dir)
-
-    assert(typeof tar.extract.args[0][1], 'object')
-    var tarMap = tar.extract.args[0][1].map
-    assert.deepEqual(tarMap({ name: 'hello/world' }), { name: 'world' })
+    assert.deepEqual(http.get.args[0][0], 'http://registry.npmjs.org/' + name)
   })
 
-  it('should fetch tarball', function () {
-    var cb = mock()
-    download(dir, tarball, cb)
-
-    assert(http.get.called)
-    assert.equal(http.get.args[0][0], tarball)
-    var handler = http.get.args[0][1]
-
-    handler({ statusCode: 500 })
-    assert(cb.called)
-
-    var res = { statusCode: 200 }
-    res.pipe = mock(res)
-    res.on = mock(res)
-
-    handler(res)
-    assert.equal(res.pipe.args[0][0], 'gunzip')
-    assert.equal(res.pipe.args[1][0], 'tar.extract')
+  it('should handle HTTP connection error', function () {
+    var err = new Error()
+    resolve('some-package', '~1.0.0', cb)
+    httpGet.emit('error', err)
+    assert.equal(cb.args[0][0], err)
   })
 
-  it('should accept optional callback function', function () {
-    download(dir, tarball)
-    assert.doesNotThrow(function () {
-      httpOn.args[0][1]()
-    })
+  it('should handle HTTP error while receiving data', function () {
+    var err = new Error()
+    resolve('some-package', '~1.0.0', cb)
+    httpResp.statusCode = 200
+    http.get.args[0][1](httpResp)
+    httpResp.emit('data', 'some data')
+    httpResp.emit('error', err)
+    assert.equal(cb.args[0][0], err)
+  })
+
+  it('should handle invalid statusCode', function () {
+    resolve('some-package', '~1.0.0', cb)
+    httpResp.statusCode = 404
+    http.get.args[0][1](httpResp)
+    httpResp.emit('data', '{}')
+    httpResp.emit('end')
+    assert(cb.args[0][0])
+  })
+
+  it('should handle invalid JSON response', function () {
+    resolve('some-package', '~1.0.0', cb)
+    httpResp.statusCode = 200
+    http.get.args[0][1](httpResp)
+    httpResp.emit('data', 'some data')
+    httpResp.emit('data', 'some more data')
+    httpResp.emit('end')
+    assert(cb.args[0][0] instanceof SyntaxError)
+  })
+
+  it('should validate JSON response schema to have plain object property "versions', function () {
+    resolve('some-package', '~1.0.0', cb)
+    httpResp.statusCode = 200
+    http.get.args[0][1](httpResp)
+    httpResp.emit('data', JSON.stringify({
+      versions: []
+    }))
+    httpResp.emit('end')
+    assert(cb.args[0][0] instanceof SyntaxError)
+  })
+
+  it('should handle case of no matching version', function () {
+    resolve('some-package', '~5.0.0', cb)
+    httpResp.statusCode = 200
+    http.get.args[0][1](httpResp)
+    httpResp.emit('data', JSON.stringify({
+      versions: {
+        '0.0.1': {},
+        '1.0.0': {},
+        '2.0.0': {}
+      }
+    }))
+    httpResp.emit('end')
+    assert(cb.args[0][0] instanceof Error)
   })
 })
