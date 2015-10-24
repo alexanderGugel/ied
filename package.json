@@ -18,7 +18,7 @@
   "devDependencies": {
     "istanbul": "^0.4.0",
     "mocha": "^2.3.3",
-    "mockmock": "0.0.2",
+    "mockmock": "0.0.5",
     "npm-registry-mock": "^1.0.1",
     "proxyquire": "^1.7.3",
     "sinon": "^1.17.1",
