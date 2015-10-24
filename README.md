@@ -1,4 +1,5 @@
 [![experimental](http://hughsk.github.io/stability-badges/dist/experimental.svg)](http://github.com/hughsk/stability-badges)
+[![Build Status](https://travis-ci.org/alexanderGugel/mpm.svg)](https://travis-ci.org/alexanderGugel/mpm)
 
 mpm
 ===
