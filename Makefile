@@ -3,6 +3,7 @@ INSTALL_DIR = /usr/local/lib/node_modules
 BIN_DIR = /usr/local/bin
 BIN = mpm
 BOOTSTRAP_DIR = .bootstrap
+COVERAGE_DIR = coverage
 DEPS_BIN_DIR = ./node_modules/.bin
 
 .PHONY: install
@@ -24,28 +25,27 @@ prepdirs:
 	mkdir -p $(INSTALL_DIR)
 	mkdir -p $(BIN_DIR)
 
-# TODO Something is wrong here
-# For some reason it creates a symlink to the binary within the cwd
-link: prepdirs node_modules
+link: uninstall prepdirs node_modules
 	ln -s $(CURRENT_DIR) $(INSTALL_DIR)/$(BIN)
 	ln -s $(INSTALL_DIR)/mpm/bin/cmd.js $(BIN_DIR)/mpm
 
-install: prepdirs node_modules
+install: uninstall prepdirs node_modules
 	cp -R $(CURRENT_DIR) $(INSTALL_DIR)/$(BIN)
 	ln -s $(INSTALL_DIR)/mpm/bin/cmd.js $(BIN_DIR)/mpm
 
 uninstall:
 	rm -rf $(INSTALL_DIR)/$(BIN)
-	rm $(BIN_DIR)/$(BIN)
+	rm -f $(BIN_DIR)/$(BIN)
 
 clean:
+	rm -rf $(COVERAGE_DIR)
 	rm -rf $(BOOTSTRAP_DIR)
 
 test:
-	mocha $(DEPS_BIN_DIR)/mocha
+	$(DEPS_BIN_DIR)/mocha
 
 dev:
-	mocha -w --reporter dot
+	$(DEPS_BIN_DIR)/mocha -w --reporter dot
 
 cover:
 	$(DEPS_BIN_DIR)/istanbul cover $(DEPS_BIN_DIR)/_mocha
