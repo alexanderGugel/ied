@@ -12,17 +12,13 @@
     "mkdirp": "^0.5.1",
     "object-assign": "^3.0.0",
     "semver": "^5.0.1",
-    "tar-fs": "^1.8.1",
-    "rimraf": "^2.4.2"
+    "tar-fs": "^1.8.1"
   },
   "devDependencies": {
     "istanbul": "^0.4.0",
     "mocha": "^2.3.3",
     "mockmock": "0.0.5",
-    "npm-registry-mock": "^1.0.1",
-    "proxyquire": "^1.7.3",
-    "sinon": "^1.17.1",
-    "tap": "^2.1.1"
+    "proxyquire": "^1.7.3"
   },
   "scripts": {
     "test": "mocha",
