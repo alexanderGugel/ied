@@ -9,15 +9,11 @@ var install = require('../lib/install')
 var init = require('../lib/init')
 var log = require('a-logger')
 var assign = require('object-assign')
+var minimist = require('minimist')
 
-var flags = {}
-var targets = process.argv.slice(2).filter(function (target, i, arr) {
-  var match = /^--?(.*)$/.exec(target)
-  if (!match) return true
-  flags[match[1]] = arr.slice(i + 1)
-})
+var argv = minimist(process.argv.slice(2))
 
-if (flags.help || flags.h) {
+if (argv.help || argv.h) {
   return fs.createReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
 }
 
@@ -37,8 +33,8 @@ function installDeps (dir, deps, cb) {
 
 var deps
 
-if (targets.length) {
-  deps = targets.reduce(function (deps, target) {
+if (argv._.length) {
+  deps = argv._.reduce(function (deps, target) {
     target = target.split('@')
     var name = target[0]
     var version = target[1] || '*'
