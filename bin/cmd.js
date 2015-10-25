@@ -8,6 +8,7 @@ var async = require('async')
 var install = require('../lib/install')
 var init = require('../lib/init')
 var log = require('a-logger')
+var assign = require('object-assign')
 
 var flags = {}
 var targets = process.argv.slice(2).filter(function (target, i, arr) {
@@ -48,9 +49,10 @@ if (targets.length) {
   installDeps(process.cwd(), deps, handleError.bind(null, 'Failed to install dependencies'))
 } else {
   try {
-    deps = JSON.parse(
+    var pkg = JSON.parse(
       fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8')
-    ).dependencies
+    )
+    deps = assign({}, pkg.dependencies, pkg.devDependencies)
   } catch (e) {
     log.error('Failed to load package.json', e)
     process.exit(1)
