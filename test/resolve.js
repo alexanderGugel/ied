@@ -34,6 +34,15 @@ describe('resolve', function () {
     assert.deepEqual(http.get.args[0][0], 'http://registry.npmjs.org/' + name)
   })
 
+  it('should accept optional callback', function () {
+    var err = new Error()
+    resolve('some-package', '~1.0.0')
+
+    assert.doesNotThrow(function () {
+      httpGet.emit('error', err)
+    })
+  })
+
   it('should handle HTTP connection error', function () {
     var err = new Error()
     resolve('some-package', '~1.0.0', cb)
@@ -94,5 +103,76 @@ describe('resolve', function () {
     }))
     httpResp.emit('end')
     assert(cb.args[0][0] instanceof Error)
+  })
+
+  it('should resolve to latest correct version', function () {
+    resolve('some-package', '~1.1.0', cb)
+    httpResp.statusCode = 200
+    http.get.args[0][1](httpResp)
+    httpResp.emit('data', JSON.stringify({
+      versions: {
+        '0.0.1': { version: '0.0.1' },
+        '1.0.0': { version: '1.0.0' },
+        '1.1.0': { version: '1.1.0' },
+        '2.0.0': { version: '2.0.0' }
+      }
+    }))
+    httpResp.emit('end')
+    assert.ifError(cb.args[0][0])
+    assert.deepEqual(cb.args[0][1], { version: '1.1.0' })
+  })
+
+  it('should properly handle pending requests', function () {
+    var cb2 = mock()
+
+    resolve('some-package', '~1.1.0', cb)
+    resolve('some-package', '~2.0.0', cb2)
+
+    httpResp.statusCode = 200
+    http.get.args[0][1](httpResp)
+
+    httpResp.emit('data', JSON.stringify({
+      versions: {
+        '0.0.1': { version: '0.0.1' },
+        '1.0.0': { version: '1.0.0' },
+        '1.1.0': { version: '1.1.0' },
+        '2.0.0': { version: '2.0.0' }
+      }
+    }))
+    httpResp.emit('end')
+
+    assert.ifError(cb.args[0][0])
+    assert.ifError(cb2.args[0][0])
+    assert.deepEqual(cb.args[0][1], { version: '1.1.0' })
+    assert.deepEqual(cb2.args[0][1], { version: '2.0.0' })
+  })
+
+  it('should properly cache requests', function () {
+    resolve('some-package', '~1.1.0', cb)
+
+    httpResp.statusCode = 200
+    http.get.args[0][1](httpResp)
+
+    httpResp.emit('data', JSON.stringify({
+      versions: {
+        '0.0.1': { version: '0.0.1' },
+        '1.0.0': { version: '1.0.0' },
+        '1.1.0': { version: '1.1.0' },
+        '2.0.0': { version: '2.0.0' }
+      }
+    }))
+    httpResp.emit('end')
+
+    assert.ifError(cb.args[0][0])
+    assert.deepEqual(cb.args[0][1], { version: '1.1.0' })
+
+    var cb2 = mock()
+    resolve('some-package', '~2.0.0', cb2)
+
+    assert.ifError(cb2.args[0][0])
+    assert.deepEqual(cb2.args[0][1], { version: '2.0.0' })
+
+    assert.equal(cb.called, 1)
+    assert.equal(cb2.called, 1)
   })
 })

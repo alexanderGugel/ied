@@ -5,6 +5,7 @@ var assert = require('assert')
 var mock = require('mockmock')
 
 describe('download', function () {
+  var log
   var httpOn
   var http
   var gunzip
@@ -12,8 +13,10 @@ describe('download', function () {
   var download
   var dir = '/1/2/3'
   var tarball = 'http://example.com/test.tar'
+  var shasum = '123'
 
   beforeEach(function () {
+    log = { info: mock() }
     httpOn = mock()
     http = {
       get: mock(function () {
@@ -29,13 +32,14 @@ describe('download', function () {
     download = proxyquire('../lib/download', {
       http: http,
       'gunzip-maybe': gunzip,
-      'tar-fs': tar
+      'tar-fs': tar,
+      'a-logger': log
     })
   })
 
   it('should create tar stream', function () {
     var cb = mock()
-    download(dir, tarball, cb)
+    download(dir, tarball, shasum, cb)
 
     assert(tar.extract.called)
     assert.equal(tar.extract.args[0][0], dir)
@@ -47,7 +51,7 @@ describe('download', function () {
 
   it('should fetch tarball', function () {
     var cb = mock()
-    download(dir, tarball, cb)
+    download(dir, tarball, shasum, cb)
 
     assert(http.get.called)
     assert.equal(http.get.args[0][0], tarball)
@@ -66,9 +70,26 @@ describe('download', function () {
   })
 
   it('should accept optional callback function', function () {
-    download(dir, tarball)
+    download(dir, tarball, shasum)
     assert.doesNotThrow(function () {
       httpOn.args[0][1]()
     })
+  })
+
+  it('should handle multiple pending requests', function () {
+    var cb1 = mock()
+    var cb2 = mock()
+
+    download(dir, tarball, shasum, cb1)
+    download(dir, tarball, shasum, cb2)
+
+    assert.equal(http.get.callCount, 1)
+    assert.equal(http.get.args[0][0], tarball)
+
+    var handler = http.get.args[0][1]
+
+    handler({ statusCode: 500 })
+    assert(cb1.called)
+    assert(cb2.called)
   })
 })
