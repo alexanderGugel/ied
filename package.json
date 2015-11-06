@@ -6,14 +6,13 @@
     "mpm": "bin/cmd.js"
   },
   "dependencies": {
-    "a-logger": "^0.1.0",
     "async": "^1.4.2",
     "gunzip-maybe": "^1.2.1",
+    "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
     "object-assign": "^3.0.0",
     "semver": "^5.0.1",
-    "tar-fs": "^1.8.1",
-    "minimist": "^1.2.0"
+    "tar-fs": "^1.8.1"
   },
   "devDependencies": {
     "istanbul": "^0.4.0",

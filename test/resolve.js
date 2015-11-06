@@ -8,21 +8,18 @@ var EventEmitter = require('events').EventEmitter
 describe('resolve', function () {
   var resolve
   var http
-  var log
   var cb
   var httpResp
   var httpGet
 
   beforeEach(function () {
-    log = { info: mock() }
     httpResp = new EventEmitter()
     httpGet = new EventEmitter()
     http = { get: mock(httpGet) }
     cb = mock()
 
     resolve = proxyquire('../lib/resolve', {
-      http: http,
-      'a-logger': log
+      http: http
     })
   })
 

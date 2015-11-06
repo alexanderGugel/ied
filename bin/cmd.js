@@ -7,51 +7,77 @@ var fs = require('fs')
 var async = require('async')
 var install = require('../lib/install')
 var init = require('../lib/init')
-var log = require('a-logger')
+var expose = require('../lib/expose')
 var assign = require('object-assign')
 var minimist = require('minimist')
 
-var argv = minimist(process.argv.slice(2))
+var dir = process.cwd()
+var argv = minimist(process.argv.slice(2), {
+  alias: {
+    h: 'help'
+  }
+})
 
-if (argv.help || argv.h) {
-  return fs.createReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
+function handleErr (err) {
+  if (err) console.error(err)
 }
 
-function handleError (msg, err) {
-  if (err) log.error(msg, err)
-}
+function installCmd () {
+  var deps = argv._.slice(1)
 
-function installDeps (dir, deps, cb) {
-  init(dir, function (err) {
-    if (err) return cb(err)
-
-    async.forEachOf(deps, function (version, name, cb) {
-      install(path.join(dir, 'node_modules'), name, version, true, cb)
-    }, cb)
-  })
-}
-
-var deps
-
-if (argv._.length) {
-  deps = argv._.reduce(function (deps, target) {
-    target = target.split('@')
-    var name = target[0]
-    var version = target[1] || '*'
-
-    deps[name] = version
-    return deps
-  }, {})
-  installDeps(process.cwd(), deps, handleError.bind(null, 'Failed to install dependencies'))
-} else {
-  try {
+  if (!deps.length) {
+    // Read dependencies from package.json when no specific targets are supplied.
     var pkg = JSON.parse(
       fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8')
     )
     deps = assign({}, pkg.dependencies, pkg.devDependencies)
-  } catch (e) {
-    log.error('Failed to load package.json', e)
-    process.exit(1)
+    deps = Object.keys(deps).map(function (name) {
+      return [ name, deps[name] ]
+    })
+  } else {
+    // Use supplied dependencies if available.
+    deps = deps.map(function (target) {
+      target = target.split('@')
+      return [ target[0], target[1] || '*' ]
+    })
   }
-  installDeps(process.cwd(), deps, handleError.bind(null, 'Failed to install dependencies'))
+
+  var node_modules = path.join(dir, 'node_modules')
+
+  init(dir, function (err) {
+    handleErr(err)
+
+    var _locks = Object.create(null)
+
+    var installAll = async.map.bind(null, deps, function (target, cb) {
+      var name = target[0]
+      var version = target[1]
+      install(node_modules, name, version, _locks, cb)
+    })
+
+    var exposeAll = function (pkgs, cb) {
+      async.map(pkgs, function (pkg, cb) {
+        expose(node_modules, pkg, cb)
+      }, cb)
+    }
+
+    async.waterfall([ installAll, exposeAll ], handleErr)
+  })
+}
+
+function helpCmd () {
+  fs.createReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
+}
+
+if (argv.help) {
+  return helpCmd()
+}
+
+switch (argv._[0]) {
+  case 'i':
+  case 'install':
+    installCmd(argv)
+    break
+  default:
+    helpCmd(argv)
 }

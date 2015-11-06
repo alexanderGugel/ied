@@ -11,7 +11,6 @@ describe('install', function () {
   var ignoreError
   var install
   var cb
-  var log
 
   beforeEach(function () {
     forceSymlink = mock()
@@ -19,16 +18,12 @@ describe('install', function () {
     download = mock()
     ignoreError = mock()
     cb = mock()
-    log = {
-      info: mock()
-    }
 
     install = proxyquire('../lib/install', {
       './force_symlink': forceSymlink,
       './resolve': resolve,
       './download': download,
-      './ignore_error': ignoreError,
-      'a-logger': log
+      './ignore_error': ignoreError
     })
   })
 

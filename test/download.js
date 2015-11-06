@@ -5,7 +5,6 @@ var assert = require('assert')
 var mock = require('mockmock')
 
 describe('download', function () {
-  var log
   var httpOn
   var http
   var gunzip
@@ -16,7 +15,6 @@ describe('download', function () {
   var shasum = '123'
 
   beforeEach(function () {
-    log = { info: mock() }
     httpOn = mock()
     http = {
       get: mock(function () {
@@ -32,8 +30,7 @@ describe('download', function () {
     download = proxyquire('../lib/download', {
       http: http,
       'gunzip-maybe': gunzip,
-      'tar-fs': tar,
-      'a-logger': log
+      'tar-fs': tar
     })
   })
 
