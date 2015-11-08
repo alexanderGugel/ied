@@ -52,10 +52,10 @@ describe('download', function () {
     assert.equal(http.get.args[0][0], tarball)
     var handler = http.get.args[0][1]
 
-    handler({ statusCode: 500 })
+    handler({ statusCode: 500, headers: {} })
     assert(cb.called)
 
-    var res = { statusCode: 200 }
+    var res = { statusCode: 200, headers: {} }
     res.pipe = mock(res)
     res.on = mock(res)
 
@@ -78,12 +78,15 @@ describe('download', function () {
     download(dir, tarball, shasum, cb1)
     download(dir, tarball, shasum, cb2)
 
-    assert.equal(http.get.callCount, 1)
+    assert.equal(http.get.callCount, 2)
     assert.equal(http.get.args[0][0], tarball)
 
-    var handler = http.get.args[0][1]
+    var handler1 = http.get.args[0][1]
+    handler1({ statusCode: 500, headers: {} })
 
-    handler({ statusCode: 500 })
+    var handler2 = http.get.args[1][1]
+    handler2({ statusCode: 500, headers: {} })
+
     assert(cb1.called)
     assert(cb2.called)
   })
