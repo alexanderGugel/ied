@@ -42,8 +42,6 @@ describe('download', function () {
     assert.equal(tar.extract.args[0][0], dir)
 
     assert(typeof tar.extract.args[0][1], 'object')
-    var tarMap = tar.extract.args[0][1].map
-    assert.deepEqual(tarMap({ name: 'hello/world' }), { name: 'world' })
   })
 
   it('should fetch tarball', function () {
