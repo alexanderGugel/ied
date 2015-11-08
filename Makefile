@@ -1,3 +1,7 @@
+# TODO Actually we could just use `npm link`, but we don't really want to rely
+# on npm. Ideally we would even check-in the dependencies, but then people
+# wouldn't take us seriously.
+
 CURRENT_DIR = $(shell pwd)
 INSTALL_DIR = /usr/local/lib/node_modules
 BIN_DIR = /usr/local/bin
@@ -16,7 +20,7 @@ node_modules: package.json
 	npm install
 	mkdir $(BOOTSTRAP_DIR)
 	cp package.json $(BOOTSTRAP_DIR)/package.json
-	cd $(BOOTSTRAP_DIR); node ../bin/cmd.js
+	cd $(BOOTSTRAP_DIR); node ../bin/cmd.js i
 	rm -rf node_modules
 	mv $(BOOTSTRAP_DIR)/node_modules node_modules
 	rm -rf $(BOOTSTRAP_DIR)

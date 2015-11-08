@@ -34,5 +34,10 @@
   "bugs": {
     "url": "https://github.com/alexanderGugel/mpm/issues"
   },
-  "homepage": "https://github.com/alexanderGugel/mpm#readme"
+  "homepage": "https://github.com/alexanderGugel/mpm#readme",
+  "description": "A package manager for Node.js",
+  "directories": {
+    "example": "example",
+    "test": "test"
+  }
 }
