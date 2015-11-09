@@ -11,6 +11,7 @@ var expose = require('../lib/expose')
 var assign = require('object-assign')
 var minimist = require('minimist')
 var save = require('../lib/save')
+var child_process = require('child_process');
 
 var dir = process.cwd()
 var argv = minimist(process.argv.slice(2), {
@@ -92,6 +93,21 @@ function helpCmd () {
   fs.createReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
 }
 
+function shellCmd () {
+  var sh = process.platform === 'win32'
+  ? process.env.ComSpec || 'cmd'
+  : process.env.SHELL || 'bash'
+
+  var env = assign({}, process.env, {
+    PATH: [path.join(dir, 'node_modules/.bin'), process.env.PATH].join(path.delimiter)
+  })
+
+  child_process.spawn(sh, [], {
+    stdio: 'inherit',
+    env: env
+  })
+}
+
 if (argv.help) {
   return helpCmd()
 }
@@ -100,6 +116,10 @@ switch (argv._[0]) {
   case 'i':
   case 'install':
     installCmd(argv)
+    break
+  case 'sh':
+  case 'shell':
+    shellCmd(argv)
     break
   default:
     helpCmd(argv)
