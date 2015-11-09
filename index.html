@@ -1,25 +1,97 @@
 <!DOCTYPE html>
-<html>
+<html lang="en-us">
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>mpm</title>
-    <meta name="description" content="">
+    <meta charset="UTF-8">
+    <title>MPM by alexanderGugel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="dist/bundle.css">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
   </head>
   <body>
-    <div class="cover">
-      <nav>
-        <a href="https://github.com/alexanderGugel/mpm">GitHub</a>
-      </nav>
+    <section class="page-header">
+      <h1 class="project-name">MPM</h1>
+      <h2 class="project-tagline">:package: A npm-like package manager in ~200 lines of code.</h2>
+      <a href="https://github.com/alexanderGugel/mpm" class="btn">View on GitHub</a>
+      <a href="https://github.com/alexanderGugel/mpm/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/alexanderGugel/mpm/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
 
-      <header>
-        <h1>mpm</h1>
-        <p>An alternative package manager for <a href="https://nodejs.org/api/modules.html">Node.js</a>.</p>
-      </header>
-    </div>
+    <section class="main-content">
+      <p><a href="http://github.com/hughsk/stability-badges"><img src="http://hughsk.github.io/stability-badges/dist/experimental.svg" alt="experimental"></a>
+<a href="https://travis-ci.org/alexanderGugel/mpm"><img src="https://travis-ci.org/alexanderGugel/mpm.svg" alt="Build Status"></a></p>
 
-    <script src="dist/bundle.js"></script>
+<h1>
+<a id="mpm" class="anchor" href="#mpm" aria-hidden="true"><span class="octicon octicon-link"></span></a>mpm</h1>
+
+<p>A <em>roughly</em> <a href="https://www.npmjs.com/"><strong>npm install</strong></a>-compatible package manager for Node.JS in <strong>~200</strong><sup id="a1"><a href="#f1">1</a></sup> lines of code (eLOC).</p>
+
+<ul>
+<li>implements <code>npm</code>'s basic <a href="https://docs.npmjs.com/cli/install#algorithm">install algorithm</a>
+</li>
+<li>correctly resolves (circular) dependencies</li>
+<li>supports <a href="http://semver.org/">semver</a>
+</li>
+<li>correctly deals with <code>devDependencies</code>
+</li>
+<li>interfaces with the <a href="https://www.npmjs.org/">npm registry</a>
+</li>
+<li>
+<strong>bootstrapping</strong> - That's why <code>node_modules</code> is checked in. It's fine, <a href="https://github.com/npm/npm-www/tree/b166b9c2cda1b49e0d5eb671d660fb0bc9e3683b#design-philosophy"><strong>really</strong></a>.</li>
+<li>
+<strong>fast</strong> - About twice as fast when installing <a href="https://www.npmjs.com/package/express">express</a>. Benchmarks are flawed. Try yourself and don't blame me.</li>
+</ul>
+
+<p>
+  <strong id="f1">1</strong> Well, at least originally <a href="https://github.com/alexanderGugel/mpm/tree/c4ba56f7dece738db5b8cb28c20c7f6aa1e64d1d">c4ba56f</a>. <a href="#a1">↩</a>
+</p>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<pre><code>  git clone https://github.com/alexanderGugel/mpm mpm &amp;&amp; cd $_ &amp;&amp; make install
+</code></pre>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<pre><code>  mpm - An alternative package manager for Node.js
+
+  Usage:
+    mpm install &lt;pkg&gt;
+    mpm install &lt;pkg&gt;@&lt;version&gt;
+    mpm install &lt;pkg&gt;@&lt;version range&gt;
+
+    Can specify one or more: mpm install semver@^5.0.1 tape
+    If no argument is supplied, installs dependencies from package.json.
+    `mpm i` also works.
+
+  Flags:
+    -h, --help      Show usage information and exit
+
+  README:  https://github.com/alexanderGugel/mpm
+  ISSUES:  https://github.com/alexanderGugel/mpm/issues
+</code></pre>
+
+<h2>
+<a id="trivia" class="anchor" href="#trivia" aria-hidden="true"><span class="octicon octicon-link"></span></a>Trivia</h2>
+
+<p><code>mpm</code> stands for "<strong>m</strong>ad <strong>p</strong>eople <strong>m</strong>atter".</p>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>See <a href="LICENSE.md">LICENSE.md</a>.</p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/alexanderGugel/mpm">MPM</a> is maintained by <a href="https://github.com/alexanderGugel">alexanderGugel</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
   </body>
 </html>
