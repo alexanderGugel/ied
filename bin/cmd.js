@@ -17,7 +17,8 @@ var argv = minimist(process.argv.slice(2), {
   alias: {
     h: 'help',
     S: 'save',
-    D: 'save-dev'
+    D: 'save-dev',
+    o: 'only'
   }
 })
 
@@ -39,7 +40,17 @@ function installCmd () {
       console.error('Failed to read in package.json')
       throw e
     }
-    deps = assign({}, pkg.dependencies, pkg.devDependencies)
+    var onlyDeps
+    if (argv.only) {
+      var field = ({
+        'prod': 'dependencies',
+        'production': 'dependencies',
+        'dev': 'devDependencies',
+        'development': 'devDependencies'
+      })[argv.only] || argv.only
+      onlyDeps = pkg[field] || {}
+    }
+    deps = onlyDeps || assign({}, pkg.dependencies, pkg.devDependencies)
     deps = Object.keys(deps).map(function (name) {
       return [ name, deps[name] ]
     })
