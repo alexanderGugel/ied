@@ -10,26 +10,35 @@ var init = require('../lib/init')
 var expose = require('../lib/expose')
 var assign = require('object-assign')
 var minimist = require('minimist')
+var save = require('../lib/save')
 
 var dir = process.cwd()
 var argv = minimist(process.argv.slice(2), {
   alias: {
-    h: 'help'
+    h: 'help',
+    S: 'save',
+    D: 'save-dev'
   }
 })
 
 function handleErr (err) {
-  if (err) console.error(err)
+  if (err) console.error(err, err.stack)
 }
 
 function installCmd () {
+  var node_modules = path.join(dir, 'node_modules')
   var deps = argv._.slice(1)
 
   if (!deps.length) {
     // Read dependencies from package.json when no specific targets are supplied.
-    var pkg = JSON.parse(
-      fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8')
-    )
+    try {    
+      var pkg = JSON.parse(
+        fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8')
+      )
+    } catch (e) {
+      console.error('Failed to read in package.json')
+      throw e
+    }
     deps = assign({}, pkg.dependencies, pkg.devDependencies)
     deps = Object.keys(deps).map(function (name) {
       return [ name, deps[name] ]
@@ -42,8 +51,6 @@ function installCmd () {
     })
   }
 
-  var node_modules = path.join(dir, 'node_modules')
-
   init(dir, function (err) {
     handleErr(err)
 
@@ -55,13 +62,18 @@ function installCmd () {
       install(node_modules, name, version, _locks, cb)
     })
 
-    var exposeAll = function (pkgs, cb) {
-      async.map(pkgs, function (pkg, cb) {
-        expose(node_modules, pkg, cb)
-      }, cb)
+    var exposeAll = expose.bind(null, node_modules)
+    var waterfall = [ installAll, exposeAll ]
+
+    if (argv.save) {
+      waterfall.push(save.bind(null, dir, 'dependencies'))
+    }
+    
+    if (argv['save-dev']) {
+      waterfall.push(save.bind(null, dir, 'devDependencies'))
     }
 
-    async.waterfall([ installAll, exposeAll ], handleErr)
+    async.waterfall(waterfall, handleErr)
   })
 }
 

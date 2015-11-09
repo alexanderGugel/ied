@@ -42,6 +42,8 @@ Usage
 
   Flags:
     -h, --help      Show usage information and exit
+    -S, --save      Update `dependencies`
+    -D, --save-dev  Update `devDependencies`
 
   README:  https://github.com/alexanderGugel/mpm
   ISSUES:  https://github.com/alexanderGugel/mpm/issues
