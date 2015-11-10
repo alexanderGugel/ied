@@ -29,3 +29,6 @@ node_modules
 
 # .bootstrap dir for self-hoisting installation
 .bootstrap
+
+# Used for debugging
+example
