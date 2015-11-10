@@ -8,9 +8,10 @@ var async = require('async')
 var install = require('../lib/install')
 var init = require('../lib/init')
 var expose = require('../lib/expose')
+var ping = require('../lib/ping')
+var save = require('../lib/save')
 var assign = require('object-assign')
 var minimist = require('minimist')
-var save = require('../lib/save')
 var child_process = require('child_process');
 
 var dir = process.cwd()
@@ -38,7 +39,7 @@ function handleErrSync (err) {
 function readPackageSync () {
   try {
     return JSON.parse(
-      fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8')
+      fs.readFileSync(path.join(dir, 'package.json'), 'utf8')
     )
   } catch (e) {
     console.error('Failed to read in package.json')
@@ -142,6 +143,13 @@ function runCmd () {
   })
 }
 
+function pingCmd () {
+  ping(function (err, data) {
+    handleErrSync(err)
+    console.log('PONG')
+  })
+}
+
 if (argv.help) {
   return helpCmd()
 }
@@ -159,6 +167,9 @@ switch (argv._[0]) {
   case 'run':
   case 'run-script':
     runCmd()
+    break
+  case 'ping':
+    pingCmd()
     break
   default:
     helpCmd()
