@@ -5,15 +5,21 @@
 var install = require('../lib/install')
 var minimist = require('minimist')
 var commands = require('../lib/commands')
+var config = require('../lib/config')
 
 var argv = minimist(process.argv.slice(2), {
   alias: {
     h: 'help',
     S: 'save',
     D: 'save-dev',
-    o: 'only'
+    o: 'only',
+    r: 'registry'
   }
 })
+
+if (argv.registry) {
+  config.registry = argv.registry
+}
 
 if (argv.help) {
   return commands.helpCmd(argv)

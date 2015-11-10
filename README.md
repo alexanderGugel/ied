@@ -45,6 +45,7 @@ Usage
     -S, --save      Update `dependencies`
     -D, --save-dev  Update `devDependencies`
     -o, --only      Only install `dependencies` or `devDependencies`
+    -r, --registry  Use custom registry (default: http://registry.npmjs.org/)
 
   README:  https://github.com/alexanderGugel/mpm
   ISSUES:  https://github.com/alexanderGugel/mpm/issues
