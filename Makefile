@@ -7,7 +7,6 @@ INSTALL_DIR = /usr/local/lib/node_modules
 BIN_DIR = /usr/local/bin
 BIN = mpm
 BOOTSTRAP_DIR = .bootstrap
-COVERAGE_DIR = coverage
 DEPS_BIN_DIR = ./node_modules/.bin
 
 .PHONY: install
@@ -42,7 +41,6 @@ uninstall:
 	rm -f $(BIN_DIR)/$(BIN)
 
 clean:
-	rm -rf $(COVERAGE_DIR)
 	rm -rf $(BOOTSTRAP_DIR)
 
 test:
@@ -50,6 +48,3 @@ test:
 
 dev:
 	$(DEPS_BIN_DIR)/mocha -w --reporter dot
-
-cover:
-	$(DEPS_BIN_DIR)/istanbul cover $(DEPS_BIN_DIR)/_mocha

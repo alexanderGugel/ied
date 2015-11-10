@@ -15,15 +15,13 @@
     "tar-fs": "^1.8.1"
   },
   "devDependencies": {
-    "istanbul": "^0.4.0",
     "mocha": "^2.3.3",
     "mockmock": "0.0.5",
     "proxyquire": "^1.7.3"
   },
   "scripts": {
     "test": "mocha",
-    "dev": "mocha -w --reporter dot",
-    "cover": "istanbul cover node_modules/mocha/bin/_mocha"
+    "dev": "mocha -w --reporter dot"
   },
   "repository": {
     "type": "git",

@@ -23,8 +23,27 @@ var argv = minimist(process.argv.slice(2), {
   }
 })
 
-function handleErr (err) {
-  if (err) console.error(err, err.stack)
+var sh = process.platform === 'win32'
+? process.env.ComSpec || 'cmd'
+: process.env.SHELL || 'bash'
+
+var env = assign({}, process.env, {
+  PATH: [path.join(dir, 'node_modules/.bin'), process.env.PATH].join(path.delimiter)
+})
+
+function handleErrSync (err) {
+  if (err) throw err
+}
+
+function readPackageSync () {
+  try {
+    return JSON.parse(
+      fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8')
+    )
+  } catch (e) {
+    console.error('Failed to read in package.json')
+    throw e
+  }
 }
 
 function installCmd () {
@@ -33,14 +52,7 @@ function installCmd () {
 
   if (!deps.length) {
     // Read dependencies from package.json when no specific targets are supplied.
-    try {    
-      var pkg = JSON.parse(
-        fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8')
-      )
-    } catch (e) {
-      console.error('Failed to read in package.json')
-      throw e
-    }
+    var pkg = readPackageSync()
     var onlyDeps
     if (argv.only) {
       var field = ({
@@ -64,7 +76,7 @@ function installCmd () {
   }
 
   init(dir, function (err) {
-    handleErr(err)
+    handleErrSync(err)
 
     var _locks = Object.create(null)
 
@@ -80,12 +92,12 @@ function installCmd () {
     if (argv.save) {
       waterfall.push(save.bind(null, dir, 'dependencies'))
     }
-    
+
     if (argv['save-dev']) {
       waterfall.push(save.bind(null, dir, 'devDependencies'))
     }
 
-    async.waterfall(waterfall, handleErr)
+    async.waterfall(waterfall, handleErrSync)
   })
 }
 
@@ -94,17 +106,39 @@ function helpCmd () {
 }
 
 function shellCmd () {
-  var sh = process.platform === 'win32'
-  ? process.env.ComSpec || 'cmd'
-  : process.env.SHELL || 'bash'
-
-  var env = assign({}, process.env, {
-    PATH: [path.join(dir, 'node_modules/.bin'), process.env.PATH].join(path.delimiter)
-  })
-
   child_process.spawn(sh, [], {
     stdio: 'inherit',
     env: env
+  })
+}
+
+function runCmd () {
+  var scripts = argv._.slice(1)
+  var pkg = readPackageSync()
+
+  if (!scripts.length) {
+    var availableScripts = Object.keys(pkg.scripts || [])
+    console.log('Available scripts: ' + availableScripts.join(', '))
+    return
+  }
+
+  async.mapSeries(scripts, function execScript (scriptName, cb) {
+    var script = pkg.scripts[scriptName]
+    if (!script) return cb(null, null)
+    var childProcess = child_process.spawn(script, {
+      env: env,
+      stdio: [0, 1, 2]
+    })
+    childProcess.on('close', cb.bind(null, null))
+    childProcess.on('error', cb)
+  }, function (err, statuses) {
+    handleErrSync(err)
+    var info = scripts.map(function (script, i) {
+      return script + ' exited with status ' + statuses[i]
+    }).join('\n')
+    console.log(info)
+    var success = statuses.every(function (code) { return code === 0 })
+    process.exit(success | 0)
   })
 }
 
@@ -115,12 +149,17 @@ if (argv.help) {
 switch (argv._[0]) {
   case 'i':
   case 'install':
-    installCmd(argv)
+    installCmd()
     break
   case 'sh':
   case 'shell':
-    shellCmd(argv)
+    shellCmd()
+    break
+  case 'r':
+  case 'run':
+  case 'run-script':
+    runCmd()
     break
   default:
-    helpCmd(argv)
+    helpCmd()
 }
