@@ -1,12 +1,20 @@
 #!/usr/bin/env node
 
-'use strict'
-
-var install = require('../lib/install')
+var fs = require('fs')
+var path = require('path')
 var minimist = require('minimist')
-var commands = require('../lib/commands')
 var config = require('../lib/config')
+var installCmd = require('../lib/install_cmd')
+var runCmd = require('../lib/run_cmd')
+var shellCmd = require('../lib/shell_cmd')
+var pingCmd = require('../lib/ping_cmd')
+var lsCmd = require('../lib/ls_cmd')
 
+function helpCmd () {
+  fs.ReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
+}
+
+var cwd = process.cwd()
 var argv = minimist(process.argv.slice(2), {
   alias: {
     h: 'help',
@@ -22,26 +30,36 @@ if (argv.registry) {
 }
 
 if (argv.help) {
-  return commands.helpCmd(argv)
+  return helpCmd()
 }
 
 switch (argv._[0]) {
   case 'i':
   case 'install':
-    commands.installCmd(argv)
+    installCmd(cwd, argv)
     break
   case 'sh':
   case 'shell':
-    commands.shellCmd(argv)
+    shellCmd(cwd)
     break
   case 'r':
   case 'run':
   case 'run-script':
-    commands.runCmd(argv)
+    runCmd(cwd, argv)
+    break
+  case 't':
+  case 'test':
+    // The test command is simple a run command that executes the test script.
+    var _argv = Object.create(argv)
+    _argv._ = ['run'].concat(argv._)
+    runCmd(cwd, _argv)
+    break
+  case 'ls':
+    lsCmd(cwd)
     break
   case 'ping':
-    commands.pingCmd(argv)
+    pingCmd()
     break
   default:
-    commands.helpCmd(argv)
+    helpCmd()
 }
