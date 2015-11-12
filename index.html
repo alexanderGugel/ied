@@ -56,23 +56,38 @@
 <h2>
 <a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
 
-<pre><code>  mpm - An alternative package manager for Node.js
+<pre><code>  mpm is a package manager for Node.
 
   Usage:
+
+    mpm command [arguments]
+
+  The commands are:
+
+    install     fetch packages and dependencies
+    run         run a package.json script
+    test        run the test-suite of the current package
+    shell       enter a sub-shell with augmented PATH
+    ping        check if the registry is up
+    ls          print the dependency graph
+    config      print the used config
+
+  Flags:
+    -h, --help      show usage information
+    -v, --version   print the current version
+    -S, --save      update package.json dependencies
+    -D, --save-dev  update package.json devDependencies
+    -o, --only      install a subset of the dependencies
+    -r, --registry  use a custom registry (default: http://registry.npmjs.org/)
+
+  Example:
     mpm install &lt;pkg&gt;
     mpm install &lt;pkg&gt;@&lt;version&gt;
     mpm install &lt;pkg&gt;@&lt;version range&gt;
 
     Can specify one or more: mpm install semver@^5.0.1 tape
     If no argument is supplied, installs dependencies from package.json.
-    `mpm i` also works.
-
-  Flags:
-    -h, --help      Show usage information and exit
-    -S, --save      Update `dependencies`
-    -D, --save-dev  Update `devDependencies`
-    -o, --only      Only install `dependencies` or `devDependencies`
-    -r, --registry  Use custom registry (default: http://registry.npmjs.org/)
+    Sub-commands can also be called via their shorthand aliases.
 
   README:  https://github.com/alexanderGugel/mpm
   ISSUES:  https://github.com/alexanderGugel/mpm/issues
@@ -86,7 +101,7 @@
 <h2>
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
 
-<p>See <a href="LICENSE.md">LICENSE.md</a>.</p>
+<p>Licensed under the MIT license.</p>
 
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/alexanderGugel/mpm">MPM</a> is maintained by <a href="https://github.com/alexanderGugel">alexanderGugel</a>.</span>
