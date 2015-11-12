@@ -4,12 +4,12 @@ var proxyquire = require('proxyquire')
 var assert = require('assert')
 var mock = require('mockmock')
 
-describe('download', function () {
+describe('fetch', function () {
   var httpOn
   var http
   var gunzip
   var tar
-  var download
+  var fetch
   var dir = '/1/2/3'
   var tarball = 'http://example.com/test.tar'
   var shasum = '123'
@@ -27,7 +27,7 @@ describe('download', function () {
     gunzip = mock('gunzip')
     tar = { extract: mock('tar.extract') }
 
-    download = proxyquire('../lib/download', {
+    fetch = proxyquire('../lib/fetch', {
       http: http,
       'gunzip-maybe': gunzip,
       'tar-fs': tar
@@ -36,7 +36,7 @@ describe('download', function () {
 
   it('should create tar stream', function () {
     var cb = mock()
-    download(dir, tarball, shasum, cb)
+    fetch(dir, tarball, shasum, cb)
 
     assert(tar.extract.called)
     assert.equal(tar.extract.args[0][0], dir)
@@ -46,7 +46,7 @@ describe('download', function () {
 
   it('should fetch tarball', function () {
     var cb = mock()
-    download(dir, tarball, shasum, cb)
+    fetch(dir, tarball, shasum, cb)
 
     assert(http.get.called)
     assert.equal(http.get.args[0][0], tarball)
@@ -65,7 +65,7 @@ describe('download', function () {
   })
 
   it('should accept optional callback function', function () {
-    download(dir, tarball, shasum)
+    fetch(dir, tarball, shasum)
     assert.doesNotThrow(function () {
       httpOn.args[0][1]()
     })
@@ -75,8 +75,8 @@ describe('download', function () {
     var cb1 = mock()
     var cb2 = mock()
 
-    download(dir, tarball, shasum, cb1)
-    download(dir, tarball, shasum, cb2)
+    fetch(dir, tarball, shasum, cb1)
+    fetch(dir, tarball, shasum, cb2)
 
     assert.equal(http.get.callCount, 2)
     assert.equal(http.get.args[0][0], tarball)

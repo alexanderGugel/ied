@@ -29,23 +29,38 @@ Usage
 -----
 
 ```
-  mpm - An alternative package manager for Node.js
+  mpm is a package manager for Node.
 
   Usage:
+
+    mpm command [arguments]
+
+  The commands are:
+
+    install     fetch packages and dependencies
+    run         run a package.json script
+    test        run the test-suite of the current package
+    shell       enter a sub-shell with augmented PATH
+    ping        check if the registry is up
+    ls          print the dependency graph
+    config      print the used config
+
+  Flags:
+    -h, --help      show usage information
+    -v, --version   print the current version
+    -S, --save      update package.json dependencies
+    -D, --save-dev  update package.json devDependencies
+    -o, --only      install a subset of the dependencies
+    -r, --registry  use a custom registry (default: http://registry.npmjs.org/)
+
+  Example:
     mpm install <pkg>
     mpm install <pkg>@<version>
     mpm install <pkg>@<version range>
 
     Can specify one or more: mpm install semver@^5.0.1 tape
     If no argument is supplied, installs dependencies from package.json.
-    `mpm i` also works.
-
-  Flags:
-    -h, --help      Show usage information and exit
-    -S, --save      Update `dependencies`
-    -D, --save-dev  Update `devDependencies`
-    -o, --only      Only install `dependencies` or `devDependencies`
-    -r, --registry  Use custom registry (default: http://registry.npmjs.org/)
+    Sub-commands can also be called via their shorthand aliases.
 
   README:  https://github.com/alexanderGugel/mpm
   ISSUES:  https://github.com/alexanderGugel/mpm/issues
@@ -59,4 +74,4 @@ Trivia
 License
 -------
 
-See [LICENSE.md](LICENSE.md).
+Licensed under the MIT license.

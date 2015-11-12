@@ -14,10 +14,15 @@ function helpCmd () {
   fs.ReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
 }
 
+function versionCmd () {
+  console.log('mpm version', require('../package.json').version)
+}
+
 var cwd = process.cwd()
 var argv = minimist(process.argv.slice(2), {
   alias: {
     h: 'help',
+    v: 'version',
     S: 'save',
     D: 'save-dev',
     o: 'only',
@@ -31,6 +36,11 @@ if (argv.registry) {
 
 if (argv.help) {
   return helpCmd()
+}
+
+if (argv.version) {
+  versionCmd()
+  process.exit(0)
 }
 
 switch (argv._[0]) {

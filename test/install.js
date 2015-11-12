@@ -7,7 +7,7 @@ var mock = require('mockmock')
 describe('install', function () {
   var forceSymlink
   var resolve
-  var download
+  var fetch
   var ignoreError
   var install
   var cb
@@ -15,14 +15,14 @@ describe('install', function () {
   beforeEach(function () {
     forceSymlink = mock()
     resolve = mock()
-    download = mock()
+    fetch = mock()
     ignoreError = mock()
     cb = mock()
 
     install = proxyquire('../lib/install', {
       './force_symlink': forceSymlink,
       './resolve': resolve,
-      './download': download,
+      './fetch': fetch,
       './ignore_error': ignoreError
     })
   })
