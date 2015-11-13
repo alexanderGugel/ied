@@ -14,7 +14,8 @@
     "semver": "^5.0.1",
     "tar-fs": "^1.8.1",
     "node-uuid": "^1.4.3",
-    "archy": "^1.0.0"
+    "archy": "^1.0.0",
+    "easy-table": "^1.0.0"
   },
   "devDependencies": {
     "mocha": "^2.3.3",

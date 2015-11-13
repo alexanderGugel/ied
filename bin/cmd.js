@@ -9,6 +9,7 @@ var runCmd = require('../lib/run_cmd')
 var shellCmd = require('../lib/shell_cmd')
 var pingCmd = require('../lib/ping_cmd')
 var lsCmd = require('../lib/ls_cmd')
+var configCmd = require('../lib/config_cmd')
 
 function helpCmd () {
   fs.ReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
@@ -69,6 +70,9 @@ switch (argv._[0]) {
     break
   case 'ping':
     pingCmd()
+    break
+  case 'config':
+    configCmd()
     break
   default:
     helpCmd()
