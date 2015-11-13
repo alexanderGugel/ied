@@ -6,6 +6,7 @@
     "mpm": "bin/cmd.js"
   },
   "dependencies": {
+    "after": "^0.8.1",
     "async": "^1.4.2",
     "gunzip-maybe": "^1.2.1",
     "minimist": "^1.2.0",
