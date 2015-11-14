@@ -12,6 +12,7 @@ The commands are:
   shell       enter a sub-shell with augmented PATH
   ping        check if the registry is up
   ls          print the dependency graph
+  expose      make a sub-dependency `require`able
   config      print the used config
 
 Flags:

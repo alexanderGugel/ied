@@ -1,4 +1,5 @@
 - [ ] Tests
+- [ ] scoped modules
 - [ ] `install -g`
 - [ ] Handle binaries
 - [ ] Scripts

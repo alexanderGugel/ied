@@ -9,6 +9,7 @@ var runCmd = require('../lib/run_cmd')
 var shellCmd = require('../lib/shell_cmd')
 var pingCmd = require('../lib/ping_cmd')
 var lsCmd = require('../lib/ls_cmd')
+var exposeCmd = require('../lib/expose_cmd')
 var configCmd = require('../lib/config_cmd')
 
 function helpCmd () {
@@ -71,8 +72,13 @@ switch (argv._[0]) {
   case 'ping':
     pingCmd()
     break
+  case 'conf':
   case 'config':
     configCmd()
+    break
+  case 'expose':
+  case 'ex':
+    exposeCmd(cwd, argv)
     break
   default:
     helpCmd()
