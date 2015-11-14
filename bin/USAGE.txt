@@ -14,6 +14,7 @@ The commands are:
   ls          print the dependency graph
   expose      make a sub-dependency `require`able
   config      print the used config
+  init        initialize a new package
 
 Flags:
   -h, --help      show usage information

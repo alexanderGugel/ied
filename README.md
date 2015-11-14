@@ -1,8 +1,8 @@
 [![experimental](http://hughsk.github.io/stability-badges/dist/experimental.svg)](http://github.com/hughsk/stability-badges)
 [![Build Status](https://travis-ci.org/alexanderGugel/mpm.svg)](https://travis-ci.org/alexanderGugel/mpm)
 
-mpm
-===
+mpm (WIP)
+=========
 
 An alternative package manager for Node.
 
@@ -63,6 +63,7 @@ Usage
     ls          print the dependency graph
     expose      make a sub-dependency `require`able
     config      print the used config
+    init        initialize a new package
 
   Flags:
     -h, --help      show usage information
