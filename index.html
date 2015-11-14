@@ -1,57 +1,86 @@
-<!DOCTYPE html>
-<html lang="en-us">
+<!doctype html>
+<html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <title>MPM by alexanderGugel</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
   </head>
   <body>
-    <section class="page-header">
-      <h1 class="project-name">MPM</h1>
-      <h2 class="project-tagline">A npm-like package manager in ~200 lines of code.</h2>
-      <a href="https://github.com/alexanderGugel/mpm" class="btn">View on GitHub</a>
-      <a href="https://github.com/alexanderGugel/mpm/zipball/master" class="btn">Download .zip</a>
-      <a href="https://github.com/alexanderGugel/mpm/tarball/master" class="btn">Download .tar.gz</a>
-    </section>
+    <div class="wrapper">
+      <header>
+        <h1>MPM</h1>
+        <p>Like npm, but faster - an alternative package manager for Node</p>
 
-    <section class="main-content">
-      <p><a href="http://github.com/hughsk/stability-badges"><img src="http://hughsk.github.io/stability-badges/dist/experimental.svg" alt="experimental"></a>
+        <p class="view"><a href="https://github.com/alexanderGugel/mpm">View the Project on GitHub <small>alexanderGugel/mpm</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/alexanderGugel/mpm/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/alexanderGugel/mpm/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/alexanderGugel/mpm">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <p><a href="http://github.com/hughsk/stability-badges"><img src="http://hughsk.github.io/stability-badges/dist/experimental.svg" alt="experimental"></a>
 <a href="https://travis-ci.org/alexanderGugel/mpm"><img src="https://travis-ci.org/alexanderGugel/mpm.svg" alt="Build Status"></a></p>
 
 <h1>
 <a id="mpm" class="anchor" href="#mpm" aria-hidden="true"><span class="octicon octicon-link"></span></a>mpm</h1>
 
-<p>A <em>roughly</em> <a href="https://www.npmjs.com/"><strong>npm install</strong></a>-compatible package manager for Node.JS in <strong>~200</strong><sup id="a1"><a href="#f1">1</a></sup> lines of code (eLOC).</p>
+<p>An alternative package manager for Node.</p>
 
 <ul>
-<li>implements <code>npm</code>'s basic <a href="https://docs.npmjs.com/cli/install#algorithm">install algorithm</a>
-</li>
+<li>blazingly <strong>fast</strong> due to completely concurrent installation procedure and constant (micro) optimizations</li>
 <li>correctly resolves (circular) dependencies</li>
 <li>supports <a href="http://semver.org/">semver</a>
 </li>
-<li>correctly deals with <code>devDependencies</code>
+<li>correctly handles <code>devDependencies</code>
 </li>
+<li>produces a flat node_modules directory</li>
+<li>verifies the integrity of downloaded packages</li>
+<li>
+<strong>fast</strong> caching</li>
 <li>interfaces with the <a href="https://www.npmjs.org/">npm registry</a>
 </li>
-<li>
-<strong>bootstrapping</strong> - That's why <code>node_modules</code> is checked in. It's fine, <a href="https://github.com/npm/npm-www/tree/b166b9c2cda1b49e0d5eb671d660fb0bc9e3683b#design-philosophy"><strong>really</strong></a>.</li>
-<li>
-<strong>fast</strong> - About twice as fast when installing <a href="https://www.npmjs.com/package/express">express</a>. Benchmarks are flawed. Try yourself and don't blame me.</li>
+<li>has no global namespace for packages</li>
+<li>allows you to <code>require</code> multiple <em>versions</em> of the <strong>same</strong> package</li>
+<li>visually indicates progress via progress bar</li>
+<li>respects your global <strong>configuration</strong>
+</li>
+<li>can run arbitrary scripts defined in your <code>package.json</code> (e.g. <code>test</code>)</li>
+<li>supports the usual <code>install</code> flags, such as <code>--save</code>, <code>--save-dev</code>
+</li>
+<li>allows you to install arbitrary groups of packages, e.g. (<code>mpm install --only otherDeps</code>, <code>mpm install --only prod</code>)</li>
+<li>useful utilities, such as <code>ping</code>, <code>config</code>, <code>ls</code>
+</li>
+<li>allows you to easily start a new sub-shell that allows you to use the scripts exposed by your dependencies without installing them globally via <code>mpm sh</code>
+</li>
+<li>supports private registries</li>
+<li>makes it impossible for you to accidentally require sub-dependencies, even though node_modules is completely flat</li>
+<li>completely atomic: <code>node_modules</code> is guaranteed to be consistent</li>
 </ul>
 
-<p>
-  <strong id="f1">1</strong> Well, at least originally <a href="https://github.com/alexanderGugel/mpm/tree/c4ba56f7dece738db5b8cb28c20c7f6aa1e64d1d">c4ba56f</a>. <a href="#a1">↩</a>
-</p>
+<h2>
+<a id="why" class="anchor" href="#why" aria-hidden="true"><span class="octicon octicon-link"></span></a>Why?</h2>
+
+<p>The original idea was to implement npm's pre-v3 install algorithm in as few lines as possible. This goal was achieved in <a href="https://github.com/alexanderGugel/mpm/tree/c4ba56f7dece738db5b8cb28c20c7f6aa1e64d1d"><code>c4ba56f</code></a>.</p>
+
+<p>Currently the main goal of this project is to provide a more performant alternative to npm. I like npm, but it's just too slow.</p>
 
 <h2>
 <a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
 
 <pre><code>  git clone https://github.com/alexanderGugel/mpm mpm &amp;&amp; cd $_ &amp;&amp; make install
 </code></pre>
+
+<p><code>mpm</code> is currently not published to the npm registry, mostly because the name is going to be changed.</p>
 
 <h2>
 <a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
@@ -95,6 +124,11 @@
 </code></pre>
 
 <h2>
+<a id="credits" class="anchor" href="#credits" aria-hidden="true"><span class="octicon octicon-link"></span></a>Credits</h2>
+
+<p>Some ideas and (upcoming) features of mpm are heavily inspired by <a href="http://nixos.org/nix/"><strong>Nix</strong></a>, a purely functional package manager.</p>
+
+<h2>
 <a id="trivia" class="anchor" href="#trivia" aria-hidden="true"><span class="octicon octicon-link"></span></a>Trivia</h2>
 
 <p><code>mpm</code> stands for "<strong>m</strong>ad <strong>p</strong>eople <strong>m</strong>atter".</p>
@@ -103,15 +137,13 @@
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
 
 <p>Licensed under the MIT license.</p>
-
-      <footer class="site-footer">
-        <span class="site-footer-owner"><a href="https://github.com/alexanderGugel/mpm">MPM</a> is maintained by <a href="https://github.com/alexanderGugel">alexanderGugel</a>.</span>
-
-        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/alexanderGugel">alexanderGugel</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
       </footer>
-
-    </section>
-
-  
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
   </body>
 </html>
