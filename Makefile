@@ -5,7 +5,7 @@
 CURRENT_DIR = $(shell pwd)
 INSTALL_DIR = /usr/local/lib/node_modules
 BIN_DIR = /usr/local/bin
-BIN = mpm
+BIN = ied
 BOOTSTRAP_DIR = .bootstrap
 DEPS_BIN_DIR = ./node_modules/.bin
 
@@ -30,11 +30,11 @@ prepdirs:
 
 link: uninstall prepdirs node_modules
 	ln -s $(CURRENT_DIR) $(INSTALL_DIR)/$(BIN)
-	ln -s $(INSTALL_DIR)/mpm/bin/cmd.js $(BIN_DIR)/mpm
+	ln -s $(INSTALL_DIR)/ied/bin/cmd.js $(BIN_DIR)/ied
 
 install: uninstall prepdirs node_modules
 	cp -R $(CURRENT_DIR) $(INSTALL_DIR)/$(BIN)
-	ln -s $(INSTALL_DIR)/mpm/bin/cmd.js $(BIN_DIR)/mpm
+	ln -s $(INSTALL_DIR)/ied/bin/cmd.js $(BIN_DIR)/ied
 
 uninstall:
 	rm -rf $(INSTALL_DIR)/$(BIN)

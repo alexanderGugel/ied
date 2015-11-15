@@ -1,9 +1,9 @@
 {
-  "name": "mpm",
+  "name": "ied",
   "version": "0.0.0",
   "main": "lib/index.js",
   "bin": {
-    "mpm": "bin/cmd.js"
+    "ied": "bin/cmd.js"
   },
   "dependencies": {
     "after": "^0.8.1",
@@ -31,14 +31,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/alexanderGugel/mpm.git"
+    "url": "git+https://github.com/alexanderGugel/ied.git"
   },
   "author": "Alexander Gugel <alexander.gugel@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/alexanderGugel/mpm/issues"
+    "url": "https://github.com/alexanderGugel/ied/issues"
   },
-  "homepage": "https://github.com/alexanderGugel/mpm#readme",
+  "homepage": "https://github.com/alexanderGugel/ied#readme",
   "description": "A package manager for Node.js",
   "directories": {
     "example": "example",

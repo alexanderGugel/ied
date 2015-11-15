@@ -1,8 +1,8 @@
-mpm is a package manager for Node.
+ied is a package manager for Node.
 
 Usage:
 
-  mpm command [arguments]
+  ied command [arguments]
 
 The commands are:
 
@@ -25,13 +25,13 @@ Flags:
   -r, --registry  use a custom registry (default: http://registry.npmjs.org/)
 
 Example:
-  mpm install <pkg>
-  mpm install <pkg>@<version>
-  mpm install <pkg>@<version range>
+  ied install <pkg>
+  ied install <pkg>@<version>
+  ied install <pkg>@<version range>
 
-  Can specify one or more: mpm install semver@^5.0.1 tape
+  Can specify one or more: ied install semver@^5.0.1 tape
   If no argument is supplied, installs dependencies from package.json.
   Sub-commands can also be called via their shorthand aliases.
 
-README:  https://github.com/alexanderGugel/mpm
-ISSUES:  https://github.com/alexanderGugel/mpm/issues
+README:  https://github.com/alexanderGugel/ied
+ISSUES:  https://github.com/alexanderGugel/ied/issues

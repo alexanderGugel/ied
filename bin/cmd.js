@@ -18,7 +18,7 @@ function helpCmd () {
 }
 
 function versionCmd () {
-  console.log('mpm version', require('../package.json').version)
+  console.log('ied version', require('../package.json').version)
 }
 
 var cwd = process.cwd()
