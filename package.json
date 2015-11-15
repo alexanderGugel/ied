@@ -6,7 +6,6 @@
     "ied": "bin/cmd.js"
   },
   "dependencies": {
-    "after": "^0.8.1",
     "archy": "^1.0.0",
     "async": "^1.4.2",
     "easy-table": "^1.0.0",
