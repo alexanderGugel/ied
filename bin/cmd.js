@@ -37,53 +37,56 @@ if (argv.registry) {
   config.registry = argv.registry
 }
 
-if (argv.help) {
-  return helpCmd()
-}
+// This doesn't have to be an IIFE, since Node wraps everything in a function
+// anyways, but standard doesn't like return statements here.
+(function () {
+  if (argv.help) {
+    return helpCmd()
+  }
 
-if (argv.version) {
-  versionCmd()
-  process.exit(0)
-}
+  if (argv.version) {
+    return versionCmd()
+  }
 
-switch (argv._[0]) {
-  case 'i':
-  case 'install':
-    installCmd(cwd, argv)
-    break
-  case 'sh':
-  case 'shell':
-    shellCmd(cwd)
-    break
-  case 'r':
-  case 'run':
-  case 'run-script':
-    runCmd(cwd, argv)
-    break
-  case 't':
-  case 'test':
-    // The test command is simple a run command that executes the test script.
-    var _argv = Object.create(argv)
-    _argv._ = ['run'].concat(argv._)
-    runCmd(cwd, _argv)
-    break
-  case 'ls':
-    lsCmd(cwd)
-    break
-  case 'ping':
-    pingCmd()
-    break
-  case 'conf':
-  case 'config':
-    configCmd()
-    break
-  case 'expose':
-  case 'ex':
-    exposeCmd(cwd, argv)
-    break
-  case 'init':
-    initCmd(cwd, argv)
-    break
-  default:
-    helpCmd()
-}
+  switch (argv._[0]) {
+    case 'i':
+    case 'install':
+      installCmd(cwd, argv)
+      break
+    case 'sh':
+    case 'shell':
+      shellCmd(cwd)
+      break
+    case 'r':
+    case 'run':
+    case 'run-script':
+      runCmd(cwd, argv)
+      break
+    case 't':
+    case 'test':
+      // The test command is simple a run command that executes the test script.
+      var _argv = Object.create(argv)
+      _argv._ = ['run'].concat(argv._)
+      runCmd(cwd, _argv)
+      break
+    case 'ls':
+      lsCmd(cwd)
+      break
+    case 'ping':
+      pingCmd()
+      break
+    case 'conf':
+    case 'config':
+      configCmd()
+      break
+    case 'expose':
+    case 'ex':
+      exposeCmd(cwd, argv)
+      break
+    case 'init':
+      initCmd(cwd, argv)
+      break
+    default:
+      helpCmd()
+  }
+}())
