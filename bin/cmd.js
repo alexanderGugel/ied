@@ -53,6 +53,7 @@ if (argv.registry) {
     case 'install':
       installCmd(cwd, argv)
       break
+    case 's':
     case 'sh':
     case 'shell':
       shellCmd(cwd)
