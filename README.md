@@ -81,6 +81,7 @@ Usage
     -r, --registry  use a custom registry (default: http://registry.npmjs.org/)
 
   Example:
+    ied install
     ied install <pkg>
     ied install <pkg>@<version>
     ied install <pkg>@<version range>
