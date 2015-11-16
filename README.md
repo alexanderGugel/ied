@@ -71,6 +71,8 @@ Usage
     expose      make a sub-dependency `require`able
     config      print the used config
     init        initialize a new package
+    link        link the current package or into it
+    unlink      unlink the current package or from it
 
   Flags:
     -h, --help      show usage information

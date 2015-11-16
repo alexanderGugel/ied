@@ -12,6 +12,8 @@ var lsCmd = require('../lib/ls_cmd')
 var exposeCmd = require('../lib/expose_cmd')
 var configCmd = require('../lib/config_cmd')
 var initCmd = require('../lib/init_cmd')
+var linkCmd = require('../lib/link_cmd')
+var unlinkCmd = require('../lib/unlink_cmd')
 
 function helpCmd () {
   fs.ReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
@@ -85,6 +87,12 @@ if (argv.registry) {
       break
     case 'init':
       initCmd(cwd, argv)
+      break
+    case 'link':
+      linkCmd(cwd, argv)
+      break
+    case 'unlink':
+      unlinkCmd(cwd, argv)
       break
     default:
       helpCmd()
