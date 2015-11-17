@@ -20,7 +20,8 @@
 
     <section class="main-content">
       <p><a href="http://github.com/hughsk/stability-badges"><img src="http://hughsk.github.io/stability-badges/dist/experimental.svg" alt="experimental"></a>
-<a href="https://travis-ci.org/alexanderGugel/ied"><img src="https://travis-ci.org/alexanderGugel/ied.svg" alt="Build Status"></a></p>
+<a href="https://travis-ci.org/alexanderGugel/ied"><img src="https://travis-ci.org/alexanderGugel/ied.svg" alt="Build Status"></a>
+<a href="https://gitter.im/alexanderGugel/ied?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://badges.gitter.im/Join%20Chat.svg" alt="Join the chat at https://gitter.im/alexanderGugel/ied"></a></p>
 
 <h1>
 <a id="ied-wip" class="anchor" href="#ied-wip" aria-hidden="true"><span class="octicon octicon-link"></span></a>ied (WIP)</h1>
@@ -99,6 +100,8 @@ After an initial installation via npm, ied will install its own dependencies:</p
     expose      make a sub-dependency `require`able
     config      print the used config
     init        initialize a new package
+    link        link the current package or into it
+    unlink      unlink the current package or from it
 
   Flags:
     -h, --help      show usage information
@@ -109,6 +112,7 @@ After an initial installation via npm, ied will install its own dependencies:</p
     -r, --registry  use a custom registry (default: http://registry.npmjs.org/)
 
   Example:
+    ied install
     ied install &lt;pkg&gt;
     ied install &lt;pkg&gt;@&lt;version&gt;
     ied install &lt;pkg&gt;@&lt;version range&gt;
