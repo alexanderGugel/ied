@@ -1,5 +1,6 @@
 [![experimental](http://hughsk.github.io/stability-badges/dist/experimental.svg)](http://github.com/hughsk/stability-badges)
 [![Build Status](https://travis-ci.org/alexanderGugel/ied.svg)](https://travis-ci.org/alexanderGugel/ied)
+[![Join the chat at https://gitter.im/alexanderGugel/ied](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/alexanderGugel/ied?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ied (WIP)
 =========
