@@ -2,7 +2,7 @@
 
 var assert = require('assert')
 var mock = require('mockmock')
-var ignoreError = require('../lib/ignore_error')
+var ignoreError = require('../../lib/ignore_error')
 
 describe('ignoreError', function () {
   var cb

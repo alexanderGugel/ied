@@ -18,7 +18,7 @@ describe('forceSymlink', function () {
     symlink = mock()
     readlink = mock()
     unlink = mock()
-    forceSymlink = proxyquire('../lib/force_symlink', {
+    forceSymlink = proxyquire('../../lib/force_symlink', {
       fs: {
         symlink: symlink,
         readlink: readlink,

@@ -19,7 +19,7 @@ describe('install', function () {
     ignoreError = mock()
     cb = mock()
 
-    install = proxyquire('../lib/install', {
+    install = proxyquire('../../lib/install', {
       './force_symlink': forceSymlink,
       './resolve': resolve,
       './fetch': fetch,

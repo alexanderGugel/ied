@@ -18,7 +18,7 @@ describe('resolve', function () {
     http = { get: mock(httpGet) }
     cb = mock()
 
-    resolve = proxyquire('../lib/resolve', {
+    resolve = proxyquire('../../lib/resolve', {
       http: http
     })
   })
