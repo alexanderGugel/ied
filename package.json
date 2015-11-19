@@ -19,7 +19,6 @@
     "tar-fs": "^1.8.1"
   },
   "devDependencies": {
-    "lodash": "^3.10.1",
     "mocha": "^2.3.3",
     "mock-fs": "^3.4.0",
     "mockmock": "0.0.5",

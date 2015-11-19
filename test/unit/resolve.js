@@ -1,6 +1,6 @@
 /* global describe it beforeEach */
 
-var _ = require('lodash')
+var assign = require('object-assign')
 var proxyquire = require('proxyquire')
 var assert = require('assert')
 var mock = require('mockmock')
@@ -20,7 +20,7 @@ describe('resolve', function () {
         httpResp = new EventEmitter()
         httpGet = new EventEmitter()
         http = { get: mock(httpGet) }
-        var dummyConfig = _.clone(config)
+        var dummyConfig = assign({}, config)
         dummyConfig.registry = protocol + '://registry.npmjs.org/'
         cb = mock()
 
