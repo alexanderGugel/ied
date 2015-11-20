@@ -43,7 +43,7 @@
     "url": "https://github.com/alexanderGugel/ied/issues"
   },
   "homepage": "https://github.com/alexanderGugel/ied#readme",
-  "description": "A package manager for Node.js",
+  "description": "An alternative package manager for Node.",
   "directories": {
     "example": "example",
     "test": "test"

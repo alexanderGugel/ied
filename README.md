@@ -1,39 +1,31 @@
-[![experimental](http://hughsk.github.io/stability-badges/dist/experimental.svg)](http://github.com/hughsk/stability-badges)
-[![Build Status](https://travis-ci.org/alexanderGugel/ied.svg)](https://travis-ci.org/alexanderGugel/ied)
-[![Join the chat at https://gitter.im/alexanderGugel/ied](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/alexanderGugel/ied?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 ied (WIP)
 =========
 
+[![Travis](https://img.shields.io/travis/alexanderGugel/ied.svg)](https://travis-ci.org/alexanderGugel/ied)
+[![npm](https://img.shields.io/npm/v/npm.svg)](https://www.npmjs.com/package/ied)
+[![GitHub stars](https://img.shields.io/github/stars/alexanderGugel/ied.svg)](https://github.com/alexanderGugel/ied/stargazers)
+[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
+[![Join the chat at https://gitter.im/migme/beachball](https://img.shields.io/badge/gitter-join%20chat-brightgreen.svg)](https://gitter.im/alexanderGugel/ied)
+
 An alternative package manager for Node.
 
-* blazingly **fast** due to completely concurrent installation procedure and constant (micro) optimizations
-* correctly resolves (circular) dependencies
-* supports [semver](http://semver.org/)
-* correctly handles `devDependencies`
-* produces a flat node_modules directory
-* verifies the integrity of downloaded packages
-* **fast** caching
-* interfaces with the [npm registry](https://www.npmjs.org/)
-* has no global namespace for packages
-* allows you to `require` multiple *versions* of the **same** package
-* visually indicates progress via progress bar
-* respects your global **configuration**
-* can run arbitrary scripts defined in your `package.json` (e.g. `test`)
-* supports the usual `install` flags, such as `--save`, `--save-dev`
-* allows you to install arbitrary groups of packages, e.g. (`ied install --only otherDeps`, `ied install --only prod`)
-* useful utilities, such as `ping`, `config`, `ls`
-* allows you to easily start a new sub-shell that allows you to use the scripts exposed by your dependencies without installing them globally via `ied sh`
-* supports private registries
-* makes it impossible for you to accidentally require sub-dependencies, even though node_modules is completely flat
-* completely atomic: `node_modules` is guaranteed to be consistent
+* **Concurrent Installations** - Sub-dependencies are being installed in parallel. This means that e.g. the download of a dependency might be completed before the installation of its respective parent or additional dependencies.
+* **Correct Caching** - Downloaded packages are being cached locally. Similarly to the entry dependencies stored in `node_modules`, they are being identified by their checksums. Therefore we can guarantee the consistency of the cache itself without (manually) invalidating dependencies (e.g. due to overridden version numbers).
+* **`node_modules` as CAS** - Packages are always being referenced by their *SHA-1* checksums. Therefore a `node_modules` directory can be considered to be a [Content Addressable Storage](https://en.wikipedia.org/wiki/Content-addressable_storage), meaning that packages are being identified by their contents, not by arbitrary identifiers, such as package names that are not guaranteed to be unique across different registries. This also means that packages don't need to be explicitly declared as `peerDependencies`.
+* **Flat `node_modules`** - Due to the *CAS*-based design, conflicts due to naming collisions are impossible in practice. Therefore all dependencies can be stored in a flat directory structure. Circular dependencies and dependencies on different versions of the same packages are still being handled correctly.
+* **Guaranteed uniqueness** - Since the directory in which a specific package is being stored is being determined by its *shasum*, identical packages can't conflict due to their location in the file system itself. This also means that the same dependency won't be installed more than once.
+* **Atomic installs** - The atomicity of installs can be ensured on a *package-level*. "In progress" downloads are being stored in `node_modules/.tmp` and moved into `node_modules` once their download has been completed. In order to prevent deadlocks, packages that have circular dependencies are exempt from this limitation. In most cases however, the `node_modules` directory is *consistent* at any given point in time.
+* **Package names as links** - While packages are being referenced by their *shasum* internally, they can still be required via their human-readable name. Package names themselves are simply symbolic links to the actual content-addressed package itself. A nice side-effect of this design is that in contrast to other package managers, you can not accidentally require a sub-dependency that hasn't been installed as such.
+* **Semantic Versioning** - [Semantic versions](http://semver.org/) are being resolved correctly.
+* **Arbitrary package groups** - Packages can be grouped into "package groups", such as `dependencies` and `devDependencies`. Dependencies can be installed exclusively based on the group they are in.
 
 Why?
 ----
 
 The original idea was to implement npm's pre-v3 install algorithm in as few lines as possible. This goal was achieved in [`c4ba56f`](https://github.com/alexanderGugel/ied/tree/c4ba56f7dece738db5b8cb28c20c7f6aa1e64d1d).
 
-Currently the main goal of this project is to provide a more performant alternative to npm. I like npm, but it's just too slow.
+Currently the main goal of this project is to provide a more performant alternative to npm.
+
 
 Installation
 ------------
@@ -53,6 +45,16 @@ After an initial installation via npm, ied will install its own dependencies:
 
 Usage
 -----
+
+The goal of `ied` is to support ~ 80 per cent of the npm commands that one uses on a daily basis. Feature parity with npm **other than** with its installation process itself is not an immediate goal. Raw performance is the primary concern during the development process.
+
+A global [configuration](lib/config.js) can be supplied via environment variables. `NODE_DEBUG` can be used in order to debug specific sub-systems. The progress bar will be disabled in that case.
+
+Although `run-script` is supported, lifecycle scripts are not.
+
+At this point in time, the majority of the command API is [self-documenting](bin/cmd.js). More extensive documentation will be available once the API is stabilized.
+
+A high-level [USAGE](bin/USAGE.txt) help is also supplied. The main goal is to keep the API predictable for regular npm-users. This means certain flags, such as for example `--save`, `--save-dev`, `--only`, are supported.
 
 ```
   ied is a package manager for Node.
@@ -112,4 +114,4 @@ FAQ
 License
 -------
 
-Licensed under the MIT license.
+Licensed under the MIT license. See [LICENSE.md].
