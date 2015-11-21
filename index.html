@@ -19,44 +19,35 @@
     </section>
 
     <section class="main-content">
-      <p><a href="http://github.com/hughsk/stability-badges"><img src="http://hughsk.github.io/stability-badges/dist/experimental.svg" alt="experimental"></a>
-<a href="https://travis-ci.org/alexanderGugel/ied"><img src="https://travis-ci.org/alexanderGugel/ied.svg" alt="Build Status"></a>
-<a href="https://gitter.im/alexanderGugel/ied?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://badges.gitter.im/Join%20Chat.svg" alt="Join the chat at https://gitter.im/alexanderGugel/ied"></a></p>
-
-<h1>
+      <h1>
 <a id="ied-wip" class="anchor" href="#ied-wip" aria-hidden="true"><span class="octicon octicon-link"></span></a>ied (WIP)</h1>
+
+<p><a href="https://travis-ci.org/alexanderGugel/ied"><img src="https://img.shields.io/travis/alexanderGugel/ied.svg" alt="Travis"></a>
+<a href="https://www.npmjs.com/package/ied"><img src="https://img.shields.io/npm/v/ied.svg" alt="npm"></a>
+<a href="http://standardjs.com/"><img src="https://img.shields.io/badge/code%20style-standard-brightgreen.svg" alt="js-standard-style"></a>
+<a href="https://gitter.im/alexanderGugel/ied"><img src="https://img.shields.io/badge/gitter-join%20chat-brightgreen.svg" alt="Join the chat at https://gitter.im/migme/beachball"></a></p>
 
 <p>An alternative package manager for Node.</p>
 
 <ul>
-<li>blazingly <strong>fast</strong> due to completely concurrent installation procedure and constant (micro) optimizations</li>
-<li>correctly resolves (circular) dependencies</li>
-<li>supports <a href="http://semver.org/">semver</a>
-</li>
-<li>correctly handles <code>devDependencies</code>
-</li>
-<li>produces a flat node_modules directory</li>
-<li>verifies the integrity of downloaded packages</li>
 <li>
-<strong>fast</strong> caching</li>
-<li>interfaces with the <a href="https://www.npmjs.org/">npm registry</a>
-</li>
-<li>has no global namespace for packages</li>
-<li>allows you to <code>require</code> multiple <em>versions</em> of the <strong>same</strong> package</li>
-<li>visually indicates progress via progress bar</li>
-<li>respects your global <strong>configuration</strong>
-</li>
-<li>can run arbitrary scripts defined in your <code>package.json</code> (e.g. <code>test</code>)</li>
-<li>supports the usual <code>install</code> flags, such as <code>--save</code>, <code>--save-dev</code>
-</li>
-<li>allows you to install arbitrary groups of packages, e.g. (<code>ied install --only otherDeps</code>, <code>ied install --only prod</code>)</li>
-<li>useful utilities, such as <code>ping</code>, <code>config</code>, <code>ls</code>
-</li>
-<li>allows you to easily start a new sub-shell that allows you to use the scripts exposed by your dependencies without installing them globally via <code>ied sh</code>
-</li>
-<li>supports private registries</li>
-<li>makes it impossible for you to accidentally require sub-dependencies, even though node_modules is completely flat</li>
-<li>completely atomic: <code>node_modules</code> is guaranteed to be consistent</li>
+<strong>Concurrent Installations</strong> - Sub-dependencies are being installed in parallel. This means that e.g. the download of a dependency might be completed before the installation of its respective parent or additional dependencies.</li>
+<li>
+<strong>Correct Caching</strong> - Downloaded packages are being cached locally. Similarly to the entry dependencies stored in <code>node_modules</code>, they are being identified by their checksums. Therefore we can guarantee the consistency of the cache itself without (manually) invalidating dependencies (e.g. due to overridden version numbers).</li>
+<li>
+<strong><code>node_modules</code> as CAS</strong> - Packages are always being referenced by their <em>SHA-1</em> checksums. Therefore a <code>node_modules</code> directory can be considered to be a <a href="https://en.wikipedia.org/wiki/Content-addressable_storage">Content Addressable Storage</a>, meaning that packages are being identified by their contents, not by arbitrary identifiers, such as package names that are not guaranteed to be unique across different registries. This also means that packages don't need to be explicitly declared as <code>peerDependencies</code>.</li>
+<li>
+<strong>Flat <code>node_modules</code></strong> - Due to the <em>CAS</em>-based design, conflicts due to naming collisions are impossible in practice. Therefore all dependencies can be stored in a flat directory structure. Circular dependencies and dependencies on different versions of the same packages are still being handled correctly.</li>
+<li>
+<strong>Guaranteed uniqueness</strong> - Since the directory in which a specific package is being stored is being determined by its <em>shasum</em>, identical packages can't conflict due to their location in the file system itself. This also means that the same dependency won't be installed more than once.</li>
+<li>
+<strong>Atomic installs</strong> - The atomicity of installs can be ensured on a <em>package-level</em>. "In progress" downloads are being stored in <code>node_modules/.tmp</code> and moved into <code>node_modules</code> once their download has been completed. In order to prevent deadlocks, packages that have circular dependencies are exempt from this limitation. In most cases however, the <code>node_modules</code> directory is <em>consistent</em> at any given point in time.</li>
+<li>
+<strong>Package names as links</strong> - While packages are being referenced by their <em>shasum</em> internally, they can still be required via their human-readable name. Package names themselves are simply symbolic links to the actual content-addressed package itself. A nice side-effect of this design is that in contrast to other package managers, you can not accidentally require a sub-dependency that hasn't been installed as such.</li>
+<li>
+<strong>Semantic Versioning</strong> - <a href="http://semver.org/">Semantic versions</a> are being resolved correctly.</li>
+<li>
+<strong>Arbitrary package groups</strong> - Packages can be grouped into "package groups", such as <code>dependencies</code> and <code>devDependencies</code>. Dependencies can be installed exclusively based on the group they are in.</li>
 </ul>
 
 <h2>
@@ -64,7 +55,7 @@
 
 <p>The original idea was to implement npm's pre-v3 install algorithm in as few lines as possible. This goal was achieved in <a href="https://github.com/alexanderGugel/ied/tree/c4ba56f7dece738db5b8cb28c20c7f6aa1e64d1d"><code>c4ba56f</code></a>.</p>
 
-<p>Currently the main goal of this project is to provide a more performant alternative to npm. I like npm, but it's just too slow.</p>
+<p>Currently the main goal of this project is to provide a more performant alternative to npm.</p>
 
 <h2>
 <a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
@@ -82,6 +73,16 @@ After an initial installation via npm, ied will install its own dependencies:</p
 
 <h2>
 <a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p>The goal of <code>ied</code> is to support ~ 80 per cent of the npm commands that one uses on a daily basis. Feature parity with npm <strong>other than</strong> with its installation process itself is not an immediate goal. Raw performance is the primary concern during the development process.</p>
+
+<p>A global <a href="lib/config.js">configuration</a> can be supplied via environment variables. <code>NODE_DEBUG</code> can be used in order to debug specific sub-systems. The progress bar will be disabled in that case.</p>
+
+<p>Although <code>run-script</code> is supported, lifecycle scripts are not.</p>
+
+<p>At this point in time, the majority of the command API is <a href="bin/cmd.js">self-documenting</a>. More extensive documentation will be available once the API is stabilized.</p>
+
+<p>A high-level <a href="bin/USAGE.txt">USAGE</a> help is also supplied. The main goal is to keep the API predictable for regular npm-users. This means certain flags, such as for example <code>--save</code>, <code>--save-dev</code>, <code>--only</code>, are supported.</p>
 
 <pre><code>  ied is a package manager for Node.
 
@@ -144,7 +145,7 @@ After an initial installation via npm, ied will install its own dependencies:</p
 <h2>
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
 
-<p>Licensed under the MIT license.</p>
+<p>Licensed under the MIT license. See [LICENSE.md].</p>
 
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/alexanderGugel/ied">ied</a> is maintained by <a href="https://github.com/alexanderGugel">alexanderGugel</a>.</span>
