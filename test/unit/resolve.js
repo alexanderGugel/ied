@@ -36,7 +36,7 @@ describe('resolve', function () {
         var version = '~1.0.0'
         resolve(name, version, cb)
 
-        assert.deepEqual(http.get.args[0][0], protocol + '://registry.npmjs.org/' + name)
+        assert.deepEqual(http.get.args[0][0].href, protocol + '://registry.npmjs.org/' + name)
       })
 
       it('should accept optional callback', function () {
