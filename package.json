@@ -10,6 +10,7 @@
     "async": "^1.4.2",
     "easy-table": "^1.0.0",
     "gunzip-maybe": "^1.2.1",
+    "https-proxy-agent": "^1.0.0",
     "init-package-json": "^1.9.1",
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
