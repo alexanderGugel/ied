@@ -36,7 +36,7 @@ describe('resolve', function () {
         var version = '~1.0.0'
         resolve(name, version, cb)
 
-        assert.deepEqual(http.get.args[0][0], protocol + '://registry.npmjs.org/' + name)
+        assert.deepEqual(http.get.args[0][0].href, protocol + '://registry.npmjs.org/' + name)
       })
 
       it('should accept optional callback', function () {
@@ -89,9 +89,10 @@ describe('resolve', function () {
         httpResp.statusCode = 200
         http.get.args[0][1](httpResp)
         httpResp.emit('data', JSON.stringify({
-          versions: []
+          versions: null
         }))
         httpResp.emit('end')
+        console.log(cb.args[0][0])
         assert(cb.args[0][0] instanceof SyntaxError)
       })
 
