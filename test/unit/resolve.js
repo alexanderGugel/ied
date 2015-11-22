@@ -92,7 +92,6 @@ describe('resolve', function () {
           versions: null
         }))
         httpResp.emit('end')
-        console.log(cb.args[0][0])
         assert(cb.args[0][0] instanceof SyntaxError)
       })
 
