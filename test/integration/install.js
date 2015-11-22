@@ -1,10 +1,11 @@
-/* global describe it before after */
+/* global describe it before */
 
 var install = require('../../lib/install')
 var rimraf = require('rimraf')
 var path = require('path')
 var assert = require('assert')
 var mkdirp = require('mkdirp')
+var semver = require('semver')
 var config = require('../../lib/config')
 
 describe('install', function () {
@@ -18,7 +19,8 @@ describe('install', function () {
     { name: 'express', version: '4.13.3' },
     { name: 'mocha', version: '2.3.4' },
     { name: 'lodash', version: '3.10.1' },
-    { name: 'gulp', version: '3.9.0' }
+    { name: 'gulp', version: '3.9.0' },
+    { name: 'grunt', version: '0.3.1' }
   ]
 
   function reset (done) {
@@ -28,7 +30,6 @@ describe('install', function () {
   }
 
   before(reset)
-  after(reset)
 
   before(mkdirp.bind(null, path.join(node_modules, '.bin')))
   before(mkdirp.bind(null, path.join(config.cacheDir, '.tmp')))
@@ -42,6 +43,8 @@ describe('install', function () {
         assert.ifError(err)
         assert(pkg.name, name)
         require(path.join(pkg.dist.shasum, 'package'))
+        var actualVersion = require(path.join(pkg.dist.shasum, 'package', 'package.json')).version
+        assert(semver.satisfies(actualVersion, version), actualVersion + ' should satisfy' + version)
         done()
       })
     })
