@@ -3,7 +3,7 @@
 # wouldn't take us seriously.
 
 CURRENT_DIR = $(shell pwd)
-INSTALL_DIR = /usr/local/lib/node_modules
+INSTALL_DIR = $(HOME)/.node_modules
 BIN_DIR = /usr/local/bin
 BIN = ied
 BOOTSTRAP_DIR = .bootstrap
