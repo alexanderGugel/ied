@@ -113,4 +113,4 @@ FAQ
 License
 -------
 
-Licensed under the MIT license. See [LICENSE.md].
+Licensed under the MIT license. See [LICENSE](LICENSE.md).
