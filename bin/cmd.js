@@ -20,7 +20,7 @@ function helpCmd () {
 }
 
 function versionCmd () {
-  console.log('ied version', require('../package.json').version)
+  console.log('nom version', require('../package.json').version)
 }
 
 var cwd = process.cwd()
