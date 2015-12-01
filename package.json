@@ -1,9 +1,9 @@
 {
-  "name": "ied",
+  "name": "nom",
   "version": "0.3.4",
   "main": "lib/index.js",
   "bin": {
-    "ied": "bin/cmd.js"
+    "nom": "bin/cmd.js"
   },
   "dependencies": {
     "archy": "^1.0.0",
@@ -36,14 +36,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/alexanderGugel/ied.git"
+    "url": "git+https://github.com/alexanderGugel/nom.git"
   },
   "author": "Alexander Gugel <alexander.gugel@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/alexanderGugel/ied/issues"
+    "url": "https://github.com/alexanderGugel/nom/issues"
   },
-  "homepage": "https://github.com/alexanderGugel/ied#readme",
+  "homepage": "https://github.com/alexanderGugel/nom#readme",
   "description": "An alternative package manager for Node.",
   "directories": {
     "example": "example",

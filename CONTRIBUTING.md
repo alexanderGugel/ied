@@ -1,17 +1,17 @@
-# Contributing to ied
+# Contributing to nom
 
 :+1::tada: First off, thanks for taking the time to contribute! :tada::+1:
 
 This project adheres to the [Contributor Covenant 1.2](CODE_OF_CONDUCT.md).
 By participating, you are expected to uphold this code. Please report unacceptable behavior to [alexander.gugel@gmail.com](mailto:alexander.gugel@gmail.com).
 
-The following is a set of guidelines for contributing to ied.
+The following is a set of guidelines for contributing to nom.
 These are just guidelines, not rules, use your best judgment and feel free to
 propose changes to this document in a pull request.
 
 ## Submitting Issues
 
-* You can create an issue [here](https://github.com/alexanderGugel/ied/issues/new),
+* You can create an issue [here](https://github.com/alexanderGugel/nom/issues/new),
 but before doing that please read the notes below and include as many details as
 possible with your report. If you can, please include:
   * The version you're using
@@ -20,7 +20,7 @@ possible with your report. If you can, please include:
   expected to happen
 * Other things that will help resolve your issue:
   * Error output that appears in your terminal, dev tools or as an alert
-  * Perform a [cursory search](https://github.com/alexanderGugel/ied/issues?utf8=✓&q=is%3Aissue+)
+  * Perform a [cursory search](https://github.com/alexanderGugel/nom/issues?utf8=✓&q=is%3Aissue+)
   to see if a similar issue has already been submitted
   * Enable logging of specific parts of the project by setting the `NODE_ENV` environment variable
 

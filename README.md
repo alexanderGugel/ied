@@ -1,10 +1,10 @@
-ied (WIP)
+nom (WIP)
 =========
 
-[![Travis](https://img.shields.io/travis/alexanderGugel/ied.svg)](https://travis-ci.org/alexanderGugel/ied)
-[![npm](https://img.shields.io/npm/v/ied.svg)](https://www.npmjs.com/package/ied)
+[![Travis](https://img.shields.io/travis/alexanderGugel/nom.svg)](https://travis-ci.org/alexanderGugel/nom)
+[![npm](https://img.shields.io/npm/v/nom.svg)](https://www.npmjs.com/package/nom)
 [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
-[![Join the chat at https://gitter.im/migme/beachball](https://img.shields.io/badge/gitter-join%20chat-brightgreen.svg)](https://gitter.im/alexanderGugel/ied)
+[![Join the chat at https://gitter.im/migme/beachball](https://img.shields.io/badge/gitter-join%20chat-brightgreen.svg)](https://gitter.im/alexanderGugel/nom)
 
 An alternative package manager for Node.
 
@@ -21,7 +21,7 @@ An alternative package manager for Node.
 Why?
 ----
 
-The original idea was to implement npm's pre-v3 install algorithm in as few lines as possible. This goal was achieved in [`c4ba56f`](https://github.com/alexanderGugel/ied/tree/c4ba56f7dece738db5b8cb28c20c7f6aa1e64d1d).
+The original idea was to implement npm's pre-v3 install algorithm in as few lines as possible. This goal was achieved in [`c4ba56f`](https://github.com/alexanderGugel/nom/tree/c4ba56f7dece738db5b8cb28c20c7f6aa1e64d1d).
 
 Currently the main goal of this project is to provide a more performant alternative to npm.
 
@@ -29,23 +29,23 @@ Currently the main goal of this project is to provide a more performant alternat
 Installation
 ------------
 
-The easiest way to install ied is using [npm](https://www.npmjs.org/):
+The easiest way to install nom is using [npm](https://www.npmjs.org/):
 
 ```
-  npm i -g ied
+  npm i -g nom
 ```
 
-Alternatively you can also "bootstrap" ied.
-After an initial installation via npm, ied will install its own dependencies:
+Alternatively you can also "bootstrap" nom.
+After an initial installation via npm, nom will install its own dependencies:
 
 ```
-  git clone https://github.com/alexanderGugel/ied ied && cd $_ && make install
+  git clone https://github.com/alexanderGugel/nom nom && cd $_ && make install
 ```
 
 Usage
 -----
 
-The goal of `ied` is to support ~ 80 per cent of the npm commands that one uses on a daily basis. Feature parity with npm **other than** with its installation process itself is not an immediate goal. Raw performance is the primary concern during the development process.
+The goal of `nom` is to support ~ 80 per cent of the npm commands that one uses on a daily basis. Feature parity with npm **other than** with its installation process itself is not an immediate goal. Raw performance is the primary concern during the development process.
 
 A global [configuration](lib/config.js) can be supplied via environment variables. `NODE_DEBUG` can be used in order to debug specific sub-systems. The progress bar will be disabled in that case.
 
@@ -56,11 +56,11 @@ At this point in time, the majority of the command API is [self-documenting](bin
 A high-level [USAGE](bin/USAGE.txt) help is also supplied. The main goal is to keep the API predictable for regular npm-users. This means certain flags, such as for example `--save`, `--save-dev`, `--only`, are supported.
 
 ```
-  ied is a package manager for Node.
+  nom is a package manager for Node.
 
   Usage:
 
-    ied command [arguments]
+    nom command [arguments]
 
   The commands are:
 
@@ -85,30 +85,30 @@ A high-level [USAGE](bin/USAGE.txt) help is also supplied. The main goal is to k
     -r, --registry  use a custom registry (default: http://registry.npmjs.org/)
 
   Example:
-    ied install
-    ied install <pkg>
-    ied install <pkg>@<version>
-    ied install <pkg>@<version range>
+    nom install
+    nom install <pkg>
+    nom install <pkg>@<version>
+    nom install <pkg>@<version range>
 
-    Can specify one or more: ied install semver@^5.0.1 tape
+    Can specify one or more: nom install semver@^5.0.1 tape
     If no argument is supplied, installs dependencies from package.json.
     Sub-commands can also be called via their shorthand aliases.
 
-  README:  https://github.com/alexanderGugel/ied
-  ISSUES:  https://github.com/alexanderGugel/ied/issues
+  README:  https://github.com/alexanderGugel/nom
+  ISSUES:  https://github.com/alexanderGugel/nom/issues
 ```
 
 Credits
 -------
 
-Some ideas and (upcoming) features of ied are heavily inspired by [**Nix**](http://nixos.org/nix/), a purely functional package manager.
+Some ideas and (upcoming) features of nom are heavily inspired by [**Nix**](http://nixos.org/nix/), a purely functional package manager.
 
 FAQ
 ---
 
-* What does ied stand for?
+* What does nom stand for?
 
-  Nothing in particular. It's just easy to type and `mpm` (the original name) was already taken.
+  Node Object Manager. Just kidding, it's the sound made when a package manager consumes [delicious, delicious packages](https://encrypted.google.com/search?hl=en&q=nom%20nom%20nom).
 
 License
 -------
