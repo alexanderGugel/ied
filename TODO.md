@@ -1,12 +1,26 @@
-- [ ] Tests
-- [ ] scoped modules
-- [ ] `install -g`
-- [ ] Handle binaries
-- [ ] Scripts
-- [ ] Install from arbitrary tarball
-- [ ] Install from git repo
-- [ ] Install from BitTorrent (via DHT) (~> use as distributed as cache)
-- [ ] ARC for tarball caching
-- [ ] install globally, just link -> save space
+TODO
+====
+
+Must
+----
+
+- [ ] integration tests (unit tests due to current pace no longer maintainable)
+- [ ] fix dead-lock issue that prevents us from completely atomic installs
+  (where the callback actually means **something**)
+
+npm feature parity
+------------------
+
+- [ ] allow running `npm` and `ied` in the same project
+- [ ] lifecycle scripts (including native dependencies)
+- [ ] global **installs** (without `link`)
+- [ ] allow declaring dependencies as git repo or tarball
+
+Wild Ideas
+----------
+
+- [ ] install from BitTorrent (via DHT) (--> use as distributed cache)
+- [ ] ARC
 - [ ] multi threaded fetch (optimize decompression)
 - [ ] NixOS like rollback
+
