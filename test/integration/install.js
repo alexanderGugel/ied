@@ -15,7 +15,7 @@ describe('install', function () {
     { name: 'express', version: '4.13.3' },
     { name: 'mocha', version: '2.3.4' },
     { name: 'lodash', version: '3.10.1' },
-    { name: 'gulp', version: '3.9.0' },
+    { name: 'gulp', version: 'https://github.com/gulpjs/gulp/archive/4.0.tar.gz' },
     { name: 'grunt', version: '0.3.1' }
   ]
 
