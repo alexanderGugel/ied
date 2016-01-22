@@ -36,23 +36,27 @@ describe('install', function () {
       install(__dirname, {_: ['', name + '@' + version]}, function (err) {
         assert.ifError(err)
         require(name)
+        var pkg = require(name + '/package.json')
         if (semver.valid(version)) {
-          var actualVersion = require(name + '/package.json').version
+          var actualVersion = pkg.version
           assert(semver.satisfies(actualVersion, version), actualVersion + ' should satisfy' + version)
+        }
+
+        if (pkg.bin && typeof pkg.bin === 'string') {
+          var bin = path.basename(pkg.bin)
+          assert(existsSync(path.join(__dirname, 'node_modules', '.bin', bin)),
+            'binstub ' + bin + ' exists')
+        }
+        if (pkg.bin && typeof pkg.bin === 'object') {
+          Object.keys(pkg.bin).forEach(function (bin) {
+            assert(existsSync(path.join(__dirname, 'node_modules', '.bin', bin)),
+              'binstub ' + bin + ' exists')
+          })
         }
 
         done()
       })
     })
-  })
-
-  it('should install node_module/.bin stubs', function () {
-    assert(
-      existsSync(path.join(__dirname, 'node_modules', '.bin', 'mocha')),
-      'has mocha bin')
-    assert(
-      existsSync(path.join(__dirname, 'node_modules', '.bin', '_mocha')),
-      'has _mocha bin')
   })
 })
 
