@@ -5,6 +5,7 @@ var rimraf = require('rimraf')
 var path = require('path')
 var assert = require('assert')
 var semver = require('semver')
+var fs = require('fs')
 
 describe('install', function () {
   this.timeout(0)
@@ -35,12 +36,32 @@ describe('install', function () {
       install(__dirname, {_: ['', name + '@' + version]}, function (err) {
         assert.ifError(err)
         require(name)
+        var pkg = require(name + '/package.json')
         if (semver.valid(version)) {
-          var actualVersion = require(name + '/package.json').version
+          var actualVersion = pkg.version
           assert(semver.satisfies(actualVersion, version), actualVersion + ' should satisfy' + version)
         }
+
+        if (pkg.bin && typeof pkg.bin === 'string') {
+          var bin = path.basename(pkg.bin)
+          assert(existsSync(path.join(__dirname, 'node_modules', '.bin', bin)),
+            'binstub ' + bin + ' exists')
+        }
+        if (pkg.bin && typeof pkg.bin === 'object') {
+          Object.keys(pkg.bin).forEach(function (bin) {
+            assert(existsSync(path.join(__dirname, 'node_modules', '.bin', bin)),
+              'binstub ' + bin + ' exists')
+          })
+        }
+
         done()
       })
     })
   })
 })
+
+function existsSync (filename) {
+  try {
+    return fs.statSync(filename)
+  } catch (e) { }
+}
