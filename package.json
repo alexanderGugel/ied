@@ -36,7 +36,7 @@
   },
   "scripts": {
     "test": "mocha",
-    "pretest": "npm run lint",
+    "pretest": "npm run lint && rimraf test/integration/node_modules",
     "lint": "standard | snazzy"
   },
   "repository": {
