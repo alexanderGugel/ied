@@ -5,6 +5,7 @@ var rimraf = require('rimraf')
 var path = require('path')
 var assert = require('assert')
 var semver = require('semver')
+var fs = require('fs')
 
 describe('install', function () {
   this.timeout(0)
@@ -39,8 +40,24 @@ describe('install', function () {
           var actualVersion = require(name + '/package.json').version
           assert(semver.satisfies(actualVersion, version), actualVersion + ' should satisfy' + version)
         }
+
         done()
       })
     })
   })
+
+  it('should install node_module/.bin stubs', function () {
+    assert(
+      existsSync(path.join(__dirname, 'node_modules', '.bin', 'mocha')),
+      'has mocha bin')
+    assert(
+      existsSync(path.join(__dirname, 'node_modules', '.bin', '_mocha')),
+      'has _mocha bin')
+  })
 })
+
+function existsSync (filename) {
+  try {
+    return fs.statSync(filename)
+  } catch (e) { }
+}
