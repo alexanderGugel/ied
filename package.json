@@ -26,6 +26,7 @@
     "mock-fs": "^3.4.0",
     "mockmock": "0.0.5",
     "nock": "^5.2.1",
+    "path-is-inside": "^1.0.1",
     "proxyquire": "^1.7.3",
     "rimraf": "^2.4.3",
     "snazzy": "^2.0.1",
