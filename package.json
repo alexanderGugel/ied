@@ -8,6 +8,7 @@
   "dependencies": {
     "archy": "^1.0.0",
     "async": "^1.4.2",
+    "debug": "^2.2.0",
     "easy-table": "^1.0.0",
     "got": "^5.3.1",
     "gunzip-maybe": "^1.2.1",
