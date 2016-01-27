@@ -105,7 +105,7 @@ describe('resolve', function () {
             assert.deepEqual(pkg, {
               name: 'some-package',
               version: '1.1.0',
-              uid: 'f379f6f508a68b25ecea93893d69e7daa7f965bf',
+              uid: '9e1e23526b2e08bcd670cd029a18c9e8ea14d916',
               shasum: undefined,
               tarball: undefined
             })
