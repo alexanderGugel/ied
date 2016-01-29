@@ -1,6 +1,6 @@
 {
   "name": "ied",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "main": "lib/index.js",
   "bin": {
     "ied": "bin/cmd.js"
