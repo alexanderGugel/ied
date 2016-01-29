@@ -1,5 +1,5 @@
-ied (WIP)
-=========
+ied
+===
 
 [![Travis](https://img.shields.io/travis/alexanderGugel/ied.svg)](https://travis-ci.org/alexanderGugel/ied)
 [![npm](https://img.shields.io/npm/v/ied.svg)](https://www.npmjs.com/package/ied)
