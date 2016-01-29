@@ -20,7 +20,7 @@
 
     <section class="main-content">
       <h1>
-<a id="ied-wip" class="anchor" href="#ied-wip" aria-hidden="true"><span class="octicon octicon-link"></span></a>ied (WIP)</h1>
+<a id="ied" class="anchor" href="#ied" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>ied</h1>
 
 <p><a href="https://travis-ci.org/alexanderGugel/ied"><img src="https://img.shields.io/travis/alexanderGugel/ied.svg" alt="Travis"></a>
 <a href="https://www.npmjs.com/package/ied"><img src="https://img.shields.io/npm/v/ied.svg" alt="npm"></a>
@@ -30,35 +30,146 @@
 <p>An alternative package manager for Node.</p>
 
 <ul>
-<li>
-<strong>Concurrent Installations</strong> - Sub-dependencies are being installed in parallel. This means that e.g. the download of a dependency might be completed before the installation of its respective parent or additional dependencies.</li>
-<li>
-<strong>Correct Caching</strong> - Downloaded packages are being cached locally. Similarly to the entry dependencies stored in <code>node_modules</code>, they are being identified by their checksums. Therefore we can guarantee the consistency of the cache itself without (manually) invalidating dependencies (e.g. due to overridden version numbers).</li>
-<li>
-<strong><code>node_modules</code> as CAS</strong> - Packages are always being referenced by their <em>SHA-1</em> checksums. Therefore a <code>node_modules</code> directory can be considered to be a <a href="https://en.wikipedia.org/wiki/Content-addressable_storage">Content Addressable Storage</a>, meaning that packages are being identified by their contents, not by arbitrary identifiers, such as package names that are not guaranteed to be unique across different registries. This also means that packages don't need to be explicitly declared as <code>peerDependencies</code>.</li>
-<li>
-<strong>Flat <code>node_modules</code></strong> - Due to the <em>CAS</em>-based design, conflicts due to naming collisions are impossible in practice. Therefore all dependencies can be stored in a flat directory structure. Circular dependencies and dependencies on different versions of the same packages are still being handled correctly.</li>
-<li>
-<strong>Guaranteed uniqueness</strong> - Since the directory in which a specific package is being stored is being determined by its <em>shasum</em>, identical packages can't conflict due to their location in the file system itself. This also means that the same dependency won't be installed more than once.</li>
-<li>
-<strong>Atomic installs</strong> - The atomicity of installs can be ensured on a <em>package-level</em>. "In progress" downloads are being stored in <code>node_modules/.tmp</code> and moved into <code>node_modules</code> once their download has been completed. In order to prevent deadlocks, packages that have circular dependencies are exempt from this limitation. In most cases however, the <code>node_modules</code> directory is <em>consistent</em> at any given point in time.</li>
-<li>
-<strong>Package names as links</strong> - While packages are being referenced by their <em>shasum</em> internally, they can still be required via their human-readable name. Package names themselves are simply symbolic links to the actual content-addressed package itself. A nice side-effect of this design is that in contrast to other package managers, you can not accidentally require a sub-dependency that hasn't been installed as such.</li>
-<li>
-<strong>Semantic Versioning</strong> - <a href="http://semver.org/">Semantic versions</a> are being resolved correctly.</li>
-<li>
-<strong>Arbitrary package groups</strong> - Packages can be grouped into "package groups", such as <code>dependencies</code> and <code>devDependencies</code>. Dependencies can be installed exclusively based on the group they are in.</li>
+<li><p><strong>Concurrent Installations</strong> - <code>ied</code> installs sub-dependencies in parallel.
+This means that the download of a dependency might have been completed before
+that of its parent or any of its siblings even started.</p></li>
+<li><p><strong>Correct Caching</strong> - Downloaded packages are being cached locally. Similarly
+to the entry dependencies stored in <code>node_modules</code>, they are being identified
+by their checksums. Therefore we can guarantee the consistency of the cache
+itself without (manually) invalidating dependencies (e.g. due to overridden
+version numbers).</p></li>
+<li><p><strong><code>node_modules</code> as CAS</strong> - Packages are always being referenced by their
+<em>SHA-1</em> checksums. Therefore a <code>node_modules</code> directory can be considered to
+be a <a href="https://en.wikipedia.org/wiki/Content-addressable_storage">Content Addressable
+Storage</a>, meaning
+that packages are being identified by their contents, not by arbitrary
+identifiers, such as package names that are not guaranteed to be unique
+across different registries.</p></li>
+<li><p><strong>Flat <code>node_modules</code></strong> - Due to the <em>CAS</em>-based design, conflicts due to
+naming collisions are more or less impossible. Therefore all dependencies can
+be stored in a flat directory structure. Circular dependencies and
+dependencies on different versions of the same packages are still being
+handled correctly.</p></li>
+<li><p><strong>Guaranteed uniqueness</strong> - Since the directory in which a specific package
+is being stored is determined by its <em>shasum</em>, identical packages can't
+conflict due to their location in the file system itself. This also means
+that the same dependency won't be installed more than once. Dependencies
+don't need to be explicitly declared as <code>peerDependencies</code>, since shared
+sub-dependencies are the default, not an option.</p></li>
+<li><p><strong>Atomic installs</strong> - The atomicity of installs can be ensured on a
+<em>package-level</em>. "In progress" downloads are being stored in
+<code>node_modules/.tmp</code> and moved into <code>node_modules</code> once their download has
+been completed. In order to prevent deadlocks, packages that have circular
+dependencies are exempt from this limitation. In most cases however, the
+<code>node_modules</code> directory is <em>consistent</em> at any given point in time during
+the main installation procedure.</p></li>
+<li><p><strong>Package names as links</strong> - While packages are being referenced by their
+<em>shasum</em> internally, they can still be required via their human-readable
+equivalent name. Package names themselves are simply symbolic links to the
+actual content-addressed package itself. A nice side-effect of this design is
+that in contrast to other package managers, you can not accidentally require
+a sub-dependency that hasn't been installed as such.</p></li>
+<li><p><strong>Semantic Versioning</strong> - <a href="http://semver.org/">Semantic version numbers</a> are
+being resolved correctly.</p></li>
+<li><p><strong>Arbitrary package groups</strong> - Packages can be grouped into "package groups",
+such as <code>dependencies</code> and <code>devDependencies</code>. Dependencies can be installed
+exclusively based on the group they are in.</p></li>
 </ul>
 
 <h2>
-<a id="why" class="anchor" href="#why" aria-hidden="true"><span class="octicon octicon-link"></span></a>Why?</h2>
+<a id="internals" class="anchor" href="#internals" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Internals</h2>
 
-<p>The original idea was to implement npm's pre-v3 install algorithm in as few lines as possible. This goal was achieved in <a href="https://github.com/alexanderGugel/ied/tree/c4ba56f7dece738db5b8cb28c20c7f6aa1e64d1d"><code>c4ba56f</code></a>.</p>
+<p>Under the hood, <code>ied</code> maintains an "object database", similar to <code>git</code>. Instead
+of storing packages by some arbitrary name, a SHA1-checksum is being generated
+to approximate their contents. The checksums can not only be used for
+guaranteeing a certain level of trust and consistency, but they also simplify
+the algorithm through which dependencies are being managed.</p>
 
-<p>Currently the main goal of this project is to provide a more performant alternative to npm.</p>
+<p>The algorithm through which packages are being installed guarantees consistency
+through atomic installs. The installation of a package either fails or
+succeeds, but at no point in time can a dependency itself be required without
+having its own sub-dependencies installed (with the exception of shared
+circular dependencies).</p>
+
+<p>The checksum of a package is based on the contents of the package itself, not
+of its sub-dependencies. Therefore the validity of a package can be verified by
+hashing the package itself. Subsequent dependency updates have no effect of the
+generated checksum.</p>
+
+<p>Since <code>node_modules</code> is essentially a file-system based content addressable
+storage, multiple versions of the same package can co-exist in the same
+project. In order to expose dependencies via CommonJS, symbolic links are being
+created that reference a specific version of the package. This has multiple
+advantages:</p>
+
+<ol>
+<li><p>Undeclared dependencies that have been installed as sub-dependencies of
+"direct" dependencies are unlikely to be required "accidentally".</p></li>
+<li><p>There is no need to "manually" (as in additionally to the installation
+procedure itself) de-duplicate the dependency graph. As long as the
+uniqueness of filenames itself can be guaranteed on an OS-level, it is
+<em>impossible</em> to install the same package twice. This does not prevent users
+from installing different versions of the same dependency as long as the
+content is different (whereas a different version declared in the
+<code>package.json</code> counts as different contents).</p></li>
+<li><p>Shorter pathnames and less problems due to OS-level limitations (as in
+Windows where the maximum path length is limited).</p></li>
+<li><p>Additional application-level startup performance improvements. <code>require</code>
+needs to traverse less directories. A limited number of symbolic links need
+to be followed. This performance improvement is primarily useful for
+continuously running tests, where startup time is actually noticeable for
+larger test suits.</p></li>
+</ol>
+
+<h3>
+<a id="directory-structure" class="anchor" href="#directory-structure" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Directory Structure</h3>
+
+<p>The used directory structure is primarily optimized for reducing the amount of
+IO interaction with the file system during subsequent installations and
+guaranteeing the consistency of installed packages.</p>
+
+<p>A consequence of the
+<a href="https://nodejs.org/api/modules.html#modules_all_together"><code>require.resolve</code></a>
+algorithm used by Node, all packages need to be stored in a project-level
+<code>node_modules</code> directory. This directory is completely flat on a package-level,
+meaning that there are no nested packages inside it.</p>
+
+<p>Instead each package is being stored in its content-addressed directory. Such a
+directory has two sub-directories:</p>
+
+<ul>
+<li><p><strong>package</strong> - This is where the unpacked package contents is being stored. At
+no point in time will this directory be modified. This enables us to verify
+the integrity of the package at a later point in time by comparing the actual
+checksum to the one defined by other dependents or registries.</p></li>
+<li><p><strong>node_modules</strong> - Sub-dependencies of the dependency installed in <code>package</code>
+are being referenced by symbolic links in <code>node_modules</code> of the package
+itself. <code>require.resolve</code> will fall-back to this level after failing to
+locate a dependency in <code>package</code>. This means checked in dependencies are
+still supported, provided that their sub-dependencies are also available
+(anywhere in the dependency graph).</p></li>
+</ul>
+
+<p>On a project level, the <code>node_modules</code> directory contains the fetched packages,
+installed dependencies and links that expose the packages to user-land via
+<code>require</code>.</p>
+
+<p>A comparison of sample directory structures produced by ied, npm 2 and npm 3 is
+available as a <a href="https://gist.github.com/alexanderGugel/a10ed5655d366875a280">GitHub
+Gist</a>.</p>
 
 <h2>
-<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
+<a id="why" class="anchor" href="#why" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Why?</h2>
+
+<p>The original idea was to implement npm's pre-v3 install algorithm in as few
+lines as possible. This goal was achieved in
+<a href="https://github.com/alexanderGugel/ied/tree/c4ba56f7dece738db5b8cb28c20c7f6aa1e64d1d"><code>c4ba56f</code></a>.</p>
+
+<p>Currently the main goal of this project is to provide a more performant
+alternative to npm.</p>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Installation</h2>
 
 <p>The easiest way to install ied is using <a href="https://www.npmjs.org/">npm</a>:</p>
 
@@ -72,17 +183,26 @@ After an initial installation via npm, ied will install its own dependencies:</p
 </code></pre>
 
 <h2>
-<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Usage</h2>
 
-<p>The goal of <code>ied</code> is to support ~ 80 per cent of the npm commands that one uses on a daily basis. Feature parity with npm <strong>other than</strong> with its installation process itself is not an immediate goal. Raw performance is the primary concern during the development process.</p>
+<p>The goal of <code>ied</code> is to support ~ 80 per cent of the npm commands that one uses
+on a daily basis. Feature parity with npm <strong>other than</strong> with its installation
+process itself is not an immediate goal. Raw performance is the primary concern
+during the development process.</p>
 
-<p>A global <a href="lib/config.js">configuration</a> can be supplied via environment variables. <code>NODE_DEBUG</code> can be used in order to debug specific sub-systems. The progress bar will be disabled in that case.</p>
+<p>A global <a href="lib/config.js">configuration</a> can be supplied via environment
+variables. <code>NODE_DEBUG</code> can be used in order to debug specific sub-systems. The
+progress bar will be disabled in that case.</p>
 
 <p>Although <code>run-script</code> is supported, lifecycle scripts are not.</p>
 
-<p>At this point in time, the majority of the command API is <a href="bin/cmd.js">self-documenting</a>. More extensive documentation will be available once the API is stabilized.</p>
+<p>At this point in time, the majority of the command API is
+<a href="bin/cmd.js">self-documenting</a>. More extensive documentation will be available
+once the API is stabilized.</p>
 
-<p>A high-level <a href="bin/USAGE.txt">USAGE</a> help is also supplied. The main goal is to keep the API predictable for regular npm-users. This means certain flags, such as for example <code>--save</code>, <code>--save-dev</code>, <code>--only</code>, are supported.</p>
+<p>A high-level <a href="bin/USAGE.txt">USAGE</a> help is also supplied. The main goal is to
+keep the API predictable for regular npm-users. This means certain flags, such
+as for example <code>--save</code>, <code>--save-dev</code>, <code>--only</code>, are supported.</p>
 
 <pre><code>  ied is a package manager for Node.
 
@@ -127,23 +247,25 @@ After an initial installation via npm, ied will install its own dependencies:</p
 </code></pre>
 
 <h2>
-<a id="credits" class="anchor" href="#credits" aria-hidden="true"><span class="octicon octicon-link"></span></a>Credits</h2>
+<a id="credits" class="anchor" href="#credits" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Credits</h2>
 
-<p>Some ideas and (upcoming) features of ied are heavily inspired by <a href="http://nixos.org/nix/"><strong>Nix</strong></a>, a purely functional package manager.</p>
+<p>Some ideas and (upcoming) features of <code>ied</code> are heavily inspired by
+<a href="http://nixos.org/nix/"><strong>Nix</strong></a>, a purely functional package manager.</p>
 
 <h2>
-<a id="faq" class="anchor" href="#faq" aria-hidden="true"><span class="octicon octicon-link"></span></a>FAQ</h2>
+<a id="faq" class="anchor" href="#faq" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>FAQ</h2>
 
 <ul>
 <li>
 <p>What does ied stand for?</p>
 
-<p>Nothing in particular. It's just easy to type and <code>mpm</code> (the original name) was already taken.</p>
+<p>Nothing in particular. It's just easy to type and <code>mpm</code> (the original name)
+was already taken.</p>
 </li>
 </ul>
 
 <h2>
-<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
 
 <p>Licensed under the MIT license. See <a href="LICENSE.md">LICENSE</a>.</p>
 
