@@ -237,6 +237,17 @@ as for example `--save`, `--save-dev`, `--only`, are supported.
   ISSUES:  https://github.com/alexanderGugel/ied/issues
 ```
 
+Development notes
+-----------------
+
+To run the test suite, run `npm test`. The test suite mocks all HTTP requests,
+with fixtures cached inside `fixtures/generated/`. If you make new tests that
+perform HTTP requests, it'll be saved there.
+
+```
+npm test
+```
+
 Credits
 -------
 
