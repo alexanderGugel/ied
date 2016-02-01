@@ -113,6 +113,35 @@ describe('resolve', function () {
           })
         })
 
+        it('should resolve tag to version', function (done) {
+          server.get('/some-package').reply(200, {
+            'dist-tags': {
+              latest: '1.0.0'
+            },
+            versions: {
+              '0.0.1': { version: '0.0.1' },
+              '1.0.0': { version: '1.0.0', dist: {} }
+            }
+          })
+          resolve('some-package', 'latest', function (err, pkg) {
+            assert.ifError(err)
+            assert.equal(pkg.version, '1.0.0')
+            done()
+          })
+        })
+
+        it('should handle missing dist-tag', function (done) {
+          server.get('/some-package').reply(200, {
+            versions: {
+              '0.0.1': { version: '0.0.1' }
+            }
+          })
+          resolve('some-package', 'latest', function (err, pkg) {
+            assert(err instanceof Error)
+            done()
+          })
+        })
+
         it('should properly handle pending requests', function (doneAll) {
           var pendingRequests = 2
           function done () {
@@ -191,18 +220,11 @@ describe('resolve', function () {
     var resolve
 
     beforeEach(function () {
-      resolve = require('../../lib/resolve')
+      resolve = proxyquire('../../lib/resolve', {})
     })
 
     it('should report that github is not supported now', function (done) {
       resolve('some-package', 'alexanderGugel/ied', function (err) {
-        assert(err)
-        done()
-      })
-    })
-
-    it('should throw on unknown version spec', function (done) {
-      resolve('some-package', 'unknown spec', function (err) {
         assert(err)
         done()
       })
