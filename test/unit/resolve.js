@@ -1,5 +1,7 @@
 /* global describe it before after beforeEach afterEach */
 
+'use strict'
+
 var assign = require('object-assign')
 var proxyquire = require('proxyquire')
 var assert = require('assert')
