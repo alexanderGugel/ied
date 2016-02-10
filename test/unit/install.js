@@ -1,5 +1,7 @@
 /* global describe it beforeEach */
 
+'use strict'
+
 var proxyquire = require('proxyquire')
 var assert = require('assert')
 var mock = require('mockmock')
