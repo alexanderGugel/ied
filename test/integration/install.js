@@ -39,7 +39,7 @@ describe('install', function () {
         assert(pathIsInside(require.resolve(name), __dirname), 'should resolve package from the target directory')
         if (scenario.checkCli) {
           var binPath = path.join('.bin', name)
-          assert(pathIsInside(require.resolve(binPath), __dirname), 'should resolve excutables from the target dir')
+          assert(pathIsInside(require.resolve(binPath), __dirname), 'should resolve executable from the target directory')
         }
         if (semver.valid(version)) {
           var actualVersion = require(name + '/package.json').version
