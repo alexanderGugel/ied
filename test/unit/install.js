@@ -10,7 +10,6 @@ describe('install', function () {
   var forceSymlink
   var resolve
   var fetch
-  var ignoreError
   var install
   var cb
 
@@ -18,14 +17,12 @@ describe('install', function () {
     forceSymlink = mock()
     resolve = mock()
     fetch = mock()
-    ignoreError = mock()
     cb = mock()
 
     install = proxyquire('../../lib/install', {
       'force-symlink': forceSymlink,
       './resolve': resolve,
-      './fetch': fetch,
-      './ignore_error': ignoreError
+      './fetch': fetch
     })
   })
 
