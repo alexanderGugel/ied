@@ -17,7 +17,8 @@ describe('install', function () {
     { name: 'mocha', version: '2.3.4', checkCli: true },
     { name: 'lodash', version: '3.10.1', checkCli: false },
     { name: 'gulp', version: 'https://github.com/gulpjs/gulp/archive/4.0.tar.gz', checkCli: true },
-    { name: 'grunt', version: '0.3.1', checkCli: true }
+    { name: 'grunt', version: '0.3.1', checkCli: true },
+    { name: 'electron-prebuilt', version: '0.36.8', checkCli: false }
   ]
 
   function reset (done) {
