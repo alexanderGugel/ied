@@ -9,7 +9,6 @@ var runCmd = require('../lib/run_cmd')
 var shellCmd = require('../lib/shell_cmd')
 var pingCmd = require('../lib/ping_cmd')
 var lsCmd = require('../lib/ls_cmd')
-var exposeCmd = require('../lib/expose_cmd')
 var configCmd = require('../lib/config_cmd')
 var initCmd = require('../lib/init_cmd')
 var linkCmd = require('../lib/link_cmd')
@@ -84,10 +83,6 @@ if (argv.registry) {
     case 'conf':
     case 'config':
       configCmd()
-      break
-    case 'expose':
-    case 'ex':
-      exposeCmd(cwd, argv)
       break
     case 'init':
       initCmd(cwd, argv)

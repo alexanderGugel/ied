@@ -209,7 +209,6 @@ as for example `--save`, `--save-dev`, `--only`, are supported.
     shell       enter a sub-shell with augmented PATH
     ping        check if the registry is up
     ls          print the dependency graph
-    expose      make a sub-dependency `require`able
     config      print the used config
     init        initialize a new package
     link        link the current package or into it
