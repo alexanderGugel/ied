@@ -33,7 +33,8 @@
     "sepia": "^2.0.1",
     "snazzy": "^2.0.1",
     "standard": "^5.3.1",
-    "tape": "^4.2.2"
+    "tape": "^4.2.2",
+    "tmp": "0.0.28"
   },
   "scripts": {
     "test": "mocha",
