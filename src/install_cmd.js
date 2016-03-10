@@ -85,9 +85,9 @@ function expand (baseDir) {
   }
 }
 
-export function run (dir, argv) {
-  const baseDir = path.join(dir, 'node_modules')
-  const pkgJSONPath = path.join(dir, 'package.json')
+function installCmd (cwd, argv) {
+  const baseDir = path.join(cwd, 'node_modules')
+  const pkgJSONPath = path.join(cwd, 'package.json')
 
   const localPkgJSON = readFileJSON(pkgJSONPath).let(catchReadPkgJSON)
   const updatedPkgJSON = localPkgJSON.let(updatePkgJSON(argv))
@@ -114,6 +114,4 @@ export function run (dir, argv) {
     : linked
 }
 
-if (require.main === module) {
-  run(process.cwd(), yargs.argv).subscribe()
-}
+export default installCmd
