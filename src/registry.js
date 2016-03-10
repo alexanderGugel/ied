@@ -7,7 +7,7 @@
 
 'use strict'
 
-import { Observable } from 'rx'
+import { Observable } from 'rxjs/Observable'
 import semver from 'semver'
 import { httpGetJSON } from './util'
 import url from 'url'

@@ -8,11 +8,17 @@
 
 'use strict'
 
-import { AsyncSubject, Observable } from 'rx'
+import { Observable } from 'rxjs/Observable'
+import { AsyncSubject } from 'rxjs/subject/AsyncSubject'
 import http from 'http'
 import { Buffer } from 'buffer'
 import fs from 'fs'
 import _mkdirp from 'mkdirp'
+
+import 'rxjs/add/operator/map'
+import 'rxjs/add/operator/let'
+import 'rxjs/add/operator/catch'
+import 'rxjs/add/operator/mergeMap'
 
 /**
  * Wrapper around Node's [http#get]{@link https://nodejs.org/api/http.html#http_http_get_options_callback} method.
@@ -23,10 +29,10 @@ import _mkdirp from 'mkdirp'
 export const httpGet = (options) => {
   const subject = new AsyncSubject()
   const handler = (response) => {
-    subject.onNext(response)
-    subject.onCompleted()
+    subject.next(response)
+    subject.complete()
   }
-  const errHandler = (err) => subject.onError(err)
+  const errHandler = (err) => subject.error(err)
   http.get(options, handler).on('error', errHandler)
   return subject
 }
@@ -37,19 +43,28 @@ export const httpGet = (options) => {
  * @return {Object} An observable sequence of the fetched JSON document.
  */
 export const httpGetJSON = (options) => httpGet(options).concatMap((res) => {
-  const error = Observable.fromEvent(res, 'error').selectMany(Observable.throwError)
+  const error = Observable.fromEvent(res, 'error').mergeMap(Observable.throwError)
   const end = Observable.fromEvent(res, 'end')
   return Observable.fromEvent(res, 'data').takeUntil(end.amb(error))
 }).toArray().map((chunks) => Buffer.concat(chunks).toString()).map(JSON.parse)
 
-export const readFile = Observable.fromNodeCallback(fs.readFile)
-export const mkdir = Observable.fromNodeCallback(fs.mkdir)
+export function readFile (file, options) {
+  return Observable.create((observer) => {
+    fs.readFile(file, options, (error, data) => {
+      if (error) observer.error(error)
+      else observer.complete(data)
+    })
+  })
+}
+
+// export const readFile = Observable.fromNodeCallback(fs.readFile)
+// export const mkdir = Observable.fromNodeCallback(fs.mkdir)
 
 export function writeFile (file, data, options) {
   return Observable.create((observer) => {
     fs.writeFile(file, data, options, (error) => {
-      if (error) observer.onError(error)
-      else observer.onCompleted()
+      if (error) observer.error(error)
+      else observer.complete()
     })
   })
 }
@@ -57,8 +72,8 @@ export function writeFile (file, data, options) {
 export function symlink (target, path, type) {
   return Observable.create((observer) => {
     fs.symlink(target, path, type, (error) => {
-      if (error) observer.onError(error)
-      else observer.onCompleted()
+      if (error) observer.error(error)
+      else observer.complete()
     })
   })
 }
@@ -66,8 +81,8 @@ export function symlink (target, path, type) {
 export function mkdirp (dir, opts) {
   return Observable.create((observer) => {
     _mkdirp(dir, opts, (error) => {
-      if (error) observer.onError(error)
-      else observer.onCompleted()
+      if (error) observer.error(error)
+      else observer.complete()
     })
   })
 }

@@ -1,17 +1,23 @@
 'use strict'
 
-import { Observable } from 'rx'
+import { Observable } from 'rxjs/Observable'
 import path from 'path'
 import { readFileJSON, writeFile } from './util'
-import yargs from 'yargs'
 import log from 'a-logger'
 import zipObject from 'lodash.zipobject'
 import xtend from 'xtend'
 import { resolve } from './registry'
 
+import 'rxjs/add/operator/map'
+import 'rxjs/add/operator/let'
+import 'rxjs/add/operator/expand'
+import 'rxjs/add/operator/do'
+import 'rxjs/add/operator/reduce'
+import 'rxjs/add/operator/mergeMap'
+
 function updatePkgJSON (argv) {
   return function (o) {
-    return o.select((outdatedPkgJSON) => {
+    return o.map((outdatedPkgJSON) => {
       // don't update when no additional dependencies have been defined
       const newDepNames = argv._
       if (!newDepNames.length) return outdatedPkgJSON
@@ -76,7 +82,7 @@ function expand (baseDir) {
 
       return Observable.pairs(allDependencies)
         .let(resolve)
-        .select((pkgJSON) => ({
+        .map((pkgJSON) => ({
           parentPkgJSON,
           pkgJSON,
           depth: parentDepth + 1
@@ -93,20 +99,20 @@ function installCmd (cwd, argv) {
   const updatedPkgJSON = localPkgJSON.let(updatePkgJSON(argv))
 
   const expanded = updatedPkgJSON
-    .select((pkgJSON) => ({ pkgJSON, depth: 0 }))
+    .map((pkgJSON) => ({ pkgJSON, depth: 0 }))
     .let(expand(baseDir))
-    .tapOnNext(({ pkgJSON }) =>
+    .do(({ pkgJSON }) =>
       log.info(`expanded ${pkgJSON.name}@${pkgJSON.version}`))
 
   const reduced = expanded
     .let(reduce(baseDir))
-    .tapOnNext((allLinks) =>
+    .do((allLinks) =>
       log.info('fetched all dependencies', allLinks))
 
   const linked = reduced
 
   const shouldSaveUpdatedPkgJSON = argv.saveDev || argv.save
-  const savedUpdatedPkgJSON = updatedPkgJSON.selectMany((pkgJSON) =>
+  const savedUpdatedPkgJSON = updatedPkgJSON.mergeMap((pkgJSON) =>
     writeFile(pkgJSONPath, JSON.stringify(pkgJSON, null, '\t'), 'utf8'))
 
   return shouldSaveUpdatedPkgJSON
@@ -114,4 +120,4 @@ function installCmd (cwd, argv) {
     : linked
 }
 
-export default installCmd
+module.exports = installCmd

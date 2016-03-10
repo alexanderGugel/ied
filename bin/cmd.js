@@ -52,11 +52,7 @@ if (argv.registry) {
   switch (argv._[0]) {
     case 'i':
     case 'install':
-      installCmd(cwd, argv, function (err) {
-        if (err) {
-          throw err
-        }
-      })
+      installCmd(cwd, argv).subscribe()
       break
     case 'sh':
     case 'shell':
