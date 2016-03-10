@@ -16,6 +16,11 @@ LIB = $(SRC:src/%.js=lib/%.js)
 # http://blog.jgc.org/2015/04/the-one-line-you-should-add-to-every.html
 print-%: ; @echo $*=$($*)
 
+lib: $(LIB)
+lib/%.js: src/%.js
+	@mkdir -p $(@D)
+	@$(DEPS_BIN_DIR)/babel $< -o $@
+
 node_modules: package.json
 	rm -rf node_modules $(BOOTSTRAP_DIR)
 	npm install
@@ -30,11 +35,13 @@ prepdirs:
 	mkdir -p $(INSTALL_DIR)
 	mkdir -p $(BIN_DIR)
 
-link: lib uninstall prepdirs node_modules
+preinstall: lib uninstall prepdirs node_modules
+
+link: preinstall
 	ln -s $(CURRENT_DIR) $(INSTALL_DIR)/$(BIN)
 	ln -s $(INSTALL_DIR)/ied/bin/cmd.js $(BIN_DIR)/ied
 
-install: lib uninstall prepdirs node_modules
+install: preinstall
 	cp -R $(CURRENT_DIR) $(INSTALL_DIR)/$(BIN)
 	ln -s $(INSTALL_DIR)/ied/bin/cmd.js $(BIN_DIR)/ied
 
@@ -51,7 +58,5 @@ test:
 dev:
 	$(DEPS_BIN_DIR)/mocha -w --reporter dot
 
-lib: $(LIB)
-lib/%.js: src/%.js
-	@mkdir -p $(@D)
-	@$(DEPS_BIN_DIR)/babel $< -o $@
+watch:
+	$(DEPS_BIN_DIR)/babel -w src --out-dir lib
