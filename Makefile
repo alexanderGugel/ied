@@ -8,6 +8,8 @@ BIN_DIR = /usr/local/bin
 BIN = ied
 BOOTSTRAP_DIR = .bootstrap
 DEPS_BIN_DIR = ./node_modules/.bin
+SRC = $(wildcard src/*.js)
+LIB = $(SRC:src/%.js=lib/%.js)
 
 .PHONY: install
 
@@ -28,11 +30,11 @@ prepdirs:
 	mkdir -p $(INSTALL_DIR)
 	mkdir -p $(BIN_DIR)
 
-link: uninstall prepdirs node_modules
+link: lib uninstall prepdirs node_modules
 	ln -s $(CURRENT_DIR) $(INSTALL_DIR)/$(BIN)
 	ln -s $(INSTALL_DIR)/ied/bin/cmd.js $(BIN_DIR)/ied
 
-install: uninstall prepdirs node_modules
+install: lib uninstall prepdirs node_modules
 	cp -R $(CURRENT_DIR) $(INSTALL_DIR)/$(BIN)
 	ln -s $(INSTALL_DIR)/ied/bin/cmd.js $(BIN_DIR)/ied
 
@@ -48,3 +50,8 @@ test:
 
 dev:
 	$(DEPS_BIN_DIR)/mocha -w --reporter dot
+
+lib: $(LIB)
+lib/%.js: src/%.js
+	@mkdir -p $(@D)
+	@$(DEPS_BIN_DIR)/babel $< -o $@

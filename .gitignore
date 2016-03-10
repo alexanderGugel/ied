@@ -33,3 +33,5 @@ node_modules
 # Used for debugging
 example
 fixtures
+
+lib
