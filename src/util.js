@@ -52,7 +52,10 @@ export function readFile (file, options) {
   return Observable.create((observer) => {
     fs.readFile(file, options, (error, data) => {
       if (error) observer.error(error)
-      else observer.complete(data)
+      else {
+        observer.next(data)
+        observer.complete()
+      }
     })
   })
 }
