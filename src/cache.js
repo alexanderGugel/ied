@@ -1,35 +1,36 @@
-'use strict'
+import { Observable } from 'rxjs/Observable'
 
-var gunzip = require('gunzip-maybe')
-var tar = require('tar-fs')
-var fs = require('fs')
-var path = require('path')
-var uuid = require('node-uuid')
-var config = require('./config')
-var mkdirp = require('mkdirp')
+import gunzip from 'gunzip-maybe'
+import tar from 'tar-fs'
+import fs from 'fs'
+import path from 'path'
+import uuid from 'node-uuid'
+import config from './config'
+import mkdirp from 'mkdirp'
 
-exports.write = write
-function write () {
+export function write () {
   return fs.WriteStream(path.join(config.cacheDir, '.tmp', uuid()))
 }
 
-exports.read = read
-function read (uid) {
-  return fs.ReadStream(path.join(config.cacheDir, uid))
+export function read (shasum) {
+  return fs.ReadStream(path.join(config.cacheDir, shasum))
 }
 
-exports.init = init
-function init (cb) {
-  mkdirp(path.join(config.cacheDir, '.tmp'), function (err) {
-    cb(err)
+// export function init (cb) {
+//   mkdirp(path.join(config.cacheDir, '.tmp'), function (err) {
+//     cb(err)
+//   })
+// }
+
+export function fetch (dest, shasum, cb) {
+  return Observable.create((observer) => {
+    const finHandler = (err) => observer.complete()
+    const errHandler = (err) => observer.error(err)
+
+    const untar = tar.extract(dest, { strip: 1 })
+    read(shasum).on('error', errHandler)
+      .pipe(gunzip()).on('error', errHandler)
+      .pipe(untar).on('error', errHandler)
+      .on('finish', finHandler)
   })
-}
-
-exports.fetch = fetch
-function fetch (dest, uid, cb) {
-  var untar = tar.extract(dest, { strip: 1 })
-  read(uid).on('error', cb)
-    .pipe(gunzip()).on('error', cb)
-    .pipe(untar).on('error', cb)
-    .on('finish', cb)
 }

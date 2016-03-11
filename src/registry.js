@@ -7,10 +7,12 @@
 
 'use strict'
 
-import { Observable } from 'rxjs/Observable'
 import semver from 'semver'
 import { httpGetJSON } from './util'
 import url from 'url'
+
+import { map } from 'rxjs/operator/map'
+import { cache } from 'rxjs/operator/cache'
 
 /**
  * The default npm registry to be used for resolving packages.
@@ -35,10 +37,10 @@ export const httpGetPackageRootCache = new Map()
  * @return {Object} An observable sequence of the specific JSON
  * document representing the package root.
  */
-export const httpGetPackageRoot = (name, registryRootUrl) => {
+export function httpGetPackageRoot (name, registryRootUrl) {
   const url = registryRootUrl + name
   if (!httpGetPackageRootCache.has(url)) {
-    httpGetPackageRootCache.set(url, httpGetJSON(url).shareReplay())
+    httpGetPackageRootCache.set(url, httpGetJSON(url)::cache())
   }
   return httpGetPackageRootCache.get(url)
 }
@@ -48,20 +50,21 @@ export const httpGetPackageRoot = (name, registryRootUrl) => {
  * specific `package.json` file.
  * @param  {String} name The name of the package to be resolved.
  * @param  {String} version The semantic version string to be used as a target.
- * @param  {String} [registryRootUrl='http://registry.npmjs.org/'] The URL of
- * the registry to be used as an endpoint.
  * @return {Object} An observable sequence of the specific `package.json` file.
  */
-export const resolveFromRegistry = (name, version, registryRootUrl) =>
-  httpGetPackageRoot(name, registryRootUrl || DEFAULT_NPM_REGISTRY).map((packageRoot) => {
+export function resolveFromRegistry (name, version) {
+  return httpGetPackageRoot(name, DEFAULT_NPM_REGISTRY)::map((packageRoot) => {
     const availableVersions = Object.keys(packageRoot.versions)
     const targetVersion = semver.maxSatisfying(availableVersions, version)
     const target = packageRoot.versions[targetVersion]
-    if (!target) throw new Error(`no version of ${name} that satisfies ${version}`)
+    if (!target) {
+      throw new Error(`no version of ${name} that satisfies ${version}`)
+    }
     return target
   })
+}
 
-export const resolve = (o) => o.selectMany(([name, version]) => {
+export function resolve (name, version) {
   const { protocol } = url.parse(version)
   switch (protocol) {
     case null:
@@ -71,6 +74,4 @@ export const resolve = (o) => o.selectMany(([name, version]) => {
     default:
       throw new Error(`unsupported protocol ${protocol} for ${name} ${version}`)
   }
-})
-
-export const fetchInto = (url) => Observable.return({})
+}
