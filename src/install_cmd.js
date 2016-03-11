@@ -8,16 +8,19 @@ import zipObject from 'lodash.zipobject'
 import xtend from 'xtend'
 import { resolve } from './registry'
 
-import 'rxjs/add/operator/map'
-import 'rxjs/add/operator/let'
-import 'rxjs/add/operator/expand'
-import 'rxjs/add/operator/do'
-import 'rxjs/add/operator/reduce'
-import 'rxjs/add/operator/mergeMap'
+import { map } from 'rxjs/operator/map'
+import { expand } from 'rxjs/operator/expand'
+import { reduce } from 'rxjs/operator/reduce'
+import { mergeMap } from 'rxjs/operator/mergeMap'
+import { concat } from 'rxjs/operator/concat'
+import { _do } from 'rxjs/operator/do'
+import { letProto } from 'rxjs/operator/let'
+import { ArrayObservable } from 'rxjs/observable/ArrayObservable'
+import { ErrorObservable } from 'rxjs/observable/ErrorObservable'
 
 function updatePkgJSON (argv) {
   return function (o) {
-    return o.map((outdatedPkgJSON) => {
+    return o::map((outdatedPkgJSON) => {
       // don't update when no additional dependencies have been defined
       const newDepNames = argv._
       if (!newDepNames.length) return outdatedPkgJSON
@@ -43,17 +46,17 @@ function catchReadPkgJSON (o) {
     switch (err.code) {
       case 'ENOENT':
         log.warn('Missing package.json')
-        return Observable.return({})
+        return ArrayObservable.of({})
       default:
         log.error('Failed to read package.json')
-        return Observable.throw(err)
+        return ErrorObservable.create(err)
     }
   })
 }
 
-function reduce (baseDir) {
+function reduceDeps (baseDir) {
   return function (o) {
-    return o.reduce((allLinks, { pkgJSON, parentPkgJSON, depth }) => {
+    return o::reduce((allLinks, { pkgJSON, parentPkgJSON, depth }) => {
       switch (depth) {
         case 0:
           break
@@ -71,9 +74,9 @@ function reduce (baseDir) {
   }
 }
 
-function expand (baseDir) {
+function expandDeps (baseDir) {
   return function (o) {
-    return o.expand(({ pkgJSON: parentPkgJSON, depth: parentDepth }) => {
+    return o::expand(({ pkgJSON: parentPkgJSON, depth: parentDepth }) => {
       const allDependencies = parentDepth
         ? (parentPkgJSON.dependencies || {})
         : xtend(
@@ -81,8 +84,8 @@ function expand (baseDir) {
           parentPkgJSON.devDependencies || {})
 
       return Observable.pairs(allDependencies)
-        .let(resolve)
-        .map((pkgJSON) => ({
+        ::letProto(resolve)
+        ::map((pkgJSON) => ({
           parentPkgJSON,
           pkgJSON,
           depth: parentDepth + 1
@@ -95,28 +98,33 @@ function installCmd (cwd, argv) {
   const baseDir = path.join(cwd, 'node_modules')
   const pkgJSONPath = path.join(cwd, 'package.json')
 
-  const localPkgJSON = readFileJSON(pkgJSONPath).let(catchReadPkgJSON)
-  const updatedPkgJSON = localPkgJSON.let(updatePkgJSON(argv))
+  const localPkgJSON = readFileJSON(pkgJSONPath)
+    ::letProto(catchReadPkgJSON)
+
+  console.log(argv)
+
+  const updatedPkgJSON = localPkgJSON
+    ::letProto(updatePkgJSON(argv))
 
   const expanded = updatedPkgJSON
-    .map((pkgJSON) => ({ pkgJSON, depth: 0 }))
-    .let(expand(baseDir))
-    .do(({ pkgJSON }) =>
-      log.info(`expanded ${pkgJSON.name}@${pkgJSON.version}`))
+    ::map((pkgJSON) => ({ pkgJSON, depth: 0 }))
+    // ::letProto(expandDeps(baseDir))
+    // ::_do(({ pkgJSON }) =>
+    //   log.info(`expanded ${pkgJSON.name}@${pkgJSON.version}`))
 
-  const reduced = expanded
-    .let(reduce(baseDir))
-    .do((allLinks) =>
-      log.info('fetched all dependencies', allLinks))
+  // const reduced = expanded
+  //   ::letProto(reduceDeps(baseDir))
+  //   ::_do((allLinks) =>
+  //     log.info('fetched all dependencies', allLinks))
 
-  const linked = reduced
+  const linked = expanded
 
   const shouldSaveUpdatedPkgJSON = argv.saveDev || argv.save
-  const savedUpdatedPkgJSON = updatedPkgJSON.mergeMap((pkgJSON) =>
+  const savedUpdatedPkgJSON = updatedPkgJSON::mergeMap((pkgJSON) =>
     writeFile(pkgJSONPath, JSON.stringify(pkgJSON, null, '\t'), 'utf8'))
 
   return shouldSaveUpdatedPkgJSON
-    ? Observable.concat(linked, savedUpdatedPkgJSON)
+    ? linked::concat(savedUpdatedPkgJSON)
     : linked
 }
 
