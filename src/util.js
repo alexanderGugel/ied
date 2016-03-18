@@ -1,13 +1,3 @@
-/**
- * @overview Utility methods used throughout the program and RxJS wrappers
- * around used Node APIs.
- * @module lib/util
- * @license MIT
- * @author Alexander Gugel <alexander.gugel@gmail.com>
- */
-
-'use strict'
-
 import { Observable } from 'rxjs/Observable'
 import http from 'http'
 import { Buffer } from 'buffer'
@@ -62,9 +52,6 @@ export function readFile (file, options) {
     })
   })
 }
-
-// export const readFile = Observable.fromNodeCallback(fs.readFile)
-// export const mkdir = Observable.fromNodeCallback(fs.mkdir)
 
 export function writeFile (file, data, options) {
   return Observable.create((observer) => {

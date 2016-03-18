@@ -1,12 +1,3 @@
-/**
- * @overview HTTP interface to the npm registry.
- * @module lib/registry
- * @license MIT
- * @author Alexander Gugel <alexander.gugel@gmail.com>
- */
-
-'use strict'
-
 import semver from 'semver'
 import { httpGetJSON } from './util'
 import url from 'url'

@@ -1,19 +1,17 @@
-'use strict'
-
-var archy = require('archy')
-var async = require('async')
-var fs = require('fs')
-var path = require('path')
+import archy from 'archy'
+import async from 'async'
+import fs from 'fs'
+import path from 'path'
 
 function filterShasums (entry) {
   return /^[0-9a-f]{40}$/.test(entry)
 }
 
 // Equivalent to `npm ls`. Prints the dependency graph.
-function lsCmd (cwd) {
+export default function lsCmd (cwd) {
   // TODO Follow symlinks (sub-dependencies).
 
-  var node_modules = path.join(cwd, 'node_modules')
+  const node_modules = path.join(cwd, 'node_modules')
 
   async.waterfall([
     fs.readdir.bind(fs, node_modules),
@@ -22,11 +20,12 @@ function lsCmd (cwd) {
     },
     function (shasums, cb) {
       async.map(shasums, function (shasum, cb) {
-        var pkgJSON = path.join(node_modules, shasum, 'package.json')
+        const pkgJSON = path.join(node_modules, shasum, 'package.json')
         fs.readFile(pkgJSON, 'utf8', function (err, raw) {
           if (!err) {
+            let pkg
             try {
-              var pkg = JSON.parse(raw)
+              pkg = JSON.parse(raw)
             } catch (e) {
               err = e
             }
@@ -45,5 +44,3 @@ function lsCmd (cwd) {
     }
   ])
 }
-
-module.exports = lsCmd

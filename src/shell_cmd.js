@@ -1,12 +1,10 @@
-'use strict'
+import path from 'path'
+import config from './config'
+import assign from 'object-assign'
+import child_process from 'child_process'
 
-var path = require('path')
-var config = require('./config')
-var assign = require('object-assign')
-var child_process = require('child_process')
-
-function shellCmd (cwd) {
-  var env = assign({}, process.env, {
+export default function shellCmd (cwd) {
+  const env = assign({}, process.env, {
     PATH: [
       path.join(cwd, 'node_modules/.bin'), process.env.PATH
     ].join(path.delimiter)
@@ -17,5 +15,3 @@ function shellCmd (cwd) {
     env: env
   })
 }
-
-module.exports = shellCmd
