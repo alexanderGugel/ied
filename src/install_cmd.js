@@ -93,7 +93,6 @@ function resolvePkgJSONs (cwd) {
         }))
       )
     })
-    // ::logResolved()
 }
 
 function makePathsRelative () {
@@ -133,7 +132,7 @@ function symlinkPkgJSONs () {
 
 function fetchPkgJSONs () {
   return this::mergeMap(({ pkgJSON, target }) =>
-    return fetch(target, pkgJSON.dist.tarball, pkgJSON.dist.shasum)
+    fetch(target, pkgJSON.dist.tarball, pkgJSON.dist.shasum)
   )
 }
 
