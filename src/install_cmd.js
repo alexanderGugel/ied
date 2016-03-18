@@ -132,15 +132,9 @@ function symlinkPkgJSONs () {
 }
 
 function fetchPkgJSONs () {
-  return this
-    ::mergeMap(({ pkgJSON, target }) => {
-      return fetch(target, pkgJSON.dist.tarball, pkgJSON.dist.shasum)
-    })
-    // ::_do(console::console.log)
-    // ::_do(({ path }) => console.log(path))
-    // ::_do(({ pkgJSON, target }) => {
-    //   console.log(target)
-    // })
+  return this::mergeMap(({ pkgJSON, target }) =>
+    return fetch(target, pkgJSON.dist.tarball, pkgJSON.dist.shasum)
+  )
 }
 
 function installCmd (cwd, argv) {
@@ -152,15 +146,23 @@ function installCmd (cwd, argv) {
     ::updatePkgJSONs(argv)
     ::share()
 
-  const resolvedPkgJSONs = updatedPkgJSONs::resolvePkgJSONs(cwd)
+  const resolvedPkgJSONs = updatedPkgJSONs
+    ::resolvePkgJSONs(cwd)
     ::skip(1)
     ::share()
-  const fetchedPkgJSONs = resolvedPkgJSONs::fetchPkgJSONs()
-  const symlinkedPkgJSONs = resolvedPkgJSONs
+
+  const relativeResolvedPkgJSONs = resolvedPkgJSONs
     ::makePathsRelative()
     ::logResolved()
+
+  const fetchedPkgJSONs = resolvedPkgJSONs
+    ::fetchPkgJSONs()
+
+  const symlinkedPkgJSONs = relativeResolvedPkgJSONs
     ::symlinkPkgJSONs()
-  const fetchedAndSymlinkedPkgJSONs = fetchedPkgJSONs::merge(symlinkedPkgJSONs)
+
+  const fetchedAndSymlinkedPkgJSONs = fetchedPkgJSONs
+    ::merge(symlinkedPkgJSONs)
 
   const shouldSaveUpdatedPkgJSON = argv.saveDev || argv.save
   if (!shouldSaveUpdatedPkgJSON) {
