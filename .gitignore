@@ -34,4 +34,5 @@ node_modules
 example
 fixtures
 
+# Produced by babel
 lib
