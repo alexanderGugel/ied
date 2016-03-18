@@ -3,7 +3,7 @@
   "version": "1.0.6",
   "main": "lib/index.js",
   "bin": {
-    "ied": "bin/cmd.js"
+    "ied": "lib/cmd.js"
   },
   "dependencies": {
     "a-logger": "^0.1.0",
