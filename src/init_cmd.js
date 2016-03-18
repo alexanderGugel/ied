@@ -1,13 +1,12 @@
-'use strict'
+import init from 'init-package-json'
+import path from 'path'
 
-var init = require('init-package-json')
-var path = require('path')
+const isWindows = process.platform === 'win32'
+const home = process.env[isWindows ? 'USERPROFILE' : 'HOME']
 
-var isWindows = process.platform === 'win32'
-var home = process.env[isWindows ? 'USERPROFILE' : 'HOME']
+export default function initCmd (cwd, argv) {
+  const initFile = path.resolve(home, '.ied-init')
 
-function initCmd (cwd, argv) {
-  var initFile = path.resolve(home, '.ied-init')
   init(cwd, initFile, function (err, data) {
     if (err) {
       if (err.message === 'canceled') {
@@ -20,4 +19,3 @@ function initCmd (cwd, argv) {
   })
 }
 
-module.exports = initCmd

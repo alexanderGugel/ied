@@ -4,7 +4,6 @@ import tar from 'tar-fs'
 import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
-import config from './config'
 import * as cache from './cache'
 import url from 'url'
 import { Observable } from 'rxjs/Observable'
@@ -12,7 +11,7 @@ import { ErrorObservable } from 'rxjs/observable/ErrorObservable'
 import { EmptyObservable } from 'rxjs/observable/EmptyObservable'
 import { _catch } from 'rxjs/operator/catch'
 import protocolToAgent from './protocol_to_agent'
-const debug = require('./debuglog')('fetch')
+import {cacheDir} from './config'
 
 function fetchFromRegistry (dest, tarball, shasum) {
   return Observable.create((observer) => {
@@ -45,9 +44,8 @@ function fetchFromRegistry (dest, tarball, shasum) {
         if (expectedShasum !== shasum) {
           observer.error(new Error('Downloaded tarball has incorrect shasum'))
         }
-        debug('cached %s in %s', shasum, cached.path)
 
-        return fs.rename(cached.path, path.join(config.cacheDir, shasum), (err) => {
+        return fs.rename(cached.path, path.join(cacheDir, shasum), (err) => {
           if (err) return errHandler(err)
           observer.complete()
         })

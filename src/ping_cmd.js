@@ -1,8 +1,6 @@
-'use strict'
-
-var url = require('url')
-var got = require('got')
-var config = require('./config')
+import url from 'url'
+import got from 'got'
+import config from './config'
 
 function ping (cb) {
   got(url.resolve(config.registry, '-/ping'), { json: true }, function (err, body, res) {
@@ -14,11 +12,9 @@ function ping (cb) {
   })
 }
 
-function pingCmd () {
+export default function pingCmd () {
   ping(function (err, data) {
     if (err) throw err
     console.log('PONG', data)
   })
 }
-
-module.exports = pingCmd

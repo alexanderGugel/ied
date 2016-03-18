@@ -1,13 +1,11 @@
-'use strict'
+import config from './config'
+import Table from 'easy-table'
 
-var config = require('./config')
-var Table = require('easy-table')
-
-function configCmd () {
-  var table = new Table()
+export default function configCmd () {
+  const table = new Table()
 
   Object.keys(config).forEach(function (key) {
-    var value = config[key]
+    const value = config[key]
     table.cell('key', key)
     table.cell('value', value)
     table.newRow()
@@ -15,5 +13,3 @@ function configCmd () {
 
   console.log(table.toString())
 }
-
-module.exports = configCmd

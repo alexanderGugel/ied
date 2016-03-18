@@ -1,16 +1,14 @@
-'use strict'
-
-var async = require('async')
-var link = require('./link')
-var config = require('./config')
-var mkdirp = require('mkdirp')
-var path = require('path')
+import async from 'async'
+import link from './link'
+import config from './config'
+import mkdirp from 'mkdirp'
+import path from 'path'
 
 function handleError (err) {
   if (err) throw err
 }
 
-function linkCmd (cwd, argv) {
+export default function linkCmd (cwd, argv) {
   var deps = argv._.slice(1)
   if (!deps.length) {
     async.series([
@@ -25,5 +23,3 @@ function linkCmd (cwd, argv) {
     ], handleError)
   }
 }
-
-module.exports = linkCmd

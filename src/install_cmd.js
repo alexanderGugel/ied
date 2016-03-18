@@ -5,7 +5,6 @@ import log from 'a-logger'
 import fromPairs from 'lodash.frompairs'
 import xtend from 'xtend'
 import { resolve } from './registry'
-import debuglog from './debuglog'
 import objectEntries from 'object.entries'
 import fetch from './fetch'
 
@@ -23,8 +22,6 @@ import { _catch } from 'rxjs/operator/catch'
 import { ArrayObservable } from 'rxjs/observable/ArrayObservable'
 import { ErrorObservable } from 'rxjs/observable/ErrorObservable'
 import { EmptyObservable } from 'rxjs/observable/EmptyObservable'
-
-const debug = debuglog('install_cmd')
 
 function updatePkgJSONs (argv) {
   return this::map((outdatedPkgJSON) => {
