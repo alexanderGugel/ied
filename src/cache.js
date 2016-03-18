@@ -16,12 +16,6 @@ export function read (shasum) {
   return fs.ReadStream(path.join(config.cacheDir, shasum))
 }
 
-// export function init (cb) {
-//   mkdirp(path.join(config.cacheDir, '.tmp'), function (err) {
-//     cb(err)
-//   })
-// }
-
 export function fetch (dest, shasum, cb) {
   return Observable.create((observer) => {
     const finHandler = (err) => observer.complete()
