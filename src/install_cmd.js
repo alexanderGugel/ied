@@ -10,18 +10,36 @@ import fetch from './fetch'
 
 import { map } from 'rxjs/operator/map'
 import { expand } from 'rxjs/operator/expand'
-import { reduce } from 'rxjs/operator/reduce'
+import { distinct } from 'rxjs/operator/distinct'
+import { distinctKey } from 'rxjs/operator/distinctKey'
 import { mergeMap } from 'rxjs/operator/mergeMap'
 import { filter } from 'rxjs/operator/filter'
 import { skip } from 'rxjs/operator/skip'
+import { concatMap } from 'rxjs/operator/concatMap'
 import { _do } from 'rxjs/operator/do'
 import { share } from 'rxjs/operator/share'
 import { merge } from 'rxjs/operator/merge'
-import { distinct } from 'rxjs/operator/distinct'
 import { _catch } from 'rxjs/operator/catch'
 import { ArrayObservable } from 'rxjs/observable/ArrayObservable'
-import { ErrorObservable } from 'rxjs/observable/ErrorObservable'
 import { EmptyObservable } from 'rxjs/observable/EmptyObservable'
+
+import {EntryPkg} from './EntryPkg'
+import {Pkg} from './Pkg'
+
+function logSymlinking () {
+  return this::_do(([_path, target]) => {
+    const relativePath = path.relative(
+      path.join(process.cwd(), 'node_modules'), _path
+    )
+    log.debug(`symlinking ${relativePath}\n\t-> ${target}`)
+  })
+}
+
+function logResolved () {
+  return this::_do(({target, pkgJSON: {name, version}}) =>
+    log.debug(`resolved ${path.basename(target)}: ${name}@${version}`)
+  )
+}
 
 function updatePkgJSONs (argv) {
   return this::map((outdatedPkgJSON) => {
@@ -41,24 +59,20 @@ function updatePkgJSONs (argv) {
   })
 }
 
-function catchReadPkgJSONs () {
-  return this::_catch((err) => {
-    switch (err.code) {
-      case 'ENOENT':
-        return ArrayObservable.of({})
-      default:
-        return ErrorObservable.create(err)
-    }
-  })
-}
-
-function saveUpdatedPkgJSON (pkgJSONPath) {
+function saveUpdatedPkgJSON (cwd) {
+  const filename = path.join(cwd, 'package.json')
   return this::mergeMap((pkgJSON) =>
-    writeFile(pkgJSONPath, JSON.stringify(pkgJSON, null, 2) + '\n', 'utf8')
+    writeFile(filename, JSON.stringify(pkgJSON, null, 2) + '\n', 'utf8')
   )
 }
 
-function getNameVersionPairs (pkgJSON, isEntry) {
+/**
+ * extract dependencies as an observable sequence of `[name, version]` tuples.
+ * @param  {Object}  pkgJSON - `package.json` file.
+ * @param  {Boolean} isEntry - if true, devDependencies will be included.
+ * @return {ArrayObservable} - observable sequence of `[name, version]` pairs.
+ */
+export function getNameVersionPairs (pkgJSON, isEntry) {
   const { dependencies, devDependencies } = pkgJSON
   const allDependencies = xtend(
     dependencies, isEntry ? devDependencies : {}
@@ -72,104 +86,64 @@ function getNameVersionPairs (pkgJSON, isEntry) {
 function resolvePkgJSONs (cwd) {
   const targets = Object.create(null)
 
-  return this
-    ::map((pkgJSON) => ({ pkgJSON, target: cwd }))
-    ::expand(({ pkgJSON, target }) => {
-      if (target in targets) return EmptyObservable.create()
-      targets[target] = true
+  return this::expand((localPkg) => {
+    if (localPkg.target in targets) {
+      return EmptyObservable.create()
+    }
+    targets[localPkg.target] = true
 
-      // Also install devDependencies of entry dependency.
-      const isEntry = target === cwd
-      const nameVersionPairs = getNameVersionPairs(pkgJSON, isEntry)
+    // Also install devDependencies of entry dependency.
+    const isEntry = localPkg instanceof EntryPkg
+    const nameVersionPairs = getNameVersionPairs(localPkg.pkgJSON, isEntry)
 
-      return nameVersionPairs::mergeMap(([ name, version ]) =>
-        resolve(name, version)::map((pkgJSON) => ({
-          pkgJSON,
-          target: path.join(cwd, 'node_modules', pkgJSON.dist.shasum),
-          path: path.join(target, 'node_modules', name)
-        }))
-      )
-    })
-}
-
-function makePathsRelative () {
-  return this::map((result) => xtend(result, {
-    path: result.path,
-    target: result.path && path.relative(result.path, result.target)
-  }))
-}
-
-function logSymlinking () {
-  return this::_do(([_path, target]) => {
-    const relativePath = path.relative(
-      path.join(process.cwd(), 'node_modules'), _path
+    return nameVersionPairs::mergeMap(([ name, version ]) =>
+      resolve(name, version)::map((pkgJSON) => new Pkg({
+        pkgJSON,
+        target: path.join(cwd, 'node_modules', pkgJSON.dist.shasum),
+        path: path.join(localPkg.target, 'node_modules', name)
+      }))
     )
-    log.debug(`symlinking ${relativePath}\n\t-> ${target}`)
   })
-}
-
-function logResolved () {
-  return this::_do(({target, pkgJSON: {name, version}}) =>
-    log.debug(`resolved ${path.basename(target)}: ${name}@${version}`)
-  )
-}
-
-function symlinkPkgJSONs () {
-  const acc = Object.create(null)
-
-  return this::reduce((acc, {target, path}) =>
-    xtend(acc, {[path]: target}), acc
-  )
-  ::mergeMap((allSymlinks) =>
-    ArrayObservable.create(objectEntries(allSymlinks))
-      ::logSymlinking()
-      ::mergeMap(([path, target]) => forceSymlink(target, path))
-  )
-}
-
-function fetchPkgJSONs () {
-  return this::mergeMap(({ pkgJSON, target }) =>
-    fetch(target, pkgJSON.dist.tarball, pkgJSON.dist.shasum)
-  )
-}
-
-function installCmd (cwd, argv) {
-  const baseDir = path.join(cwd, 'node_modules')
-  const pkgJSONPath = path.join(cwd, 'package.json')
-
-  const updatedPkgJSONs = readFileJSON(pkgJSONPath)
-    ::catchReadPkgJSONs()
-    ::updatePkgJSONs(argv)
-    ::share()
-
-  const resolvedPkgJSONs = updatedPkgJSONs
-    ::resolvePkgJSONs(cwd)
-    ::skip(1)
-    ::share()
-
-  const relativeResolvedPkgJSONs = resolvedPkgJSONs
-    ::makePathsRelative()
     ::logResolved()
-
-  const fetchedPkgJSONs = resolvedPkgJSONs
-    ::fetchPkgJSONs()
-
-  const symlinkedPkgJSONs = relativeResolvedPkgJSONs
-    ::symlinkPkgJSONs()
-
-  const fetchedAndSymlinkedPkgJSONs = fetchedPkgJSONs
-    ::merge(symlinkedPkgJSONs)
-
-  const shouldSaveUpdatedPkgJSON = argv.saveDev || argv.save
-  if (!shouldSaveUpdatedPkgJSON) {
-    return fetchedAndSymlinkedPkgJSONs
-  }
-
-  const savedUpdatedPkgJSON = updatedPkgJSONs
-    ::saveUpdatedPkgJSON(pkgJSONPath)
-
-  return fetchedAndSymlinkedPkgJSONs
-    ::merge(savedUpdatedPkgJSON)
 }
 
-module.exports = installCmd
+/**
+ * symlink the intermediate results of the underlying observable sequence
+ * @return {Observable} - an empty observable sequence that will be completed
+ * once all dependencies have been symlinked.
+ */
+function linkAll () {
+  return this::distinctKey('path')::mergeMap((pkg) => pkg.link())
+}
+
+/**
+ * download the tarballs into their respective `target`.
+ * @return {Observable} - an empty observable sequence that will be completed
+ * once all dependencies have been downloaded.
+ */
+function fetchAll () {
+  return this::distinctKey('target')::mergeMap((pkg) => pkg.fetch())
+}
+
+/**
+ * run the installation command.
+ * @param  {String} cwd - current working directory (absolute path).
+ * @param  {Object} argv - parsed command line arguments.
+ * @return {Observable} - an observable sequence that will be completed once the
+ * installation is complete.
+ */
+export default function installCmd (cwd, argv) {
+  const baseDir = path.join(cwd, 'node_modules')
+  const explicit = !!(argv._.length - 1)
+
+  const updatedPkgJSONs = explicit
+    ? EntryPkg.fromArgv(cwd, argv)
+    : EntryPkg.fromFS(cwd)
+
+  const resolved = updatedPkgJSONs::resolvePkgJSONs(cwd)::share()
+
+  const fetched = resolved::fetchAll()
+  const linked = resolved::linkAll()
+
+  return fetched::merge(linked)
+}
