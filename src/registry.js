@@ -4,7 +4,12 @@ import {map} from 'rxjs/operator/map'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGetJSON} from './util'
 import {registry} from './config'
-import memoize from 'lodash.memoize'
+
+/**
+ * internal cache used for package root urls.
+ * @type {Object}
+ */
+export const cache = Object.create(null)
 
 /**
  * fetch the CommonJS package root JSON document for a specific npm package.
@@ -12,12 +17,11 @@ import memoize from 'lodash.memoize'
  * @return {Object} - observable sequence of the JSON document that represents
  * the package root.
  */
-const httpGetPackageRoot = memoize((name) =>
-  httpGetJSON(url.resolve(registry, name))
-    ::publishReplay()
-)
-
-export httpGetPackageRoot
+export function httpGetPackageRoot (name) {
+  const uri = url.resolve(registry, name)
+  cache[name] = cache[name] || httpGetJSON(uri)::publishReplay().refCount()
+  return cache[name]
+}
 
 /**
  * resolve a package defined via an ambiguous semantic version string to a

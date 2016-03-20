@@ -1,5 +1,5 @@
 import path from 'path'
-import config from './config'
+import {sh} from './config'
 import assign from 'object-assign'
 import child_process from 'child_process'
 
@@ -10,7 +10,7 @@ export default function shellCmd (cwd) {
     ].join(path.delimiter)
   })
 
-  child_process.spawn(config.sh, [], {
+  child_process.spawn(sh, [], {
     stdio: 'inherit',
     env: env
   })

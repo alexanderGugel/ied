@@ -1,5 +1,5 @@
 import async from 'async'
-import link from './link'
+import * as link from './link'
 
 function handleError (err) {
   if (err) throw err

@@ -1,9 +1,9 @@
 import url from 'url'
 import got from 'got'
-import config from './config'
+import {registry} from './config'
 
 function ping (cb) {
-  const uri = url.resolve(config.registry, '-/ping')
+  const uri = url.resolve(registry, '-/ping')
   got(uri, { json: true }, (err, body, res) => {
     if (err) return cb(err)
     if (res.statusCode !== 200) {
