@@ -1,13 +1,27 @@
 import path from 'path'
 import {forceSymlink} from './util'
 import {fetch} from './fetch'
-import {AbstractDep} from './AbstractDep'
 
 /**
  * class representing a "local" version of a possibly installed package (e.g.
  * during the installation procedure).
  */
-export class Dep extends AbstractDep {
+export class Dep {
+  /**
+   * create instance.
+   * @param  {Object} [options.pkgJSON] - an object
+   * representing a `package.json` file.
+   * @param  {String} [options.target] - where the package has **actually**
+   * been installed into.
+   * @param  {String} [options.path] - path of the symlink pointing to the
+   * (possibly relative) `target`.
+   */
+  constructor ({pkgJSON, target, path}) {
+    this.pkgJSON = pkgJSON
+    this.target = target
+    this.path = path
+  }
+
   /**
    * download the tarball of the package into the `target` path.
    * @return {Observable} - an empty observable sequence that will be completed

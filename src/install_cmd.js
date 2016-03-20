@@ -1,27 +1,27 @@
-import { Observable } from 'rxjs/Observable'
+import {Observable} from 'rxjs/Observable'
 import path from 'path'
-import { readFileJSON, writeFile, stat, readlink, forceSymlink } from './util'
+import {readFileJSON, writeFile, stat, readlink, forceSymlink} from './util'
 import log from 'a-logger'
 import fromPairs from 'lodash.frompairs'
 import xtend from 'xtend'
-import { resolve } from './registry'
+import {resolve} from './registry'
 import objectEntries from 'object.entries'
 import fetch from './fetch'
 
-import { map } from 'rxjs/operator/map'
-import { expand } from 'rxjs/operator/expand'
-import { distinct } from 'rxjs/operator/distinct'
-import { distinctKey } from 'rxjs/operator/distinctKey'
-import { mergeMap } from 'rxjs/operator/mergeMap'
-import { filter } from 'rxjs/operator/filter'
-import { skip } from 'rxjs/operator/skip'
-import { concatMap } from 'rxjs/operator/concatMap'
-import { _do } from 'rxjs/operator/do'
-import { share } from 'rxjs/operator/share'
-import { merge } from 'rxjs/operator/merge'
-import { _catch } from 'rxjs/operator/catch'
-import { ArrayObservable } from 'rxjs/observable/ArrayObservable'
-import { EmptyObservable } from 'rxjs/observable/EmptyObservable'
+import {map} from 'rxjs/operator/map'
+import {expand} from 'rxjs/operator/expand'
+import {distinct} from 'rxjs/operator/distinct'
+import {distinctKey} from 'rxjs/operator/distinctKey'
+import {mergeMap} from 'rxjs/operator/mergeMap'
+import {filter} from 'rxjs/operator/filter'
+import {skip} from 'rxjs/operator/skip'
+import {concatMap} from 'rxjs/operator/concatMap'
+import {_do} from 'rxjs/operator/do'
+import {share} from 'rxjs/operator/share'
+import {merge} from 'rxjs/operator/merge'
+import {_catch} from 'rxjs/operator/catch'
+import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
+import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 
 import {EntryDep} from './EntryDep'
 import {Dep} from './Dep'
@@ -36,9 +36,10 @@ function logSymlinking () {
 }
 
 function logResolved () {
-  return this::_do(({target, pkgJSON: {name, version}}) =>
-    log.debug(`resolved ${path.basename(target)}: ${name}@${version}`)
-  )
+  return this::_do(({target, pkgJSON: {name, version}}) => {
+    const basename = path.basename(target)
+    log.debug(`resolved ${basename}: ${name}@${version}`)
+  })
 }
 
 function updatePkgJSONs (argv) {

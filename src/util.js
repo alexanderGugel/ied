@@ -1,7 +1,9 @@
 import { Observable } from 'rxjs/Observable'
 import http from 'http'
+import https from 'https'
 import { Buffer } from 'buffer'
 import fs from 'fs'
+import url from 'url'
 import _mkdirp from 'mkdirp'
 import _forceSymlink from 'force-symlink'
 
@@ -21,6 +23,17 @@ import { FromEventObservable } from 'rxjs/observable/FromEventObservable'
  */
 export const httpGet = (options) => {
   return Observable.create((observer) => {
+    if (typeof options === 'string') {
+      options = url.parse(options)
+    }
+    switch (options.protocol) {
+      case 'https:':
+        options.agent = https.globalAgent
+        break
+      case 'http:':
+        options.agent = http.globalAgent
+    }
+
     const handler = (response) => {
       observer.next(response)
       observer.complete()
@@ -121,4 +134,3 @@ export function readlink (path) {
 export function readFileJSON (filename) {
   return readFile(filename, 'utf8')::map(JSON.parse)
 }
-

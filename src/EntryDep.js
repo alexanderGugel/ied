@@ -1,8 +1,8 @@
 import path from 'path'
 import {NullPkgJSON} from './NullPkgJSON'
-import {AbstractDep} from './AbstractDep'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {ErrorObservable} from 'rxjs/observable/ErrorObservable'
+import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
 import {_catch} from 'rxjs/operator/catch'
 import {map} from 'rxjs/operator/map'
@@ -12,7 +12,39 @@ import fromPairs from 'lodash.frompairs'
 /**
  * class representing an entry, project level `package.json` file.
  */
-export class EntryDep extends AbstractDep {
+export class EntryDep {
+  /**
+   * create instance.
+   * @param {Object} [options.pkgJSON] - an object
+   * representing a `package.json` file.
+   * @param {String} [options.cwd] - current working directory used for
+   * determining the target.
+   */
+  constructor ({pkgJSON, cwd}) {
+    this.pkgJSON = pkgJSON
+    this.cwd = cwd
+  }
+
+  get target () {
+    return this.cwd
+  }
+
+  /**
+   * download the dependency into its `target`.
+   * @return {EmptyObservable} - an empty observable sequence.
+   */
+  fetch () {
+    return EmptyObservable.create()
+  }
+
+  /**
+   * create a symbolic link that exposes the dependency.
+   * @return {EmptyObservable} - an empty observable sequence.
+   */
+  link () {
+    return EmptyObservable.create()
+  }
+
   /**
    * create an instance by reading a `package.json` from disk.
    * @param  {String} cwd - current working directory.
@@ -22,7 +54,7 @@ export class EntryDep extends AbstractDep {
     const filename = path.join(cwd, 'package.json')
     return readFileJSON(filename)
       ::EntryDep.catchReadFileJSON()
-      ::map((pkgJSON) => new EntryDep({pkgJSON, target: cwd}))
+      ::map((pkgJSON) => new EntryDep({pkgJSON, cwd}))
   }
 
   /**
@@ -33,9 +65,8 @@ export class EntryDep extends AbstractDep {
    * @return {Observabel} - an observable sequence of an `EntryDep`.
    */
   static fromArgv (cwd, argv) {
-    const target = cwd
     const pkgJSON = EntryDep.parseArgv(argv)
-    const entryDep = new EntryDep({pkgJSON, target})
+    const entryDep = new EntryDep({pkgJSON, cwd})
     return ScalarObservable.create(entryDep)
   }
 

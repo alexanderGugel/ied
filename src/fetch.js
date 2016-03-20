@@ -10,8 +10,10 @@ import { Observable } from 'rxjs/Observable'
 import { ErrorObservable } from 'rxjs/observable/ErrorObservable'
 import { EmptyObservable } from 'rxjs/observable/EmptyObservable'
 import { _catch } from 'rxjs/operator/catch'
+import {map} from 'rxjs/operator/map'
 import protocolToAgent from './protocol_to_agent'
 import {cacheDir} from './config'
+import {httpGet} from './util'
 
 const cache = new Cache(cacheDir)
 
@@ -27,13 +29,7 @@ function fetchFromRegistry (dest, tarball, shasum) {
     // We verify the actual shasum to detect "corrupted" packages.
     const actualShasum = crypto.createHash('sha1')
 
-    const opts = url.parse(tarball)
-    opts.agent = protocolToAgent[opts.protocol]
-    if (!opts.agent) {
-      return observer.error(new Error(tarball + ' uses an unsupported protocol'))
-    }
-
-    http.get(opts, (res) => {
+    httpGet(tarball).subscribe((res) => {
       if (res.statusCode !== 200) {
         return observer.error(new Error('Unexpected status code ' + res.statusCode + ' for ' + tarball))
       }
@@ -61,7 +57,7 @@ function fetchFromRegistry (dest, tarball, shasum) {
         .pipe(gunzip()).on('error', errHandler)
         .pipe(untar).on('error', errHandler)
         .on('finish', onFinish)
-    }).on('error', errHandler)
+    }, errHandler)
   })
 }
 
