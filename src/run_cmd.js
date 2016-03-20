@@ -1,10 +1,10 @@
 import path from 'path'
 import async from 'async'
 import child_process from 'child_process'
-import assign from 'object-assign'
+import xtend from 'xtend'
 import {sh, shFlag} from './config'
 
-export default function runCmd (cwd, argv) {
+export default function run (cwd, argv) {
   const scripts = argv._.slice(1)
   const pkg = require(path.join(cwd, 'package.json'))
 
@@ -14,7 +14,7 @@ export default function runCmd (cwd, argv) {
     return
   }
 
-  const env = assign({}, process.env, {
+  const env = xtend(process.env, {
     PATH: [
       path.join(cwd, 'node_modules/.bin'), process.env.PATH
     ].join(path.delimiter)

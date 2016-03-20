@@ -30,7 +30,7 @@ export class Cache {
   /**
    * open a write stream into a temporarily cached file for caching a new
    * package.
-   * @return {WriteStream}    Write Stream
+   * @return {WriteStream} - Write Stream
    */
   write () {
     const filename = path.join(this.dir, '.tmp', uuid())

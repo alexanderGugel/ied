@@ -1,10 +1,8 @@
 import init from 'init-package-json'
 import path from 'path'
+import {home} from './config'
 
-const isWindows = process.platform === 'win32'
-const home = process.env[isWindows ? 'USERPROFILE' : 'HOME']
-
-export default function initCmd (cwd, argv) {
+export default function run (cwd, argv) {
   const initFile = path.resolve(home, '.ied-init')
 
   init(cwd, initFile, function (err, data) {

@@ -1,8 +1,7 @@
 import path from 'path'
 
-const isWindows = process.platform === 'win32'
-const home = process.env[isWindows ? 'USERPROFILE' : 'HOME']
-
+export const isWindows = process.platform === 'win32'
+export const home = process.env[isWindows ? 'USERPROFILE' : 'HOME']
 export const registry = process.env.IED_REGISTRY || 'https://registry.npmjs.org/'
 export const cacheDir = process.env.IED_CACHE_DIR || path.join(home, '.ied_cache')
 export const globalNodeModules = process.env.IED_GLOBAL_NODE_MODULES || path.join(home, '.node_modules')

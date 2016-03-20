@@ -8,9 +8,7 @@ function filterShasums (entry) {
 }
 
 // Equivalent to `npm ls`. Prints the dependency graph.
-export default function lsCmd (cwd) {
-  // TODO Follow symlinks (sub-dependencies).
-
+export default function run (cwd) {
   const node_modules = path.join(cwd, 'node_modules')
 
   async.waterfall([

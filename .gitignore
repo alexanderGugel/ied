@@ -36,3 +36,5 @@ fixtures
 
 # Produced by babel
 lib
+
+esdoc

@@ -112,4 +112,13 @@ export function readlink (path) {
   })
 }
 
-export const readFileJSON = (file) => readFile(file, 'utf8')::map(JSON.parse)
+/**
+ * read a UTF8 encoded JSON file from disk.
+ * @param  {String} filename - filename to be used.
+ * @return {Observable} - observable sequence of a single object representing
+ * the read JSON file.
+ */
+export function readFileJSON (filename) {
+  return readFile(filename, 'utf8')::map(JSON.parse)
+}
+

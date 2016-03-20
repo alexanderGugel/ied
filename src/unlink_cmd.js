@@ -5,7 +5,7 @@ function handleError (err) {
   if (err) throw err
 }
 
-export default function unlinkCmd (cwd, argv) {
+export default function run (cwd, argv) {
   const deps = argv._.slice(1)
 
   if (!deps.length) {

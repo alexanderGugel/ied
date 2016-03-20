@@ -1,7 +1,7 @@
 import * as config from './config'
 import Table from 'easy-table'
 
-export default function configCmd () {
+export default function run () {
   const table = new Table()
 
   Object.keys(config).forEach(function (key) {
