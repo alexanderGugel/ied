@@ -63,7 +63,7 @@ function fetchFromRegistry (dest, tarball, shasum) {
 
 // Fetches the specified tarball. Verifies the passed in shasum if not cached.
 export function fetch (dest, tarball, shasum) {
-  return cache.fetch(dest, shasum)
+  return cache.extract(dest, shasum)
     ::_catch((err) => err.code === 'ENOENT'
       ? fetchFromRegistry(dest, tarball, shasum)
       : ErrorObservable.create(err)

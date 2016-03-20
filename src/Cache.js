@@ -48,23 +48,23 @@ export class Cache {
   }
 
   /**
-   * fetch a dependency from the cache.
+   * extract a dependency from the cache.
    * @param {String} dest - pathname into which the cached dependency should be
    * extracted.
    * @param {String} shasum - shasum (unique identifier) of the cached tarball.
    * @return {Observable} - observable sequence that will be completed once
    * the cached dependency has been fetched.
    */
-  fetch (dest, shasum) {
+  extract (dest, shasum) {
     return Observable.create((observer) => {
-      const finHandler = () => observer.complete()
+      const handler = () => observer.complete()
       const errHandler = (err) => observer.error(err)
 
       const untar = tar.extract(dest, {strip: 1})
       this.read(shasum).on('error', errHandler)
         .pipe(gunzip()).on('error', errHandler)
         .pipe(untar).on('error', errHandler)
-        .on('finish', finHandler)
+        .on('finish', handler)
     })
   }
 }
