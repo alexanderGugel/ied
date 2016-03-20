@@ -1,10 +1,9 @@
 import path from 'path'
 import {NullPkgJSON} from './NullPkgJSON'
-import {Pkg} from './Pkg'
+import {AbstractPkg} from './AbstractPkg'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {ErrorObservable} from 'rxjs/observable/ErrorObservable'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
-import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {_catch} from 'rxjs/operator/catch'
 import {map} from 'rxjs/operator/map'
 import {readFileJSON} from './util'
@@ -13,7 +12,7 @@ import fromPairs from 'lodash.frompairs'
 /**
  * class representing an entry, project level `package.json` file.
  */
-export class EntryPkg extends Pkg {
+export class EntryPkg extends AbstractPkg {
   /**
    * create an instance by reading a `package.json` from disk.
    * @param  {String} cwd - current working directory.
@@ -80,13 +79,5 @@ export class EntryPkg extends Pkg {
       : 'dependencies'
     const pkgJSON = new NullPkgJSON({[key]: nameVersionPairs})
     return pkgJSON
-  }
-
-  fetch () {
-    return EmptyObservable.create()
-  }
-
-  link () {
-    return EmptyObservable.create()
   }
 }
