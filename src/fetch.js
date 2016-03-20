@@ -4,7 +4,7 @@ import tar from 'tar-fs'
 import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
-import {Cache} from './Cache'
+import * as cache from './cache'
 import url from 'url'
 import { Observable } from 'rxjs/Observable'
 import { ErrorObservable } from 'rxjs/observable/ErrorObservable'
@@ -14,8 +14,6 @@ import {map} from 'rxjs/operator/map'
 import protocolToAgent from './protocol_to_agent'
 import {cacheDir} from './config'
 import {httpGet} from './util'
-
-const cache = new Cache(cacheDir)
 
 function fetchFromRegistry (dest, tarball, shasum) {
   return Observable.create((observer) => {

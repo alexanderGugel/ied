@@ -84,7 +84,7 @@ export function getNameVersionPairs (pkgJSON, isEntry) {
   return nameVersionPairs
 }
 
-function resolvePkgJSONs (cwd) {
+function resolveAll (cwd) {
   const targets = Object.create(null)
 
   return this::expand((dep) => {
@@ -141,10 +141,12 @@ export default function installCmd (cwd, argv) {
     ? EntryDep.fromArgv(cwd, argv)
     : EntryDep.fromFS(cwd)
 
-  const resolved = updatedPkgJSONs::resolvePkgJSONs(cwd)::share()
+  const resolved = updatedPkgJSONs
+    ::resolveAll(cwd)::share()
 
   const fetched = resolved::fetchAll()
   const linked = resolved::linkAll()
 
-  return fetched::merge(linked)
+  return EmptyObservable.create()
+    ::merge(linked)::merge(fetched)
 }
