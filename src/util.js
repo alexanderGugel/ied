@@ -35,11 +35,19 @@ export const httpGet = (options) => {
  * @param  {Object|String} options Options as accepted by [httpGet]{@link httpGet}.
  * @return {Object} An observable sequence of the fetched JSON document.
  */
-export const httpGetJSON = (options) => httpGet(options)::concatMap((res) => {
-  const error = FromEventObservable.create(res, 'error')::mergeMap(Observable.throwError)
-  const end = FromEventObservable.create(res, 'end')
-  return FromEventObservable.create(res, 'data')::takeUntil(end::race(error))
-})::toArray()::map((chunks) => Buffer.concat(chunks).toString())::map(JSON.parse)
+export function httpGetJSON (options) {
+  return httpGet(options)
+    ::concatMap((res) => {
+      const error = FromEventObservable.create(res, 'error')
+        ::mergeMap(Observable.throwError)
+      const end = FromEventObservable.create(res, 'end')
+      return FromEventObservable.create(res, 'data')
+        ::takeUntil(end::race(error))
+    })
+    ::toArray()
+    ::map((chunks) => Buffer.concat(chunks).toString())
+    ::map(JSON.parse)
+}
 
 export function readFile (file, options) {
   return Observable.create((observer) => {
@@ -102,15 +110,6 @@ export function readlink (path) {
       }
     })
   })
-}
-
-export const omitError = (code) => (err) => {
-  switch (err.code) {
-    case code:
-      return Observable.return()
-    default:
-      return Observable.throw(err)
-  }
 }
 
 export const readFileJSON = (file) => readFile(file, 'utf8')::map(JSON.parse)

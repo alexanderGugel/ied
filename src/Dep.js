@@ -1,13 +1,13 @@
 import path from 'path'
 import {forceSymlink} from './util'
 import {fetch} from './fetch'
-import {AbstractPkg} from './AbstractPkg'
+import {AbstractDep} from './AbstractDep'
 
 /**
  * class representing a "local" version of a possibly installed package (e.g.
  * during the installation procedure).
  */
-export class Pkg extends AbstractPkg {
+export class Dep extends AbstractDep {
   /**
    * download the tarball of the package into the `target` path.
    * @return {Observable} - an empty observable sequence that will be completed

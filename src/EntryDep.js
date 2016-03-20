@@ -1,6 +1,6 @@
 import path from 'path'
 import {NullPkgJSON} from './NullPkgJSON'
-import {AbstractPkg} from './AbstractPkg'
+import {AbstractDep} from './AbstractDep'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {ErrorObservable} from 'rxjs/observable/ErrorObservable'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
@@ -12,17 +12,17 @@ import fromPairs from 'lodash.frompairs'
 /**
  * class representing an entry, project level `package.json` file.
  */
-export class EntryPkg extends AbstractPkg {
+export class EntryDep extends AbstractDep {
   /**
    * create an instance by reading a `package.json` from disk.
    * @param  {String} cwd - current working directory.
-   * @return {Observabel} - an observable sequence of an `EntryPkg`.
+   * @return {Observabel} - an observable sequence of an `EntryDep`.
    */
   static fromFS (cwd) {
     const filename = path.join(cwd, 'package.json')
     return readFileJSON(filename)
-      ::EntryPkg.catchReadFileJSON()
-      ::map((pkgJSON) => new EntryPkg({pkgJSON, target: cwd}))
+      ::EntryDep.catchReadFileJSON()
+      ::map((pkgJSON) => new EntryDep({pkgJSON, target: cwd}))
   }
 
   /**
@@ -30,13 +30,13 @@ export class EntryPkg extends AbstractPkg {
    * command line arguments.
    * @param  {String} cwd - current working directory.
    * @param  {Array} argv - command line arguments.
-   * @return {Observabel} - an observable sequence of an `EntryPkg`.
+   * @return {Observabel} - an observable sequence of an `EntryDep`.
    */
   static fromArgv (cwd, argv) {
     const target = cwd
-    const pkgJSON = EntryPkg.parseArgv(argv)
-    const entryPkg = new EntryPkg({pkgJSON, target})
-    return ScalarObservable.create(entryPkg)
+    const pkgJSON = EntryDep.parseArgv(argv)
+    const entryDep = new EntryDep({pkgJSON, target})
+    return ScalarObservable.create(entryDep)
   }
 
   /**

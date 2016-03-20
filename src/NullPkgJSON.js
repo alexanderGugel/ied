@@ -5,8 +5,8 @@
 export class NullPkgJSON {
   /**
    * create instance.
-   * @param  {Object} [options.dependencies] - dependencies.
-   * @param  {Object} [devDependencies] - development dependencies.
+   * @param  {Object} [options.dependencies = {}] - dependencies.
+   * @param  {Object} [devDependencies = {}] - development dependencies.
    */
   constructor ({dependencies = {}, devDependencies = {}}) {
     this.dependencies = dependencies

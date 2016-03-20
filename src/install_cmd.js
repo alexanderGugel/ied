@@ -23,8 +23,8 @@ import { _catch } from 'rxjs/operator/catch'
 import { ArrayObservable } from 'rxjs/observable/ArrayObservable'
 import { EmptyObservable } from 'rxjs/observable/EmptyObservable'
 
-import {EntryPkg} from './EntryPkg'
-import {Pkg} from './Pkg'
+import {EntryDep} from './EntryDep'
+import {Dep} from './Dep'
 
 function logSymlinking () {
   return this::_do(([_path, target]) => {
@@ -86,21 +86,21 @@ export function getNameVersionPairs (pkgJSON, isEntry) {
 function resolvePkgJSONs (cwd) {
   const targets = Object.create(null)
 
-  return this::expand((localPkg) => {
-    if (localPkg.target in targets) {
+  return this::expand((dep) => {
+    if (dep.target in targets) {
       return EmptyObservable.create()
     }
-    targets[localPkg.target] = true
+    targets[dep.target] = true
 
     // Also install devDependencies of entry dependency.
-    const isEntry = localPkg instanceof EntryPkg
-    const nameVersionPairs = getNameVersionPairs(localPkg.pkgJSON, isEntry)
+    const isEntry = dep instanceof EntryDep
+    const nameVersionPairs = getNameVersionPairs(dep.pkgJSON, isEntry)
 
     return nameVersionPairs::mergeMap(([ name, version ]) =>
-      resolve(name, version)::map((pkgJSON) => new Pkg({
+      resolve(name, version)::map((pkgJSON) => new Dep({
         pkgJSON,
         target: path.join(cwd, 'node_modules', pkgJSON.dist.shasum),
-        path: path.join(localPkg.target, 'node_modules', name)
+        path: path.join(dep.target, 'node_modules', name)
       }))
     )
   })
@@ -113,7 +113,7 @@ function resolvePkgJSONs (cwd) {
  * once all dependencies have been symlinked.
  */
 function linkAll () {
-  return this::distinctKey('path')::mergeMap((pkg) => pkg.link())
+  return this::distinctKey('path')::mergeMap((dep) => dep.link())
 }
 
 /**
@@ -122,7 +122,7 @@ function linkAll () {
  * once all dependencies have been downloaded.
  */
 function fetchAll () {
-  return this::distinctKey('target')::mergeMap((pkg) => pkg.fetch())
+  return this::distinctKey('target')::mergeMap((dep) => dep.fetch())
 }
 
 /**
@@ -137,8 +137,8 @@ export default function installCmd (cwd, argv) {
   const explicit = !!(argv._.length - 1)
 
   const updatedPkgJSONs = explicit
-    ? EntryPkg.fromArgv(cwd, argv)
-    : EntryPkg.fromFS(cwd)
+    ? EntryDep.fromArgv(cwd, argv)
+    : EntryDep.fromFS(cwd)
 
   const resolved = updatedPkgJSONs::resolvePkgJSONs(cwd)::share()
 
