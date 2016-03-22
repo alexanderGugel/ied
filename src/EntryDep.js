@@ -93,9 +93,9 @@ export class EntryDep {
   /**
    * parse the command line arguments and create a `package.json` file from it.
    * @private
-   * @param  {Array} argv - command line arguments
+   * @param  {Array} argv - command line arguments.
    * @return {NullPkgJSON} - package.json created from explicit dependencies
-   * supplied via command line arguments
+   * supplied via command line arguments.
    */
   static parseArgv (argv) {
     const names = argv._.slice(1)

@@ -4,6 +4,11 @@ import child_process from 'child_process'
 import xtend from 'xtend'
 import {sh, shFlag} from './config'
 
+/**
+ * run a `package.json` script.
+ * @param {String} cwd - current working directory.
+ * @param  {Object} argv - command line arguments.
+ */
 export default function run (cwd, argv) {
   const scripts = argv._.slice(1)
   const pkg = require(path.join(cwd, 'package.json'))

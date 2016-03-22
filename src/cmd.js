@@ -40,7 +40,7 @@ if (argv.registry) {
 
 // This doesn't have to be an IIFE, since Node wraps everything in a function
 // anyways, but standard doesn't like return statements here.
-(function () {
+(() => {
   if (argv.help) {
     return helpCmd()
   }
@@ -92,4 +92,4 @@ if (argv.registry) {
     default:
       helpCmd()
   }
-}())
+})()
