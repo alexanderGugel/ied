@@ -8,10 +8,6 @@ import {mkdirp} from './util'
 import {cacheDir} from './config'
 
 /**
- * File system based cache (without predefined eviction strategy).
- */
-
-/**
  * initialize the cache.
  * @return {Observable} - an observable sequence that will be completed once
  * the base directory of the cache has been created.

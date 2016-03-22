@@ -1,5 +1,4 @@
 import url from 'url'
-import got from 'got'
 import {registry} from './config'
 
 function ping (cb) {

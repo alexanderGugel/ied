@@ -1,4 +1,3 @@
-import http from 'http'
 import gunzip from 'gunzip-maybe'
 import tar from 'tar-fs'
 import crypto from 'crypto'
@@ -15,7 +14,7 @@ import protocolToAgent from './protocol_to_agent'
 import {cacheDir} from './config'
 import {httpGet} from './util'
 
-function fetchFromRegistry (dest, tarball, shasum) {
+export function fetchFromRegistry (dest, tarball, shasum) {
   return Observable.create((observer) => {
     const errHandler = (err) => observer.error(err)
 
@@ -47,9 +46,7 @@ function fetchFromRegistry (dest, tarball, shasum) {
         })
       }
 
-      res.on('data', (chunk) =>
-        actualShasum.update(chunk)
-      )
+      res.on('data', (chunk) => actualShasum.update(chunk))
 
       res.on('error', errHandler)
         .pipe(gunzip()).on('error', errHandler)

@@ -1,6 +1,9 @@
 import path from 'path'
-import {forceSymlink} from './util'
-import {fetch} from './fetch'
+import {forceSymlink, download, rename} from './util'
+import * as cache from './cache'
+import {_catch} from 'rxjs/operator/catch'
+import {mergeMap} from 'rxjs/operator/mergeMap'
+import assert from 'assert'
 
 /**
  * class representing a "local" version of a possibly installed package (e.g.
@@ -29,7 +32,16 @@ export class Dep {
    */
   fetch () {
     const {target, pkgJSON: {dist: {tarball, shasum}}} = this
-    return fetch(target, tarball, shasum)
+    return cache.extract(target, shasum)
+      ::_catch((err) => err.code === 'ENOENT'
+        ? download(tarball)
+        : ErrorObservable.create(err)
+      )
+      // ::mergeMap(({ shasum: actualShasum, stream }) => {
+      //   console.log(actualShasum.digest('hex'))
+      //   // assert.equal(shasum, actualShasum.digest('hex'))
+      //   return rename(stream.path, target)
+      // })
   }
 
   /**

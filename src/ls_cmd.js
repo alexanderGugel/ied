@@ -20,8 +20,8 @@ export default function run (cwd) {
       async.map(shasums, function (shasum, cb) {
         const pkgJSON = path.join(node_modules, shasum, 'package.json')
         fs.readFile(pkgJSON, 'utf8', function (err, raw) {
+          let pkg
           if (!err) {
-            let pkg
             try {
               pkg = JSON.parse(raw)
             } catch (e) {
