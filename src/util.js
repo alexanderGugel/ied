@@ -216,10 +216,10 @@ export function fetchFromRegistry (resp) {
   })
 }
 
-function _assertStatusCode (expected) {
+export function assertStatusCode (expected) {
   return this::_do((resp) => {
     if (resp.statusCode !== expected) {
-      throw new Error('unexpected status code: expected ${expected}, got ${resp.statusCode}')
+      throw new Error(`unexpected status code: expected ${expected}, got ${resp.statusCode}`)
     }
   })
 }
@@ -279,7 +279,7 @@ function _calcShasum () {
  */
 export function download (url) {
   const resp = httpGet(url)
-    ::_assertStatusCode(200)
+    ::assertStatusCode(200)
     ::share()
 
   return resp
