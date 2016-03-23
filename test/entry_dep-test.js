@@ -13,7 +13,7 @@ afterEach(() => sandbox.restore())
 
 describe('entryDep.fromArgv', () => {
   it('should return ScalarObservable', () => {
-    const result = entryDep.fromArgv('/', {_: ['install', 'tap']})
+    const result = entryDep.fromArgv('/', {_: ['install'], packages: ['tap']})
     assert(result instanceof ScalarObservable)
   })
 
@@ -23,7 +23,7 @@ describe('entryDep.fromArgv', () => {
     const next = sinon.spy()
     const error = sinon.spy()
     const complete = sinon.spy()
-    entryDep.fromArgv('/cwd', {_: []}).subscribe(next, error, complete)
+    entryDep.fromArgv('/cwd', {_: [], packages: []}).subscribe(next, error, complete)
     sinon.assert.calledWith(next, ({pkgJSON, target: '/cwd'}))
     sinon.assert.calledOnce(next)
     sinon.assert.notCalled(error)
@@ -34,19 +34,19 @@ describe('entryDep.fromArgv', () => {
 describe('entryDep.parseArgv', () => {
   const scenarios = [
     {
-      argv: { _: ['install', 'tap'] },
+      argv: { _: ['install'], packages: ['tap'] },
       pkgJSON: {
         dependencies: { tap: '*' }
       }
     },
     {
-      argv: { _: ['install', 'tap'], saveDev: true },
+      argv: { _: ['install'], packages: ['tap'], saveDev: true },
       pkgJSON: {
         devDependencies: { tap: '*' }
       }
     },
     {
-      argv: { _: ['install', 'tap', 'browserify'], saveDev: true },
+      argv: { _: ['install'], packages: ['tap', 'browserify'], saveDev: true },
       pkgJSON: {
         devDependencies: {
           tap: '*',
@@ -55,7 +55,7 @@ describe('entryDep.parseArgv', () => {
       }
     },
     {
-      argv: { _: ['install', 'tap', 'browserify'] },
+      argv: { _: ['install'], packages: ['tap', 'browserify']},
       pkgJSON: {
         dependencies: {
           tap: '*',

@@ -195,45 +195,57 @@ keep the API predictable for regular npm-users. This means certain flags, such
 as for example `--save`, `--save-dev`, `--only`, are supported.
 
 ```
-  ied is a package manager for Node.
+ied is a package manager for Node.
 
-  Usage:
+Usage:
 
-    ied command [arguments]
+ied <command> [arguments]
 
-  The commands are:
+Commands:
+  help [command]        View this help, or help on an individual command
+  install [packages..]  Fetch all packages or an individual package
+  run <command..>       Run a package.json script
+  shell                 Enter a sub-shell with an augmented PATH
+  ping                  Check if the registry is up
+  ls                    Print the dependency graph
+  config                Print the current config
+  init                  Initialize a new package
+  link [package]        Link the current package or into it
+  unlink [package]      Unlink the current package or from it
+  cache clean           Clean the global package cache
+  start                 runs `ied run start`
+  stop                  runs `ied run stop`
+  build                 runs `ied run build`
+  test                  runs `ied run test`
 
-    install     fetch packages and dependencies
-    run         run a package.json script
-    test        run the test-suite of the current package
-    shell       enter a sub-shell with augmented PATH
-    ping        check if the registry is up
-    ls          print the dependency graph
-    config      print the used config
-    init        initialize a new package
-    link        link the current package or into it
-    unlink      unlink the current package or from it
+Options:
+  --version   Show version number                 [boolean]
+  -h, --help  Show usage information              [boolean]
 
-  Flags:
-    -h, --help      show usage information
-    -v, --version   print the current version
-    -S, --save      update package.json dependencies
-    -D, --save-dev  update package.json devDependencies
-    -o, --only      install a subset of the dependencies
-    -r, --registry  use a custom registry (default: http://registry.npmjs.org/)
+README:  https://github.com/alexanderGugel/ied
+ISSUES:  https://github.com/alexanderGugel/ied/issues
 
-  Example:
-    ied install
-    ied install <pkg>
-    ied install <pkg>@<version>
-    ied install <pkg>@<version range>
+---
 
-    Can specify one or more: ied install semver@^5.0.1 tape
-    If no argument is supplied, installs dependencies from package.json.
-    Sub-commands can also be called via their shorthand aliases.
+ied install [packages..]
 
-  README:  https://github.com/alexanderGugel/ied
-  ISSUES:  https://github.com/alexanderGugel/ied/issues
+Options:
+  --version           Show version number                                          [boolean]
+  -h, --help, --help  Show usage information                                       [boolean]
+  --save, -S          Update package.json dependencies                             [boolean]
+  --save-dev, -D      Update package.json devDependencies                          [boolean]
+  --only, -o          Install a subset of dependencies
+  --registry, -r      Use a custom registry          [default: "https://registry.npmjs.org"]
+  -b, --build         Execute lifecycle scripts upon completion (e.g. postinstall) [boolean]
+
+Examples:
+  src/cmd.js install
+  src/cmd.js install <pkg>
+  src/cmd.js install <pkg> <pkg2>
+  src/cmd.js install <pkg>@<version>
+  src/cmd.js install <pkg>@<version range>
+  src/cmd.js install --only=production
+  src/cmd.js install --registry="https://npm.mycorp.com" <pkg>
 ```
 
 Development notes

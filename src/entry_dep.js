@@ -56,7 +56,7 @@ export function catchReadFileJSON () {
  * supplied via command line arguments.
  */
 export function parseArgv (argv) {
-  const names = argv._.slice(1)
+  const names = argv.packages
 
   const nameVersionPairs = fromPairs(names.map((target) => {
     const nameVersion = /^(@?.+?)(?:@(.+)?)?$/.exec(target)

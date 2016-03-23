@@ -10,7 +10,7 @@ import {sh, shFlag} from './config'
  * @param  {Object} argv - command line arguments.
  */
 export default function runCmd (cwd, argv) {
-  const scripts = argv._.slice(1)
+  const scripts = argv.command
   const pkg = require(path.join(cwd, 'package.json'))
 
   if (!scripts.length) {
@@ -35,6 +35,7 @@ export default function runCmd (cwd, argv) {
     const scriptCmds = scripts.map((scriptName) => {
       return pkg.scripts[scriptName]
     }).filter((scriptCmd) => {
+      if (!scriptCmd) return cb(new Error(`Missing script: ${scriptName}`), null)
       return scriptCmd
     })
 
