@@ -14,13 +14,13 @@
     "gunzip-maybe": "^1.2.1",
     "https-proxy-agent": "^1.0.0",
     "init-package-json": "^1.9.1",
-    "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
     "node-uuid": "^1.4.3",
     "npm-package-arg": "^4.1.0",
     "object-assign": "^3.0.0",
     "semver": "^5.0.1",
-    "tar-fs": "^1.8.1"
+    "tar-fs": "^1.8.1",
+    "yargs": "^4.3.2"
   },
   "devDependencies": {
     "mocha": "^2.3.3",
