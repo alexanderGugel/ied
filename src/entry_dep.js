@@ -10,23 +10,12 @@ import {readFileJSON} from './util'
 import fromPairs from 'lodash.frompairs'
 import objectEntries from 'object.entries'
 import xtend from 'xtend'
+import {Dep} from './dep'
 
 /**
  * class representing an entry, project level `package.json` file.
  */
-export class EntryDep {
-  /**
-   * create instance.
-   * @param {Object} [options.pkgJSON] - an object
-   * representing a `package.json` file.
-   * @param {String} [options.cwd] - current working directory used for
-   * determining the target.
-   */
-  constructor ({pkgJSON, cwd}) {
-    this.pkgJSON = pkgJSON
-    this.cwd = cwd
-  }
-
+export class EntryDep extends Dep {
   /**
    * extract dependencies as an observable sequence of `[name, version]` tuples.
    * @return {ArrayObservable} - observable sequence of `[name, version]` pairs.
@@ -38,26 +27,6 @@ export class EntryDep {
     return ArrayObservable.create(entries)
   }
 
-  get target () {
-    return this.cwd
-  }
-
-  /**
-   * download the dependency into its `target`.
-   * @return {EmptyObservable} - an empty observable sequence.
-   */
-  fetch () {
-    return EmptyObservable.create()
-  }
-
-  /**
-   * create a symbolic link that exposes the dependency.
-   * @return {EmptyObservable} - an empty observable sequence.
-   */
-  link () {
-    return EmptyObservable.create()
-  }
-
   /**
    * create an instance by reading a `package.json` from disk.
    * @param  {String} cwd - current working directory.
@@ -67,7 +36,7 @@ export class EntryDep {
     const filename = path.join(cwd, 'package.json')
     return readFileJSON(filename)
       ::EntryDep.catchReadFileJSON()
-      ::map((pkgJSON) => new EntryDep({pkgJSON, cwd}))
+      ::map((pkgJSON) => new EntryDep({pkgJSON, target: cwd}))
   }
 
   /**
@@ -78,8 +47,8 @@ export class EntryDep {
    * @return {Observabel} - an observable sequence of an `EntryDep`.
    */
   static fromArgv (cwd, argv) {
-    const pkgJSON = EntryDep.parseArgv(argv)
-    const entryDep = new EntryDep({pkgJSON, cwd})
+    const pkgJSON = EntryDep._parseArgv(argv)
+    const entryDep = new EntryDep({pkgJSON, target: cwd})
     return ScalarObservable.create(entryDep)
   }
 
@@ -110,7 +79,7 @@ export class EntryDep {
    * @return {NullPkgJSON} - package.json created from explicit dependencies
    * supplied via command line arguments.
    */
-  static parseArgv (argv) {
+  static _parseArgv (argv) {
     const names = argv._.slice(1)
 
     const nameVersionPairs = fromPairs(names.map((target) => {

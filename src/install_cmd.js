@@ -88,12 +88,44 @@ function resolveAll (cwd) {
 }
 
 /**
+ * create a relative symbolic link to a dependency.
+ * @param {Dep} dep - dependency to be linked.
+ * @return {Observable} - an empty observable sequence that will be completed
+ * once the symbolic link has been created.
+ */
+function link (dep) {
+  const relTarget = path.relative(dep.path, dep.target)
+  return forceSymlink(relTarget, dep.path)
+}
+
+/**
  * symlink the intermediate results of the underlying observable sequence
  * @return {Observable} - an empty observable sequence that will be completed
  * once all dependencies have been symlinked.
  */
 function linkAll () {
-  return this::distinctKey('path')::mergeMap((dep) => dep.link())
+  return this::distinctKey('path')::mergeMap(link)
+}
+
+/**
+ * download the tarball of the package into the `target` path.
+ * @param {Dep} dep - dependency to be fetched.
+ * @return {Observable} - an empty observable sequence that will be completed
+ * once the dependency has been downloaded.
+ */
+static fetch (dep) {
+  return this
+  // const {target, pkgJSON: {dist: {tarball, shasum}}} = this
+  // return cache.extract(target, shasum)
+  //   ::_catch((err) => err.code === 'ENOENT'
+  //     ? download(tarball)
+  //     : ErrorObservable.create(err)
+  //   )
+  // ::mergeMap(({ shasum: actualShasum, stream }) => {
+  //   console.log(actualShasum.digest('hex'))
+  //   // assert.equal(shasum, actualShasum.digest('hex'))
+  //   return rename(stream.path, target)
+  // })
 }
 
 /**
@@ -102,7 +134,7 @@ function linkAll () {
  * once all dependencies have been downloaded.
  */
 function fetchAll () {
-  return this::distinctKey('target')::mergeMap((dep) => dep.fetch())
+  return this::distinctKey('target')::mergeMap(Dep.fetch)
 }
 
 /**
@@ -123,8 +155,8 @@ export default function installCmd (cwd, argv) {
   const resolved = updatedPkgJSONs
     ::resolveAll(cwd)::share()
 
-  const fetched = resolved::fetchAll()
-  const linked = resolved::linkAll()
+  const fetched = resolved::skip(1)::fetchAll()
+  const linked = resolved::skip(1)::linkAll()
 
   return EmptyObservable.create()
     ::merge(linked)::merge(fetched)
