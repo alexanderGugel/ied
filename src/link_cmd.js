@@ -8,7 +8,7 @@ function handleError (err) {
   if (err) throw err
 }
 
-export default function run (cwd, argv) {
+export default function linkCmd (cwd, argv) {
   var deps = argv._.slice(1)
   if (!deps.length) {
     async.series([

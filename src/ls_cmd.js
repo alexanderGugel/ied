@@ -8,7 +8,7 @@ function filterShasums (entry) {
 }
 
 // Equivalent to `npm ls`. Prints the dependency graph.
-export default function run (cwd) {
+export default function lsCmd (cwd) {
   const node_modules = path.join(cwd, 'node_modules')
 
   async.waterfall([

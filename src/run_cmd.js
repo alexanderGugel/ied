@@ -9,7 +9,7 @@ import {sh, shFlag} from './config'
  * @param {String} cwd - current working directory.
  * @param  {Object} argv - command line arguments.
  */
-export default function run (cwd, argv) {
+export default function runCmd (cwd, argv) {
   const scripts = argv._.slice(1)
   const pkg = require(path.join(cwd, 'package.json'))
 

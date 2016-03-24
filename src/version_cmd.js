@@ -6,7 +6,7 @@ import path from 'path'
  * @return {Subscription} - an RxJS subscription that logs the version
  * number to the console.
  */
-export default function run () {
+export default function versionCmd () {
   return readFileJSON(path.join(__dirname, '../package.json'))
     .subscribe((pkgJSON) => console.log(`ied version ${pkgJSON.version}`))
 }

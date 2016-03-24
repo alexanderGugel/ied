@@ -44,7 +44,9 @@ if (argv.registry) {
     return versionCmd()
   }
 
-  switch (argv._[0]) {
+  const [subCommand] = argv._
+
+  switch (subCommand) {
     case 'i':
     case 'install':
       installCmd = require('./install_cmd').default

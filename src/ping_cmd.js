@@ -7,7 +7,7 @@ function ping () {
   return httpGetJSON(uri)
 }
 
-export default function run () {
+export default function pingCmd () {
   return ping().subscribe(
     (json) => console.log(json),
     (err) => { throw err }
