@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 
-var fs = require('fs')
-var path = require('path')
-var minimist = require('minimist')
-var config = require('../lib/config')
-var installCmd = require('../lib/install_cmd')
-var runCmd = require('../lib/run_cmd')
-var shellCmd = require('../lib/shell_cmd')
-var pingCmd = require('../lib/ping_cmd')
-var lsCmd = require('../lib/ls_cmd')
-var configCmd = require('../lib/config_cmd')
-var initCmd = require('../lib/init_cmd')
-var linkCmd = require('../lib/link_cmd')
-var unlinkCmd = require('../lib/unlink_cmd')
+import fs from 'fs'
+import path from 'path'
+import minimist from 'minimist'
+import config from '../lib/config'
+import installCmd from '../lib/install_cmd'
+import runCmd from '../lib/run_cmd'
+import shellCmd from '../lib/shell_cmd'
+import pingCmd from '../lib/ping_cmd'
+import lsCmd from '../lib/ls_cmd'
+import configCmd from '../lib/config_cmd'
+import initCmd from '../lib/init_cmd'
+import linkCmd from '../lib/link_cmd'
+import unlinkCmd from '../lib/unlink_cmd'
 
 function helpCmd () {
   fs.ReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
@@ -22,8 +22,8 @@ function versionCmd () {
   console.log('ied version', require('../package.json').version)
 }
 
-var cwd = process.cwd()
-var argv = minimist(process.argv.slice(2), {
+const cwd = process.cwd()
+const argv = minimist(process.argv.slice(2), {
   alias: {
     h: 'help',
     v: 'version',
@@ -52,11 +52,7 @@ if (argv.registry) {
   switch (argv._[0]) {
     case 'i':
     case 'install':
-      installCmd(cwd, argv, function (err) {
-        if (err) {
-          throw err
-        }
-      })
+      installCmd(cwd, argv).subscribe()
       break
     case 'sh':
     case 'shell':
@@ -70,7 +66,7 @@ if (argv.registry) {
     case 't':
     case 'test':
       // The test command is simple a run command that executes the test script.
-      var _argv = Object.create(argv)
+      const _argv = Object.create(argv)
       _argv._ = ['run'].concat(argv._)
       runCmd(cwd, _argv)
       break

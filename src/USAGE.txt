@@ -22,7 +22,6 @@ Flags:
   -v, --version   print the current version
   -S, --save      update package.json dependencies
   -D, --save-dev  update package.json devDependencies
-  -o, --only      install a subset of the dependencies
   -r, --registry  use a custom registry (default: http://registry.npmjs.org/)
 
 Example:
