@@ -8,6 +8,8 @@ import {_catch} from 'rxjs/operator/catch'
 import {map} from 'rxjs/operator/map'
 import {readFileJSON} from './util'
 import fromPairs from 'lodash.frompairs'
+import objectEntries from 'object.entries'
+import xtend from 'xtend'
 
 /**
  * class representing an entry, project level `package.json` file.
@@ -23,6 +25,17 @@ export class EntryDep {
   constructor ({pkgJSON, cwd}) {
     this.pkgJSON = pkgJSON
     this.cwd = cwd
+  }
+
+  /**
+   * extract dependencies as an observable sequence of `[name, version]` tuples.
+   * @return {ArrayObservable} - observable sequence of `[name, version]` pairs.
+   */
+  get subDependencies () {
+    const {dependencies, devDependencies} = this.pkgJSON
+    const allDependencies = xtend(dependencies, devDependencies)
+    const entries = objectEntries(allDependencies)
+    return ArrayObservable.create(entries)
   }
 
   get target () {

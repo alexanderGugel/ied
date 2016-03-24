@@ -4,6 +4,8 @@ import * as cache from './cache'
 import {_catch} from 'rxjs/operator/catch'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import assert from 'assert'
+import objectEntries from 'object.entries'
+import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 
 /**
  * class representing a "local" version of a possibly installed package (e.g.
@@ -23,6 +25,15 @@ export class Dep {
     this.pkgJSON = pkgJSON
     this.target = target
     this.path = path
+  }
+
+  /**
+   * extract dependencies as an observable sequence of `[name, version]` tuples.
+   * @return {ArrayObservable} - observable sequence of `[name, version]` pairs.
+   */
+  get subDependencies () {
+    const entries = objectEntries(this.pkgJSON.dependencies || {})
+    return ArrayObservable.create(entries)  
   }
 
   /**

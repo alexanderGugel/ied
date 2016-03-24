@@ -67,23 +67,6 @@ function saveUpdatedPkgJSON (cwd) {
   )
 }
 
-/**
- * extract dependencies as an observable sequence of `[name, version]` tuples.
- * @param  {Object}  pkgJSON - `package.json` file.
- * @param  {Boolean} isEntry - if true, devDependencies will be included.
- * @return {ArrayObservable} - observable sequence of `[name, version]` pairs.
- */
-export function getNameVersionPairs (pkgJSON, isEntry) {
-  const { dependencies, devDependencies } = pkgJSON
-  const allDependencies = xtend(
-    dependencies, isEntry ? devDependencies : {}
-  )
-  const nameVersionPairs = ArrayObservable.create(
-    objectEntries(allDependencies)
-  )
-  return nameVersionPairs
-}
-
 function resolveAll (cwd) {
   const targets = Object.create(null)
 
@@ -93,11 +76,7 @@ function resolveAll (cwd) {
     }
     targets[dep.target] = true
 
-    // Also install devDependencies of entry dependency.
-    const isEntry = dep instanceof EntryDep
-    const nameVersionPairs = getNameVersionPairs(dep.pkgJSON, isEntry)
-
-    return nameVersionPairs::mergeMap(([ name, version ]) =>
+    return (dep.subDependencies)::mergeMap(([ name, version ]) =>
       resolve(name, version)::map((pkgJSON) => new Dep({
         pkgJSON,
         target: path.join(cwd, 'node_modules', pkgJSON.dist.shasum),
