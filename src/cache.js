@@ -22,7 +22,7 @@ export function init () {
  * @return {WriteStream} - Write Stream
  */
 export function write () {
-  const filename = path.join(cacheDir, '.tmp', uuid())
+  const filename = path.join(cacheDir, '.tmp', uuid.v4())
   return fs.WriteStream(filename)
 }
 
