@@ -1,5 +1,5 @@
 import path from 'path'
-import {NullPkgJSON} from './NullPkgJSON'
+import {NullPkgJSON} from './null_pkg_json'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {ErrorObservable} from 'rxjs/observable/ErrorObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'

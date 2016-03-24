@@ -23,8 +23,8 @@ import {_catch} from 'rxjs/operator/catch'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 
-import {EntryDep} from './EntryDep'
-import {Dep} from './Dep'
+import {EntryDep} from './entry_dep'
+import {Dep} from './dep'
 
 function logSymlinking () {
   return this::_do(([_path, target]) => {
