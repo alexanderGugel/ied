@@ -1,26 +1,7 @@
 #!/usr/bin/env node
 
-import fs from 'fs'
-import path from 'path'
 import minimist from 'minimist'
-import config from '../lib/config'
-import installCmd from '../lib/install_cmd'
-import runCmd from '../lib/run_cmd'
-import shellCmd from '../lib/shell_cmd'
-import pingCmd from '../lib/ping_cmd'
-import lsCmd from '../lib/ls_cmd'
-import configCmd from '../lib/config_cmd'
-import initCmd from '../lib/init_cmd'
-import linkCmd from '../lib/link_cmd'
-import unlinkCmd from '../lib/unlink_cmd'
-
-function helpCmd () {
-  fs.ReadStream(path.join(__dirname, 'USAGE.txt')).pipe(process.stdout)
-}
-
-function versionCmd () {
-  console.log('ied version', require('../package.json').version)
-}
+import config from './config'
 
 const cwd = process.cwd()
 const argv = minimist(process.argv.slice(2), {
@@ -41,55 +22,83 @@ if (argv.registry) {
 // This doesn't have to be an IIFE, since Node wraps everything in a function
 // anyways, but standard doesn't like return statements here.
 (() => {
+  let installCmd
+  let shellCmd
+  let runCmd
+  let lsCmd
+  let pingCmd
+  let configCmd
+  let initCmd
+  let linkCmd
+  let unlinkCmd
+  let helpCmd
+  let versionCmd
+
   if (argv.help) {
+    helpCmd = require('./help_cmd').default
     return helpCmd()
   }
 
   if (argv.version) {
+    versionCmd = require('./version_cmd').default
     return versionCmd()
   }
 
   switch (argv._[0]) {
     case 'i':
     case 'install':
+      installCmd = require('./install_cmd').default
       installCmd(cwd, argv).subscribe()
       break
     case 'sh':
     case 'shell':
+      shellCmd = require('./shell_cmd').default
       shellCmd(cwd)
       break
     case 'r':
     case 'run':
     case 'run-script':
+      runCmd = require('./run_cmd').default
       runCmd(cwd, argv)
       break
     case 't':
     case 'test':
-      // The test command is simple a run command that executes the test script.
+      runCmd = require('./run_cmd').default
       const _argv = Object.create(argv)
       _argv._ = ['run'].concat(argv._)
       runCmd(cwd, _argv)
       break
     case 'ls':
+      lsCmd = require('./ls_cmd').default
       lsCmd(cwd)
       break
     case 'ping':
+      pingCmd = require('./ping_cmd').default
       pingCmd()
       break
     case 'conf':
     case 'config':
+      configCmd = require('./config_cmd').default
       configCmd()
       break
     case 'init':
+      initCmd = require('./init_cmd').default
       initCmd(cwd, argv)
       break
     case 'link':
+      linkCmd = require('./link_cmd').default
       linkCmd(cwd, argv)
       break
     case 'unlink':
+      unlinkCmd = require('./unlink_cmd').default
       unlinkCmd(cwd, argv)
       break
+    case 'version':
+      versionCmd = require('./version_cmd').default
+      versionCmd()
+      break
     default:
+      helpCmd = require('./help_cmd').default
       helpCmd()
   }
 })()
