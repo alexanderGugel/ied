@@ -12,6 +12,35 @@ const sandbox = sinon.sandbox.create()
 
 afterEach(() => sandbox.restore())
 
+describe('NullPkgJSON', () => {
+  context('when no arguments are given', () => {  
+    it('should default to empty dependencies', () => {
+      const pkgJSON = new NullPkgJSON()
+      assert.deepEqual(pkgJSON, { dependencies: {}, devDependencies: {} })
+    })
+  })
+
+  context('when empty object is given', () => {  
+    it('should default to empty dependencies', () => {
+      const pkgJSON = new NullPkgJSON({})
+      assert.deepEqual(pkgJSON, { dependencies: {}, devDependencies: {} })
+    })
+  })
+
+  context('when dependencies are given', () => {  
+    it('should use supplied dependencies', () => {
+      const pkgJSON = new NullPkgJSON({
+        dependencies: { tap: '*' },
+        devDependencies: { standard: '*' }
+      })
+      assert.deepEqual(pkgJSON, {
+        dependencies: { tap: '*' },
+        devDependencies: { standard: '*' }
+      })
+    })
+  })
+})
+
 describe('EntryDep.fromArgv', () => {
   it('should return ScalarObservable', () => {
     const result = EntryDep.fromArgv('/', {_: ['install', 'tap']})

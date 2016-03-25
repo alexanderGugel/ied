@@ -1,8 +1,5 @@
 import path from 'path'
-import {NullPkgJSON} from './null_pkg_json'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
-import {ErrorObservable} from 'rxjs/observable/ErrorObservable'
-import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
 import {_catch} from 'rxjs/operator/catch'
 import {map} from 'rxjs/operator/map'
@@ -10,12 +7,27 @@ import {readFileJSON} from './util'
 import fromPairs from 'lodash.frompairs'
 import objectEntries from 'object.entries'
 import xtend from 'xtend'
-import {Dep} from './dep'
+
+/**
+ * class used for creating `package.json` files with neutral behavior
+ * (e.g. in case of an `ENOENT`).
+ */
+export class NullPkgJSON {
+  /**
+   * create instance.
+   * @param  {Object} [options.dependencies = {}] - dependencies.
+   * @param  {Object} [devDependencies = {}] - development dependencies.
+   */
+  constructor ({dependencies = {}, devDependencies = {}} = {}) {
+    this.dependencies = dependencies
+    this.devDependencies = devDependencies
+  }
+}
 
 /**
  * class representing an entry, project level `package.json` file.
  */
-export class EntryDep extends Dep {
+export class EntryDep {
   /**
    * extract dependencies as an observable sequence of `[name, version]` tuples.
    * @return {ArrayObservable} - observable sequence of `[name, version]` pairs.
