@@ -47,7 +47,7 @@ export class EntryDep extends Dep {
    * @return {Observabel} - an observable sequence of an `EntryDep`.
    */
   static fromArgv (cwd, argv) {
-    const pkgJSON = EntryDep._parseArgv(argv)
+    const pkgJSON = EntryDep.parseArgv(argv)
     const entryDep = new EntryDep({pkgJSON, target: cwd})
     return ScalarObservable.create(entryDep)
   }
@@ -55,7 +55,6 @@ export class EntryDep extends Dep {
   /**
    * gracefully handle `ENOENT` errors when running the install command in
    * projects that don't include a `package.json` file.
-   * @private
    * @return {Observable} - an observable sequence of object representing
    * `package.json` files.
    */
@@ -67,19 +66,18 @@ export class EntryDep extends Dep {
           const pkgJSON = new NullPkgJSON()
           return ScalarObservable.create(pkgJSON)
         default:
-          return ErrorObservable.create(err)
+          throw err
       }
     })
   }
 
   /**
    * parse the command line arguments and create a `package.json` file from it.
-   * @private
    * @param  {Array} argv - command line arguments.
    * @return {NullPkgJSON} - package.json created from explicit dependencies
    * supplied via command line arguments.
    */
-  static _parseArgv (argv) {
+  static parseArgv (argv) {
     const names = argv._.slice(1)
 
     const nameVersionPairs = fromPairs(names.map((target) => {
