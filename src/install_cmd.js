@@ -6,7 +6,6 @@ import fromPairs from 'lodash.frompairs'
 import xtend from 'xtend'
 import {resolve} from './registry'
 import objectEntries from 'object.entries'
-import fetch from './fetch'
 
 import {map} from 'rxjs/operator/map'
 import {expand} from 'rxjs/operator/expand'
@@ -113,7 +112,7 @@ function linkAll () {
  * @return {Observable} - an empty observable sequence that will be completed
  * once the dependency has been downloaded.
  */
-static fetch (dep) {
+function fetch (dep) {
   return this
   // const {target, pkgJSON: {dist: {tarball, shasum}}} = this
   // return cache.extract(target, shasum)
