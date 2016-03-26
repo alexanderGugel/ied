@@ -5,7 +5,18 @@ import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGetJSON} from './util'
 import {registry} from './config'
 
+/**
+ * class used for throwing an error when the required version target is not
+ * available.
+ * @extends Error
+ */
 export class VersionError extends Error {
+  /**
+   * create instance.
+   * @param {String} options.name - name of the package.
+   * @param {String} options.version - unavailable version number.
+   * @param {Array.<String>} options.available - an array of available versions
+   */
   constructor ({ name, version, available }) {
     super(`no satisying version of ${name} in ${available.join(', ')} for ${version}`)
     this.name = 'VersionError'
@@ -13,6 +24,39 @@ export class VersionError extends Error {
     this.version = version
     this.available = available
   }
+
+  /**
+   * name of the error (not the package name),
+   *
+   * @name VersionError#name
+   * @type String
+   * @default "VersionError"
+   * @readonly
+   */
+
+  /**
+   * package name.
+   *
+   * @name VersionError#pkgName
+   * @type String
+   * @readonly
+   */
+  
+  /**
+   * target version that could not be found.
+   *
+   * @name VersionError#version
+   * @type String
+   * @readonly
+   */
+  
+  /**
+   * all available version numbers of the supplied package.
+   *
+   * @name available
+   * @type Array.<String>
+   * @readonly
+   */
 }
 
 /**
