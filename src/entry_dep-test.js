@@ -2,10 +2,9 @@
 
 import assert from 'assert'
 import sinon from 'sinon'
-import {EntryDep} from './entry_dep'
+import {EntryDep, NullPkgJSON} from './entry_dep'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
 import {ErrorObservable} from 'rxjs/observable/ErrorObservable'
-import {NullPkgJSON} from './null_pkg_json'
 import * as util from './util'
 
 const sandbox = sinon.sandbox.create()

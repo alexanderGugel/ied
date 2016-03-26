@@ -5,6 +5,16 @@ import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGetJSON} from './util'
 import {registry} from './config'
 
+export class VersionError extends Error {
+  constructor ({ name, version, available }) {
+    super(`no satisying version of ${name} in ${available.join(', ')} for ${version}`)
+    this.name = 'VersionError'
+    this.pkgName = name
+    this.version = version
+    this.available = available
+  }
+}
+
 /**
  * internal cache used for package root urls.
  * @type {Object}
@@ -32,11 +42,11 @@ export function httpGetPackageRoot (name) {
  */
 export function resolve (name, version) {
   return httpGetPackageRoot(name, registry)::map((packageRoot) => {
-    const availableVersions = Object.keys(packageRoot.versions)
-    const targetVersion = semver.maxSatisfying(availableVersions, version)
+    const available = Object.keys(packageRoot.versions)
+    const targetVersion = semver.maxSatisfying(available, version)
     const target = packageRoot.versions[targetVersion]
     if (!target) {
-      throw new Error(`no version of ${name} that satisfies ${version}`)
+      throw new VersionError({name, version, available})
     }
     return target
   })
