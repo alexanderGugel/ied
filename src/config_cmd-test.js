@@ -1,6 +1,5 @@
-/* global describe context it afterEach */
+/* global describe it afterEach */
 
-import assert from 'assert'
 import sinon from 'sinon'
 import * as config from './config'
 import configCmd from './config_cmd'

@@ -23,7 +23,7 @@ export function getSymlinks (cwd, pkgJSON) {
     path.join(globalNodeModules, pkgJSON.name, bin[name]),
     path.join(globalBin, name)
   ]))
-  return binSymlinks.concat([libSymlink])
+  return [libSymlink].concat(binSymlinks)
 }
 
 /*
@@ -74,7 +74,7 @@ export function unlinkToGlobal (cwd, name, cb) {
 }
 
 /**
- * revert the effects of `ied unlink some-package` by removing the previously
+ * revert the effects of `ied link some-package` by removing the previously
  * created symbolic links from the project's `node_modules` directory (used for
  * `ied unlink some-package`).
  * @param {String} cwd - current working directory.

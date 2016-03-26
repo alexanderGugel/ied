@@ -27,7 +27,7 @@ import {FromEventObservable} from 'rxjs/observable/FromEventObservable'
  * [http#request]{@link https://nodejs.org/api/http.html#http_http_request_options_callback}.
  * @return {Object} An observable sequence of the chunks retrieved from the specified HTTP endpoint.
  */
-export const httpGet = (options) => {
+export function httpGet (options) {
   return Observable.create((observer) => {
     if (typeof options === 'string') {
       options = url.parse(options)
