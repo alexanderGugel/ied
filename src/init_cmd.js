@@ -1,11 +1,11 @@
 import init from 'init-package-json'
 import path from 'path'
-import {home} from './config'
+import config from './config'
 
 export default function initCmd (cwd, argv) {
-  const initFile = path.resolve(home, '.ied-init')
+  const initFile = path.resolve(config.home, '.ied-init')
 
-  init(cwd, initFile, function (err, data) {
+  init(cwd, initFile, (err) => {
     if (err) {
       if (err.message === 'canceled') {
         console.log('init canceled!')

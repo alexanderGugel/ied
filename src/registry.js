@@ -3,7 +3,7 @@ import url from 'url'
 import {map} from 'rxjs/operator/map'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGetJSON} from './util'
-import {registry} from './config'
+import config from './config'
 
 /**
  * class used for throwing an error when the required version target is not
@@ -72,7 +72,7 @@ export const cache = Object.create(null)
  * the package root.
  */
 export function httpGetPackageRoot (name) {
-  const uri = url.resolve(registry, name)
+  const uri = url.resolve(config.registry, name)
   cache[name] = cache[name] || httpGetJSON(uri)::publishReplay().refCount()
   return cache[name]
 }
@@ -85,7 +85,7 @@ export function httpGetPackageRoot (name) {
  * @return {Object} - observable sequence of the `package.json` file.
  */
 export function resolve (name, version) {
-  return httpGetPackageRoot(name, registry)::map((packageRoot) => {
+  return httpGetPackageRoot(name, config.registry)::map((packageRoot) => {
     const available = Object.keys(packageRoot.versions)
     const targetVersion = semver.maxSatisfying(available, version)
     const target = packageRoot.versions[targetVersion]

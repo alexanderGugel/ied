@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import async from 'async'
-import {globalNodeModules, globalBin} from './config'
+import config from './config'
 import forceSymlink from 'force-symlink'
 
 /**
@@ -12,7 +12,7 @@ import forceSymlink from 'force-symlink'
  * created.
  */
 export function getSymlinks (cwd, pkgJSON) {
-  const libSymlink = [cwd, path.join(globalNodeModules, pkgJSON.name)]
+  const libSymlink = [cwd, path.join(config.globalNodeModules, pkgJSON.name)]
   let bin = pkgJSON.bin
   if (typeof bin === 'string') {
     bin = {}
@@ -20,8 +20,8 @@ export function getSymlinks (cwd, pkgJSON) {
   }
   bin = bin || {}
   const binSymlinks = Object.keys(bin).map((name) => ([
-    path.join(globalNodeModules, pkgJSON.name, bin[name]),
-    path.join(globalBin, name)
+    path.join(config.globalNodeModules, pkgJSON.name, bin[name]),
+    path.join(config.globalBin, name)
   ]))
   return [libSymlink].concat(binSymlinks)
 }
@@ -51,7 +51,7 @@ export function linkToGlobal (cwd, cb) {
  */
 export function linkFromGlobal (cwd, name, cb) {
   const dstPath = path.join(cwd, 'node_modules', name)
-  const srcPath = path.join(globalNodeModules, name)
+  const srcPath = path.join(config.globalNodeModules, name)
   console.log(dstPath, '->', srcPath)
   forceSymlink(srcPath, dstPath, cb)
 }

@@ -5,7 +5,7 @@ import fs from 'fs'
 import path from 'path'
 import uuid from 'node-uuid'
 import {mkdirp} from './util'
-import {cacheDir} from './config'
+import config from './config'
 
 /**
  * initialize the cache.
@@ -13,7 +13,7 @@ import {cacheDir} from './config'
  * the base directory of the cache has been created.
  */
 export function init () {
-  return mkdirp(cacheDir)
+  return mkdirp(config.cacheDir)
 }
 
 /**
@@ -22,7 +22,7 @@ export function init () {
  * @return {WriteStream} - Write Stream
  */
 export function write () {
-  const filename = path.join(cacheDir, '.tmp', uuid.v4())
+  const filename = path.join(config.cacheDir, '.tmp', uuid.v4())
   return fs.WriteStream(filename)
 }
 
@@ -32,7 +32,7 @@ export function write () {
  * @return {ReadStream} - Read Stream
  */
 export function read (shasum) {
-  const filename = path.join(cacheDir, shasum)
+  const filename = path.join(config.cacheDir, shasum)
   return fs.ReadStream(filename)
 }
 

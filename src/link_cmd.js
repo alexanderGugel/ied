@@ -1,6 +1,6 @@
 import async from 'async'
 import * as link from './link'
-import * as config from './config'
+import config from './config'
 import mkdirp from 'mkdirp'
 import path from 'path'
 

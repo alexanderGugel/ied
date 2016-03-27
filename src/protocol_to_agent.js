@@ -1,6 +1,6 @@
 import http from 'http'
 import https from 'https'
-import * as config from './config'
+import config from './config'
 import HttpProxyAgent from 'https-proxy-agent'
 
 const httpProxy = config.httpProxy && HttpProxyAgent(config.httpProxy)

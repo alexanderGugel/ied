@@ -2,7 +2,7 @@
 
 import assert from 'assert'
 import sinon from 'sinon'
-import * as config from './config'
+import config from './config'
 import * as link from './link'
 import fs from 'fs'
 
