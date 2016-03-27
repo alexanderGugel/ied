@@ -36,9 +36,9 @@ export default function runCmd (cwd, argv) {
     childProcess.on('error', cb)
   }, function (err, statuses) {
     if (err) throw err
-    const info = scripts.map(function (script, i) {
-      return script + ' exited with status ' + statuses[i]
-    }).join('\n')
+    const info = scripts.map((script, i) =>
+      script + ' exited with status ' + statuses[i]
+    ).join('\n')
     console.log(info)
     const success = statuses.every(function (code) { return code === 0 })
     process.exit(success | 0)
