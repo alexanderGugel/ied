@@ -49,8 +49,8 @@
     "tape": "^4.2.2"
   },
   "scripts": {
-    "test": "mocha src/*-test.js --compilers js:babel-register --reporter min",
-    "dev": "mocha src/*-test.js --compilers js:babel-register --reporter min --watch",
+    "test": "make test",
+    "dev": "make dev",
     "lint": "standard | snazzy"
   },
   "repository": {
