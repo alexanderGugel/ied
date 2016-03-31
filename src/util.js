@@ -1,7 +1,7 @@
-import { Observable } from 'rxjs/Observable'
+import {Observable} from 'rxjs/Observable'
 import http from 'http'
 import https from 'https'
-import { Buffer } from 'buffer'
+import {Buffer} from 'buffer'
 import fs from 'fs'
 import url from 'url'
 import crypto from 'crypto'
@@ -21,6 +21,12 @@ import {concatMap} from 'rxjs/operator/concatMap'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {FromEventObservable} from 'rxjs/observable/FromEventObservable'
 
+import config from './config'
+import HttpProxyAgent from 'https-proxy-agent'
+
+export const httpProxy = config.httpProxy && HttpProxyAgent(config.httpProxy)
+export const httpsProxy = config.httpsProxy && HttpProxyAgent(config.httpsProxy)
+
 /**
  * Wrapper around Node's [http#get]{@link https://nodejs.org/api/http.html#http_http_get_options_callback} method.
  * @param  {Object|String} options URL or options object as expected by
@@ -34,10 +40,10 @@ export function httpGet (options) {
     }
     switch (options.protocol) {
       case 'https:':
-        options.agent = https.globalAgent
+        options.agent = httpsProxy || https.globalAgent
         break
       case 'http:':
-        options.agent = http.globalAgent
+        options.agent = httpProxy || http.globalAgent
     }
 
     const handler = (response) => {
@@ -254,20 +260,6 @@ function _cache () {
     res.pipe(cached)
       .on('error', errHandler)
       .on('finish', finHandler)
-  }))
-}
-
-function _calcShasum () {
-  return this::mergeMap((resp) => Observable.create((observer) => {
-    const shasum = crypto.createHash('sha1')
-    const endHandler = () => {
-      observer.next(shasum.digest('hex'))
-      observer.complete()
-    }
-
-    res
-      .on('data', (chunk) => shasum.update(chunk))
-      .on('end', endHandler)
   }))
 }
 

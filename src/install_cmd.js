@@ -1,89 +1,82 @@
-import {Observable} from 'rxjs/Observable'
 import path from 'path'
-import {readFileJSON, writeFile, stat, readlink, forceSymlink} from './util'
-import log from 'a-logger'
-import fromPairs from 'lodash.frompairs'
 import xtend from 'xtend'
-import {resolve} from './registry'
-import objectEntries from 'object.entries'
-
-import {map} from 'rxjs/operator/map'
-import {expand} from 'rxjs/operator/expand'
-import {distinct} from 'rxjs/operator/distinct'
-import {distinctKey} from 'rxjs/operator/distinctKey'
-import {mergeMap} from 'rxjs/operator/mergeMap'
-import {filter} from 'rxjs/operator/filter'
-import {skip} from 'rxjs/operator/skip'
-import {concatMap} from 'rxjs/operator/concatMap'
-import {_do} from 'rxjs/operator/do'
-import {share} from 'rxjs/operator/share'
-import {merge} from 'rxjs/operator/merge'
-import {_catch} from 'rxjs/operator/catch'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
+import {_do} from 'rxjs/operator/do'
+import {distinctKey} from 'rxjs/operator/distinctKey'
+import {expand} from 'rxjs/operator/expand'
+import {map} from 'rxjs/operator/map'
+import {mergeMap} from 'rxjs/operator/mergeMap'
+import {merge} from 'rxjs/operator/merge'
+import {share} from 'rxjs/operator/share'
+import {skip} from 'rxjs/operator/skip'
 
+import * as cache from './cache'
+import * as registry from './registry'
 import {EntryDep} from './entry_dep'
 import {Dep} from './dep'
+import {download} from './tarball'
+import {forceSymlink} from './util'
+import {logResolved} from './logger'
 
-function logSymlinking () {
-  return this::_do(([_path, target]) => {
-    const relativePath = path.relative(
-      path.join(process.cwd(), 'node_modules'), _path
-    )
-    log.debug(`symlinking ${relativePath}\n\t-> ${target}`)
-  })
-}
-
-function logResolved () {
-  return this::_do(({target, pkgJSON: {name, version}}) => {
-    const basename = path.basename(target)
-    log.debug(`resolved ${basename}: ${name}@${version}`)
-  })
-}
-
-function updatePkgJSONs (argv) {
-  return this::map((outdatedPkgJSON) => {
-    const newDepNames = argv._.slice(1)
-    if (!newDepNames.length) return outdatedPkgJSON
-
-    const newDeps = fromPairs(newDepNames.map((target) => {
-      const nameVersion = /^(@?.+?)(?:@(.+)?)?$/.exec(target)
-      return [ nameVersion[1], nameVersion[2] || '*' ]
+function resolve (cwd, target, name, version) {
+  return registry.resolve(name, version)
+    ::_do(({dist: {shasum}}) => {
+      const parentShasum = cwd === target ? null : path.basename(target)
+      logResolved(parentShasum, shasum, name, version)
+    })
+    ::map((pkgJSON) => new Dep({
+      pkgJSON,
+      target: path.join(cwd, 'node_modules', pkgJSON.dist.shasum),
+      path: path.join(target, 'node_modules', name)
     }))
-
-    const diff = argv.saveDev
-      ? { devDependencies: xtend(outdatedPkgJSON.devDependencies || {}, newDeps) }
-      : { dependencies: xtend(outdatedPkgJSON.dependencies || {}, newDeps) }
-
-    return xtend(outdatedPkgJSON, diff)
-  })
 }
 
-function saveUpdatedPkgJSON (cwd) {
-  const filename = path.join(cwd, 'package.json')
-  return this::mergeMap((pkgJSON) =>
-    writeFile(filename, JSON.stringify(pkgJSON, null, 2) + '\n', 'utf8')
-  )
+/**
+ * extract specified dependencies from a specific `package.json`.
+ *
+ * @param  {Object} pkgJSON - a plain JavaScript object representing a
+ * `package.json` file.
+ * @param  {Array.<String>} fields - an array of dependency fields to be
+ * followed.
+ * @return {ArrayObservable} - an observable sequence of `[name, version]`
+ * entries.
+ */
+function getAllDependencies (pkgJSON, fields) {
+  const dependencies = fields.map((field) => pkgJSON[field])
+  const allDependencies = xtend.apply(null, dependencies)
+  const entries = []
+  const names = Object.keys(allDependencies)
+  for (let i = 0; i < names.length; i++) {
+    const name = names[i]
+    entries[i] = [name, allDependencies[name]]
+  }
+  return ArrayObservable.create(entries)
 }
 
+/**
+ * resolve all dependencies starting at the current working directory.
+ * 
+ * @param  {String} cwd - current working directory.
+ * @return {Observable} - an observable sequence of resolved dependencies.
+ */
 function resolveAll (cwd) {
   const targets = Object.create(null)
 
-  return this::expand((dep) => {
-    if (dep.target in targets) {
-      return EmptyObservable.create()
-    }
-    targets[dep.target] = true
+  return this::expand(({ target, pkgJSON }) => {
+    if (target in targets) return EmptyObservable.create()
+    targets[target] = true
 
-    return (dep.subDependencies)::mergeMap(([ name, version ]) =>
-      resolve(name, version)::map((pkgJSON) => new Dep({
-        pkgJSON,
-        target: path.join(cwd, 'node_modules', pkgJSON.dist.shasum),
-        path: path.join(dep.target, 'node_modules', name)
-      }))
+    // install dependencies and devDependencies of the initial, project-level
+    // package.json
+    const isEntry = target === cwd
+    const fields = isEntry ? ['dependencies', 'devDependencies'] : ['dependencies']
+    const allDependencies = getAllDependencies(pkgJSON, fields)
+
+    return allDependencies::mergeMap(([ name, version ]) =>
+      resolve(cwd, target, name, version)
     )
   })
-    ::logResolved()
 }
 
 /**
@@ -92,9 +85,9 @@ function resolveAll (cwd) {
  * @return {Observable} - an empty observable sequence that will be completed
  * once the symbolic link has been created.
  */
-function link (dep) {
-  const relTarget = path.relative(dep.path, dep.target)
-  return forceSymlink(relTarget, dep.path)
+function link ({ path: absPath, target: absTarget }) {
+  const relTarget = path.relative(absPath, absTarget)
+  return forceSymlink(relTarget, absPath)
 }
 
 /**
@@ -112,19 +105,10 @@ function linkAll () {
  * @return {Observable} - an empty observable sequence that will be completed
  * once the dependency has been downloaded.
  */
-function fetch (dep) {
-  return this
-  // const {target, pkgJSON: {dist: {tarball, shasum}}} = this
-  // return cache.extract(target, shasum)
-  //   ::_catch((err) => err.code === 'ENOENT'
-  //     ? download(tarball)
-  //     : ErrorObservable.create(err)
-  //   )
-  // ::mergeMap(({ shasum: actualShasum, stream }) => {
-  //   console.log(actualShasum.digest('hex'))
-  //   // assert.equal(shasum, actualShasum.digest('hex'))
-  //   return rename(stream.path, target)
-  // })
+function fetch ({target, pkgJSON: {dist: {tarball, shasum}}}) {
+  // console.log('fetch', target, tarball)
+  return EmptyObservable.create()
+  // return download(tarball)
 }
 
 /**
@@ -133,30 +117,27 @@ function fetch (dep) {
  * once all dependencies have been downloaded.
  */
 function fetchAll () {
-  return this::distinctKey('target')::mergeMap(Dep.fetch)
+  return this::distinctKey('target')::mergeMap(fetch)
 }
 
 /**
  * run the installation command.
  * @param  {String} cwd - current working directory (absolute path).
  * @param  {Object} argv - parsed command line arguments.
- * @return {Observable} - an observable sequence that will be completed once the
- * installation is complete.
+ * @return {Observable} - an observable sequence that will be completed once
+ * the installation is complete.
  */
 export default function installCmd (cwd, argv) {
-  const baseDir = path.join(cwd, 'node_modules')
   const explicit = !!(argv._.length - 1)
 
   const updatedPkgJSONs = explicit
     ? EntryDep.fromArgv(cwd, argv)
     : EntryDep.fromFS(cwd)
 
-  const resolved = updatedPkgJSONs
-    ::resolveAll(cwd)::share()
-
-  const fetched = resolved::skip(1)::fetchAll()
-  const linked = resolved::skip(1)::linkAll()
+  const resolved = updatedPkgJSONs::resolveAll(cwd)
+    ::skip(1)::share()
 
   return EmptyObservable.create()
-    ::merge(linked)::merge(fetched)
+    ::merge(resolved::fetchAll())
+    ::merge(resolved::linkAll())
 }

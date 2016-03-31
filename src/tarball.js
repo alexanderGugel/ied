@@ -14,7 +14,7 @@ import protocolToAgent from './protocol_to_agent'
 import {cacheDir} from './config'
 import {httpGet} from './util'
 
-export function fetchFromRegistry (dest, tarball, shasum) {
+export function _download (dest, tarball, shasum) {
   return Observable.create((observer) => {
     const errHandler = (err) => observer.error(err)
 
@@ -56,11 +56,12 @@ export function fetchFromRegistry (dest, tarball, shasum) {
   })
 }
 
-// Fetches the specified tarball. Verifies the passed in shasum if not cached.
-export function fetch (dest, tarball, shasum) {
+export function download (dest, tarball, shasum) {
   return cache.extract(dest, shasum)
-    ::_catch((err) => err.code === 'ENOENT'
-      ? fetchFromRegistry(dest, tarball, shasum)
-      : ErrorObservable.create(err)
-    )
+    ::_catch((err) => {
+      if (err.code === 'ENOENT') {
+        return _download(dest, tarball, shasum)
+      }
+      throw err
+    })
 }

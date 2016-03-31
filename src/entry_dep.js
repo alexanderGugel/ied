@@ -7,6 +7,7 @@ import {readFileJSON} from './util'
 import fromPairs from 'lodash.frompairs'
 import objectEntries from 'object.entries'
 import xtend from 'xtend'
+import {Dep} from './dep'
 
 /**
  * class used for creating `package.json` files with neutral behavior
@@ -27,18 +28,7 @@ export class NullPkgJSON {
 /**
  * class representing an entry, project level `package.json` file.
  */
-export class EntryDep {
-  /**
-   * extract dependencies as an observable sequence of `[name, version]` tuples.
-   * @return {ArrayObservable} - observable sequence of `[name, version]` pairs.
-   */
-  get subDependencies () {
-    const {dependencies, devDependencies} = this.pkgJSON
-    const allDependencies = xtend(dependencies, devDependencies)
-    const entries = objectEntries(allDependencies)
-    return ArrayObservable.create(entries)
-  }
-
+export class EntryDep extends Dep {
   /**
    * create an instance by reading a `package.json` from disk.
    * @param  {String} cwd - current working directory.
