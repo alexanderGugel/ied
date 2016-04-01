@@ -21,7 +21,7 @@ import {concatMap} from 'rxjs/operator/concatMap'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {FromEventObservable} from 'rxjs/observable/FromEventObservable'
 
-import config from './config'
+import * as config from './config'
 import HttpProxyAgent from 'https-proxy-agent'
 
 export const httpProxy = config.httpProxy && HttpProxyAgent(config.httpProxy)

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import minimist from 'minimist'
-import config from './config'
+import * as config from './config'
 
 const cwd = process.cwd()
 const argv = minimist(process.argv.slice(2), {

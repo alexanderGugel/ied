@@ -1,5 +1,5 @@
 import path from 'path'
-import config from './config'
+import * as config from './config'
 import assign from 'object-assign'
 import child_process from 'child_process'
 

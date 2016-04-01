@@ -1,6 +1,6 @@
 import init from 'init-package-json'
 import path from 'path'
-import config from './config'
+import * as config from './config'
 
 export default function initCmd (cwd, argv) {
   const initFile = path.resolve(config.home, '.ied-init')

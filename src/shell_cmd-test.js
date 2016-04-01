@@ -4,7 +4,7 @@ import assert from 'assert'
 import sinon from 'sinon'
 import shellCmd from './shell_cmd'
 import child_process from 'child_process'
-import config from './config'
+import * as config from './config'
 
 const sandbox = sinon.sandbox.create()
 

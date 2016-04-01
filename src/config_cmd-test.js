@@ -1,7 +1,7 @@
 /* global describe it afterEach */
 
 import sinon from 'sinon'
-import config from './config'
+import * as config from './config'
 import configCmd from './config_cmd'
 
 const sandbox = sinon.sandbox.create()

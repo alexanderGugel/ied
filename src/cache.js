@@ -5,7 +5,7 @@ import fs from 'fs'
 import path from 'path'
 import uuid from 'node-uuid'
 import {mkdirp} from './util'
-import config from './config'
+import * as config from './config'
 
 /**
  * initialize the cache.

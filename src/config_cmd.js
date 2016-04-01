@@ -1,4 +1,4 @@
-import config from './config'
+import * as config from './config'
 import Table from 'easy-table'
 
 export default function configCmd () {

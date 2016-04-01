@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import async from 'async'
-import config from './config'
+import * as config from './config'
 import forceSymlink from 'force-symlink'
 
 /**

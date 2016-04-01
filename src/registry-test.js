@@ -9,7 +9,7 @@ import {publishReplay} from 'rxjs/operator/publishReplay'
 import semver from 'semver'
 import * as registry from './registry'
 import * as util from './util'
-import config from './config'
+import * as config from './config'
 
 const sandbox = sinon.sandbox.create()
 

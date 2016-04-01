@@ -3,7 +3,7 @@ import url from 'url'
 import {map} from 'rxjs/operator/map'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGetJSON} from './util'
-import config from './config'
+import * as config from './config'
 
 /**
  * class used for throwing an error when the required version target is not
