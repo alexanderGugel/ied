@@ -18,6 +18,7 @@ import {Dep} from './dep'
 import {download} from './tarball'
 import {forceSymlink} from './util'
 import {logResolved} from './logger'
+import status from './status'
 
 function resolve (cwd, target, name, version) {
   return registry.resolve(name, version)
@@ -64,7 +65,9 @@ function resolveAll (cwd) {
   const targets = Object.create(null)
 
   return this::expand(({ target, pkgJSON }) => {
-    if (target in targets) return EmptyObservable.create()
+    if (target in targets) {
+      return EmptyObservable.create()
+    }
     targets[target] = true
 
     // install dependencies and devDependencies of the initial, project-level
@@ -73,9 +76,16 @@ function resolveAll (cwd) {
     const fields = isEntry ? ['dependencies', 'devDependencies'] : ['dependencies']
     const allDependencies = getAllDependencies(pkgJSON, fields)
 
-    return allDependencies::mergeMap(([ name, version ]) =>
-      resolve(cwd, target, name, version)
-    )
+    return allDependencies
+      ::_do(([ name, version ]) =>
+        status.start().update(`resolving ${name}@${version}`)
+      )
+      ::mergeMap(([ name, version ]) =>
+        resolve(cwd, target, name, version)
+      )
+      ::_do(({ pkgJSON: {name, version, dist: {shasum}} }) => 
+        status.complete().update(`resolved ${name}@${version} [${shasum.substr(0, 7)}]`)
+      )
   })
 }
 

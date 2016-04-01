@@ -156,6 +156,12 @@ export function readFileJSON (filename) {
   return readFile(filename, 'utf8')::map(JSON.parse)
 }
 
+export function setTerminalTitle (title) {
+  process.stdout.write(
+    String.fromCharCode(27) + "]0;" + title + String.fromCharCode(7)
+  )
+}
+
 /**
  * @private
  * @param  {http.Response} res - http response stream.
