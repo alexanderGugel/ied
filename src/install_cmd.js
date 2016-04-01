@@ -17,15 +17,10 @@ import {EntryDep} from './entry_dep'
 import {Dep} from './dep'
 import {download} from './tarball'
 import {forceSymlink} from './util'
-import {logResolved} from './logger'
 import status from './status'
 
 function resolve (cwd, target, name, version) {
   return registry.resolve(name, version)
-    ::_do(({dist: {shasum}}) => {
-      const parentShasum = cwd === target ? null : path.basename(target)
-      logResolved(parentShasum, shasum, name, version)
-    })
     ::map((pkgJSON) => new Dep({
       pkgJSON,
       target: path.join(cwd, 'node_modules', pkgJSON.dist.shasum),
@@ -78,14 +73,14 @@ function resolveAll (cwd) {
 
     return allDependencies
       ::_do(([ name, version ]) =>
-        status.start().update(`resolving ${name}@${version}`)
+        status.update(`resolving ${name}@${version}`).start()
       )
       ::mergeMap(([ name, version ]) =>
         resolve(cwd, target, name, version)
       )
-      ::_do(({ pkgJSON: {name, version, dist: {shasum}} }) => 
-        status.complete().update(`resolved ${name}@${version} [${shasum.substr(0, 7)}]`)
-      )
+      ::_do(({ pkgJSON: {name, version, dist: {shasum}} }) => {
+        status.update(`resolved ${name}@${version} [${shasum.substr(0, 7)}]`).complete()
+      })
   })
 }
 

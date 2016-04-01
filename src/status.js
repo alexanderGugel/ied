@@ -10,6 +10,9 @@ class Status {
   complete (n = 1) {
     this.completed += n
     this.draw()
+    if (this.completed === this.started) {
+      this.clear()
+    }
     return this
   }
 
@@ -28,9 +31,29 @@ class Status {
   draw () {
     const ratio = this.started ? this.completed / this.started : 0
     const percentage = Math.ceil(ratio * 10000) / 100
+
     const title = `${percentage.toFixed(2)}% - ${this.status}`
     setTerminalTitle(title)
+
+    if (!process.stderr.isTTY) return
+    process.stderr.cursorTo(0)
+    let barWidth = Math.floor(Status.WIDTH * ratio)
+    let bar = '['
+    for (let i = 0; i < Status.WIDTH; i++) {
+      bar += i <= barWidth ? '#' : ' '
+    }
+    bar += '] '
+    process.stderr.write(bar + percentage.toFixed(2) + '%')
+    process.stderr.clearLine(1)
+  }
+
+  clear () {
+    if (!process.stderr.isTTY) return
+    process.stderr.clearLine()
+    process.stderr.cursorTo(0)
   }
 }
+
+Status.WIDTH = 50
 
 export default new Status()
