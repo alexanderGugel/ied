@@ -10,7 +10,6 @@ import { ErrorObservable } from 'rxjs/observable/ErrorObservable'
 import { EmptyObservable } from 'rxjs/observable/EmptyObservable'
 import { _catch } from 'rxjs/operator/catch'
 import {map} from 'rxjs/operator/map'
-import protocolToAgent from './protocol_to_agent'
 import {cacheDir} from './config'
 import {httpGet} from './util'
 

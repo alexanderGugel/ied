@@ -53,7 +53,7 @@ clean:
 	rm -rf $(BOOTSTRAP_DIR)
 
 test:
-	$(DEPS_BIN_DIR)/src/*-test.js --compilers js:babel-register --reporter min
+	$(DEPS_BIN_DIR)/mocha src/*-test.js --compilers js:babel-register --reporter min
 
 dev:
 	$(DEPS_BIN_DIR)/mocha src/*-test.js --compilers js:babel-register --reporter min --watch
