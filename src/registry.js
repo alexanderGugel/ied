@@ -1,6 +1,8 @@
 import semver from 'semver'
 import url from 'url'
 import {map} from 'rxjs/operator/map'
+import {_do} from 'rxjs/operator/do'
+import {retry} from 'rxjs/operator/retry'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGetJSON} from './util'
 import * as config from './config'
@@ -28,7 +30,7 @@ export class VersionError extends Error {
   }
 
   /**
-   * name of the error (not the package name),
+   * name of the error (not the package name).
    *
    * @name VersionError#name
    * @type String
@@ -61,6 +63,41 @@ export class VersionError extends Error {
    */
 }
 
+export class PackageRootValidationError extends SyntaxError {
+  /**
+   * create instance.
+   * @param  {String} url - url of the package root.
+   * @param  {Object} body - body of the invalid package root.
+   */
+  constructor (url, body) {
+    super(`invalid package root at ${url}`)
+    this.name = 'PackageRootValidationError'
+    this.url = url
+    this.body = body
+  }
+  
+  /**
+   * name of the error.
+   *
+   * @name VersionError#name
+   * @type String
+   * @default "PackageRootValidationError"
+   * @readonly
+   */
+
+  /**
+   * url of the package root.
+   * @type String
+   * @readonly
+   */
+  
+  /**
+   * body of the invalid package root.
+   * @type Object
+   * @readonly
+   */
+}
+
 /**
  * fetch the CommonJS package root JSON document for a specific npm package.
  * @param {String} name - package name.
@@ -72,8 +109,17 @@ export function httpGetPackageRoot (name) {
   const cached = imCache.get(uri)
   if (cached) return cached
   const result = httpGetJSON(uri)
+    ::validatePackageRoot(uri)
     ::publishReplay().refCount()
   return imCache.set(uri, result)
+}
+
+export function validatePackageRoot (url) {
+  return this::_do((body) => {
+    if (!body) throw new PackageRootValidationError(url, body)
+    if (body.error) throw new Error(body.error)
+    if (typeof body.versions !== 'object') throw new PackageRootValidationError(url, body)
+  })
 }
 
 /**
@@ -88,9 +134,7 @@ export function resolve (name, version) {
     const available = Object.keys(packageRoot.versions)
     const targetVersion = semver.maxSatisfying(available, version)
     const target = packageRoot.versions[targetVersion]
-    if (!target) {
-      throw new VersionError(name, version, available)
-    }
+    if (!target) throw new VersionError(name, version, available)
     return target
   })
 }

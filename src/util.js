@@ -62,7 +62,8 @@ export function httpGet (options) {
  */
 export function httpGetJSON (options) {
   return httpGet(options)
-    ::concatMap((res) => {
+    ::assertStatusCode(200, options)
+    ::mergeMap((res) => {
       const error = FromEventObservable.create(res, 'error')
         ::mergeMap(Observable.throwError)
       const end = FromEventObservable.create(res, 'end')
@@ -228,10 +229,19 @@ export function fetchFromRegistry (resp) {
   })
 }
 
-export function assertStatusCode (expected) {
+export class StatusCodeAssertionError extends Error {
+  constructor (actual, expected, options) {
+    super(`unexpected status code: expected ${expected}, got ${actual} for ${JSON.stringify(options)}`)
+    this.actual = actual
+    this.expected = expected
+    this.options = options
+  }
+}
+
+export function assertStatusCode (expected, options) {
   return this::_do((resp) => {
     if (resp.statusCode !== expected) {
-      throw new Error(`unexpected status code: expected ${expected}, got ${resp.statusCode}`)
+      throw new StatusCodeAssertionError(resp.statusCode, expected, options)
     }
   })
 }
