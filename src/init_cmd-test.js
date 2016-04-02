@@ -1,4 +1,4 @@
-/* global describe it afterEach */
+/* global describe it */
 
 import assert from 'assert'
 import initCmd from './init_cmd'

@@ -11,7 +11,7 @@ import {merge} from 'rxjs/operator/merge'
 import {share} from 'rxjs/operator/share'
 import {skip} from 'rxjs/operator/skip'
 
-import * as cache from './cache'
+import * as cache from './fs_cache'
 import * as registry from './registry'
 import {EntryDep} from './entry_dep'
 import {Dep} from './dep'

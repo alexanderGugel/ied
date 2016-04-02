@@ -8,7 +8,7 @@ import tar from 'tar-fs'
 import uuid from 'node-uuid'
 import {Observable} from 'rxjs/Observable'
 
-import * as cache from './cache'
+import * as cache from './fs_cache'
 import * as config from './config'
 import * as util from './util'
 
@@ -16,7 +16,7 @@ const sandbox = sinon.sandbox.create()
 
 afterEach(() => sandbox.restore())
 
-describe('cache.init', () => {
+describe('fsCache.init', () => {
   it('should return Observable', () => {
     assert(cache.init() instanceof Observable)
   })
@@ -30,7 +30,7 @@ describe('cache.init', () => {
   })
 })
 
-describe('cache.write', () => {
+describe('fsCache.write', () => {
   it('should open a WriteStream to random temporary location in cacheDir', () => {
     const writeStream = {}
     const randomId = '123'
@@ -41,7 +41,7 @@ describe('cache.write', () => {
   })
 })
 
-describe('cache.read', () => {
+describe('fsCache.read', () => {
   it('should open a ReadStream to specified shasum in cacheDir', () => {
     const readStream = {}
     const shasum = '5e2f6970611f079c7cf857de1dc7aa1b480de7a5'
@@ -51,7 +51,7 @@ describe('cache.read', () => {
   })
 })
 
-describe('cache.extract', () => {
+describe('fsCache.extract', () => {
   it('should return lazy Observable', () => {
     sandbox.spy(cache, 'read')
     const shasum = '5e2f6970611f079c7cf857de1dc7aa1b480de7a5'

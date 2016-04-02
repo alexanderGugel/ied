@@ -4,6 +4,7 @@ import {map} from 'rxjs/operator/map'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGetJSON} from './util'
 import * as config from './config'
+import * as imCache from './im-cache'
 
 /**
  * class used for throwing an error when the required version target is not
@@ -61,12 +62,6 @@ export class VersionError extends Error {
 }
 
 /**
- * internal cache used for package root urls.
- * @type {Object}
- */
-export const cache = Object.create(null)
-
-/**
  * fetch the CommonJS package root JSON document for a specific npm package.
  * @param {String} name - package name.
  * @return {Object} - observable sequence of the JSON document that represents
@@ -74,8 +69,11 @@ export const cache = Object.create(null)
  */
 export function httpGetPackageRoot (name) {
   const uri = url.resolve(config.registry, name)
-  cache[name] = cache[name] || httpGetJSON(uri)::publishReplay().refCount()
-  return cache[name]
+  const cached = imCache.get(uri)
+  if (cached) return cached
+  const result = httpGetJSON(uri)
+    ::publishReplay().refCount()
+  return imCache.set(uri, result)
 }
 
 /**

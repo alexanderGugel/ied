@@ -3,7 +3,7 @@ import crypto from 'crypto'
 import {httpGet} from './util'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {merge} from 'rxjs/operator/merge'
-import * as cache from './cache'
+import * as cache from './fs_cache'
 
 function hashResp (resp) {
   return Observable.create((observer) => {
