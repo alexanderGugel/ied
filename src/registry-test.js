@@ -136,11 +136,7 @@ describe('registry.resolve', () => {
 
       sinon.assert.notCalled(next)
       sinon.assert.calledOnce(error)
-      const err = new registry.VersionError({
-        name: 'tap',
-        version: '9.0.0',
-        available: Object.keys(body.versions)
-      })
+      const err = new registry.VersionError('tap', '9.0.0', Object.keys(body.versions))
       sinon.assert.calledWithExactly(error, err)
       sinon.assert.notCalled(complete)
     })
@@ -149,11 +145,7 @@ describe('registry.resolve', () => {
 
 describe('registry.VersionError', () => {
   it('should have expected properties', () => {
-    const err = new registry.VersionError({
-      name: 'tap',
-      version: '1.0.0',
-      available: ['0.0.1', '0.0.2']
-    })
+    const err = new registry.VersionError('tap', '1.0.0', ['0.0.1', '0.0.2'])
     assert.equal(err.pkgName, 'tap')
     assert.equal(err.version, '1.0.0')
     assert.deepEqual(err.available, ['0.0.1', '0.0.2'])
@@ -162,11 +154,7 @@ describe('registry.VersionError', () => {
   })
 
   it('should include name, version and available versions in message', () => {
-    const err = new registry.VersionError({
-      name: 'tap',
-      version: '1.0.0',
-      available: ['0.0.1', '0.0.2']
-    })
+    const err = new registry.VersionError('tap', '1.0.0', ['0.0.1', '0.0.2'])
     assert(err.message.match(/no satisying version/))
     assert(err.message.match('1.0.0'))
     assert(err.message.match('0.0.1, 0.0.2'))

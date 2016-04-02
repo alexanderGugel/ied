@@ -13,11 +13,12 @@ import * as config from './config'
 export class VersionError extends Error {
   /**
    * create instance.
-   * @param {String} options.name - name of the package.
-   * @param {String} options.version - unavailable version number.
+   * @param {String} name - name of the package.
+   * @param {String} version - unavailable version number.
+   * @param {Array.<String>} - array of available version numbers.
    * @param {Array.<String>} options.available - an array of available versions
    */
-  constructor ({ name, version, available }) {
+  constructor (name, version, available) {
     super(`no satisying version of ${name} in ${available.join(', ')} for ${version}`)
     this.name = 'VersionError'
     this.pkgName = name
@@ -85,12 +86,12 @@ export function httpGetPackageRoot (name) {
  * @return {Object} - observable sequence of the `package.json` file.
  */
 export function resolve (name, version) {
-  return httpGetPackageRoot(name, config.registry)::map((packageRoot) => {
+  return httpGetPackageRoot(name)::map((packageRoot) => {
     const available = Object.keys(packageRoot.versions)
     const targetVersion = semver.maxSatisfying(available, version)
     const target = packageRoot.versions[targetVersion]
     if (!target) {
-      throw new VersionError({name, version, available})
+      throw new VersionError(name, version, available)
     }
     return target
   })
