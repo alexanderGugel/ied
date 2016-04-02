@@ -19,13 +19,17 @@ import {download} from './tarball'
 import {forceSymlink} from './util'
 import status from './status'
 
-function resolve (cwd, target, name, version) {
-  return registry.resolve(name, version)
-    ::map((pkgJSON) => new Dep({
-      pkgJSON,
-      target: path.join(cwd, 'node_modules', pkgJSON.dist.shasum),
-      path: path.join(target, 'node_modules', name)
-    }))
+function resolve (cwd, target) {
+  return this
+    ::_do(_logPreResolve)
+    ::mergeMap(([name, version]) =>
+      registry.resolve(name, version)::map((pkgJSON) => new Dep({
+        pkgJSON,
+        target: path.join(cwd, 'node_modules', pkgJSON.dist.shasum),
+        path: path.join(target, 'node_modules', name)
+      }))
+    )
+    ::_do(_logPostResolve)
 }
 
 /**
@@ -50,6 +54,17 @@ function getAllDependencies (pkgJSON, fields) {
   return ArrayObservable.create(entries)
 }
 
+function _logPreResolve ([name, version]) {
+  status.update(`resolving ${name}@${version}`).start()
+}
+
+function _logPostResolve ({pkgJSON: {name, version, dist: {shasum}}}) {
+  status.update(`resolved ${name}@${version} [${shasum.substr(0, 7)}]`).complete()
+}
+
+export const ENTRY_DEPENDENCY_FIELDS = ['dependencies', 'devDependencies']
+export const DEPENDENCY_FIELDS = ['dependencies']
+
 /**
  * resolve all dependencies starting at the current working directory.
  * 
@@ -65,22 +80,9 @@ function resolveAll (cwd) {
     }
     targets[target] = true
 
-    // install dependencies and devDependencies of the initial, project-level
-    // package.json
     const isEntry = target === cwd
-    const fields = isEntry ? ['dependencies', 'devDependencies'] : ['dependencies']
-    const allDependencies = getAllDependencies(pkgJSON, fields)
-
-    return allDependencies
-      ::_do(([ name, version ]) =>
-        status.update(`resolving ${name}@${version}`).start()
-      )
-      ::mergeMap(([ name, version ]) =>
-        resolve(cwd, target, name, version)
-      )
-      ::_do(({ pkgJSON: {name, version, dist: {shasum}} }) => {
-        status.update(`resolved ${name}@${version} [${shasum.substr(0, 7)}]`).complete()
-      })
+    const fields = isEntry ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
+    return getAllDependencies(pkgJSON, fields)::resolve(cwd, target)
   })
 }
 
@@ -134,15 +136,14 @@ function fetchAll () {
  */
 export default function installCmd (cwd, argv) {
   const explicit = !!(argv._.length - 1)
-
   const updatedPkgJSONs = explicit
     ? EntryDep.fromArgv(cwd, argv)
     : EntryDep.fromFS(cwd)
 
-  const resolved = updatedPkgJSONs::resolveAll(cwd)
-    ::skip(1)::share()
+  const resolved = updatedPkgJSONs
+    ::resolveAll(cwd)::skip(1)::share()
 
   return EmptyObservable.create()
-    ::merge(resolved::fetchAll())
+    // ::merge(resolved::fetchAll())
     ::merge(resolved::linkAll())
 }

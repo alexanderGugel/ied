@@ -12,7 +12,7 @@ export class Dep {
    * @param  {String} [options.path] - path of the symlink pointing to the
    * (possibly relative) `target`.
    */
-  constructor ({pkgJSON, target, path }) {
+  constructor ({ pkgJSON, target, path }) {
     this.pkgJSON = pkgJSON
     this.target = target
     this.path = path
