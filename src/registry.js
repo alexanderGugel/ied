@@ -6,11 +6,12 @@ import {retry} from 'rxjs/operator/retry'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGetJSON} from './util'
 import * as config from './config'
-import * as imCache from './im-cache'
+import * as imCache from './im_cache'
 
 /**
- * class used for throwing an error when the required version target is not
- * available.
+ * error class for the case when the required version target is not available
+ * (= the package is in the registry, but the available version is not
+ * available).
  * @extends Error
  */
 export class VersionError extends Error {
@@ -63,15 +64,24 @@ export class VersionError extends Error {
    */
 }
 
-export class PackageRootValidationError extends SyntaxError {
+/**
+ * error class for the case when the package root is not "valid", meaning the
+ * document that we got from the registry does not represent a valid package
+ * root document.
+ */
+export class PackageRootError extends SyntaxError {
   /**
    * create instance.
    * @param  {String} url - url of the package root.
    * @param  {Object} body - body of the invalid package root.
    */
   constructor (url, body) {
-    super(`invalid package root at ${url}`)
-    this.name = 'PackageRootValidationError'
+    if (body && body.error) {
+      super(`invalid package root at ${url}: ${body.error}`)
+    } else {
+      super(`invalid package root at ${url}`)
+    }
+    this.name = 'PackageRootError'
     this.url = url
     this.body = body
   }
@@ -81,7 +91,7 @@ export class PackageRootValidationError extends SyntaxError {
    *
    * @name VersionError#name
    * @type String
-   * @default "PackageRootValidationError"
+   * @default "PackageRootError"
    * @readonly
    */
 
@@ -96,6 +106,19 @@ export class PackageRootValidationError extends SyntaxError {
    * @type Object
    * @readonly
    */
+  
+  /**
+   * Validate the given bo
+   * @param  {String} url  - url from which the document has been retrieved.
+   * @param  {Object} body - package root as JSON object.
+   * @throws {PackageRootError}
+   * @throws {Error}
+   */
+  static validate (url, body) {
+    if (!body || body.error || typeof body.versions !== 'object') {
+      throw new PackageRootError(url, body)
+    }
+  }
 }
 
 /**
@@ -109,17 +132,9 @@ export function httpGetPackageRoot (name) {
   const cached = imCache.get(uri)
   if (cached) return cached
   const result = httpGetJSON(uri)
-    ::validatePackageRoot(uri)
+    ::_do((body) => PackageRootError.validate(uri, body))
     ::publishReplay().refCount()
   return imCache.set(uri, result)
-}
-
-export function validatePackageRoot (url) {
-  return this::_do((body) => {
-    if (!body) throw new PackageRootValidationError(url, body)
-    if (body.error) throw new Error(body.error)
-    if (typeof body.versions !== 'object') throw new PackageRootValidationError(url, body)
-  })
 }
 
 /**

@@ -7,25 +7,17 @@ import {ErrorObservable} from 'rxjs/observable/ErrorObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import semver from 'semver'
+import url from 'url'
 import * as registry from './registry'
 import * as util from './util'
 import * as config from './config'
+import * as imCache from './im_cache'
 
 const sandbox = sinon.sandbox.create()
 
-/**
- * clear the internal registry cache
- */
-function clearCache () {
-  const keys = Object.keys(registry.cache)
-  keys.forEach((key) => {
-    delete registry.cache[key]
-  })
-}
-
 afterEach(() => {
   sandbox.restore()
-  clearCache()
+  imCache.reset()
 })
 
 describe('registry.httpGetPackageRoot', () => {
@@ -92,8 +84,9 @@ describe('registry.resolve', () => {
   }
 
   beforeEach(() => {
-    registry.cache.tap = ScalarObservable.create(body)
+    const tap = ScalarObservable.create(body)
       ::publishReplay().refCount()
+    imCache.set(url.resolve(config.registry, 'tap'), tap)
   })
 
   context('when satisfying version is available', () => {
