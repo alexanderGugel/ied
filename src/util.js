@@ -31,7 +31,8 @@ export const httpsProxy = config.httpsProxy && HttpProxyAgent(config.httpsProxy)
  * Wrapper around Node's [http#get]{@link https://nodejs.org/api/http.html#http_http_get_options_callback} method.
  * @param  {Object|String} options URL or options object as expected by
  * [http#request]{@link https://nodejs.org/api/http.html#http_http_request_options_callback}.
- * @return {Object} An observable sequence of the chunks retrieved from the specified HTTP endpoint.
+ * @return {Object} An observable sequence of the chunks retrieved from the
+ * specified HTTP endpoint.
  */
 export function httpGet (options) {
   return Observable.create((observer) => {
@@ -156,146 +157,12 @@ export function readFileJSON (filename) {
   return readFile(filename, 'utf8')::map(JSON.parse)
 }
 
+/**
+ * set the terminal title using the required ANSI escape codes.
+ * @param {String} title - title to be set.
+ */
 export function setTerminalTitle (title) {
   process.stdout.write(
     String.fromCharCode(27) + ']0;' + title + String.fromCharCode(7)
   )
-}
-
-/**
- * @private
- * @param  {http.Response} res - http response stream.
- * @return {Observable} - observable sequence of final cached results.
- */
-function fsCacheResponse (res) {
-  return Observable.create((observer) => {
-    if (res.statusCode !== 200) {
-      throw new Error(`unexpected status code ${res.statusCode} for ${url}`)
-    }
-
-    const shasum = crypto.createHash('sha1')
-    const dest = cache.write()
-    const cached = cache.write()
-
-    const errHandler = (error) => observer.error(error)
-
-    let after = 1
-    const handler = (stream) => {
-      observer.next({ shasum, stream })
-      if (!(after--)) observer.complete()
-    }
-
-    res
-      .on('error', errHandler)
-      .on('data', (chunk) => shasum.update(chunk))
-
-    res.pipe(dest)
-      .on('error', errHandler)
-      .on('finish', () => handler(dest))
-  })
-}
-
-export function fetchFromRegistry (resp) {
-  return Observable.create((observer) => {
-    const errHandler = (err) => observer.error(err)
-
-    const untar = tar.extract(dest)
-
-    // We verify the actual shasum to detect "corrupted" packages.
-    const actualShasum = crypto.createHash('sha1')
-
-    // Write to cache.
-    const cached = res.pipe(cache.write()).on('error', errHandler)
-
-    function onFinish () {
-      const expectedShasum = actualShasum.digest('hex')
-      if (expectedShasum !== shasum) {
-        observer.error(new Error('Downloaded tarball has incorrect shasum'))
-      }
-
-      return fs.rename(cached.path, path.join(cacheDir, shasum), (err) => {
-        if (err) return errHandler(err)
-        observer.complete()
-      })
-    }
-
-    res.on('data', (chunk) => actualShasum.update(chunk))
-
-    res.on('error', errHandler)
-      .pipe(gunzip()).on('error', errHandler)
-      .pipe(untar).on('error', errHandler)
-      .on('finish', onFinish)
-  })
-}
-
-export class StatusCodeAssertionError extends Error {
-  constructor (actual, expected, options) {
-    super(`unexpected status code: expected ${expected}, got ${actual} for ${JSON.stringify(options)}`)
-    this.actual = actual
-    this.expected = expected
-    this.options = options
-  }
-}
-
-export function assertStatusCode (expected, options) {
-  return this::_do((resp) => {
-    if (resp.statusCode !== expected) {
-      throw new StatusCodeAssertionError(resp.statusCode, expected, options)
-    }
-  })
-}
-
-function _extract () {
-  return this
-  // this::mergeMap((resp) => Observable.create((observer) => {
-  //   const cached = cache.write()
-
-  //   const errHandler = (err) => observer.error(err)
-  //   const finHandler = () => {
-  //     observer.next(cached)  
-  //     observer.complete()
-  //   }
-
-  //   res.pipe(cached)
-  //     .on('error', errHandler)
-  //     .on('finish', finHandler)
-  // })
-}
-
-function _cache () {
-  return this::mergeMap((resp) => Observable.create((observer) => {
-    const cached = cache.write()
-
-    const errHandler = (err) => observer.error(err)
-    const finHandler = () => {
-      observer.next(cached)
-      observer.complete()
-    }
-
-    res.pipe(cached)
-      .on('error', errHandler)
-      .on('finish', finHandler)
-  }))
-}
-
-/**
- * download a tarball from a given endpoint.
- * @param {String} tarball - url of the tarball.
- * @return {Observable} - observable sequence of the target directories into
- * which the tarball has been downloaded.
- */
-export function download (url) {
-  const resp = httpGet(url)
-    ::assertStatusCode(200)
-    ::share()
-
-  return resp
-
-  // const cached = resp::_cache()
-  // return cached
-
-  // const extracted = resp::_extract()
-  // const hashed = resp::_calcShasum()
-
-  // return cached::merge(extracted)
 }

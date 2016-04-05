@@ -1,5 +1,5 @@
 /**
- * internal cache primarily used for HTTP responses.
+ * internal in-memory cache primarily used for HTTP responses.
  * @type {Object}
  */
 let cache = Object.create(null)

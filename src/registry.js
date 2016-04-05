@@ -69,7 +69,7 @@ export class VersionError extends Error {
  * document that we got from the registry does not represent a valid package
  * root document.
  */
-export class PackageRootError extends SyntaxError {
+export class PackageRootError extends Error {
   /**
    * create instance.
    * @param  {String} url - url of the package root.
@@ -89,7 +89,7 @@ export class PackageRootError extends SyntaxError {
   /**
    * name of the error.
    *
-   * @name VersionError#name
+   * @name PackageRootError#name
    * @type String
    * @default "PackageRootError"
    * @readonly
@@ -97,12 +97,14 @@ export class PackageRootError extends SyntaxError {
 
   /**
    * url of the package root.
+   * @name PackageRootError#url
    * @type String
    * @readonly
    */
   
   /**
    * body of the invalid package root.
+   * @name PackageRootError#body
    * @type Object
    * @readonly
    */

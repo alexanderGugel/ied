@@ -13,7 +13,7 @@ import * as config from './config'
  * the base directory of the cache has been created.
  */
 export function init () {
-  return mkdirp(config.cacheDir)
+  return mkdirp(path.join(config.cacheDir, '.tmp'))
 }
 
 /**

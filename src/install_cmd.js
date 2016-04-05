@@ -2,26 +2,43 @@ import path from 'path'
 import xtend from 'xtend'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
-import {_do} from 'rxjs/operator/do'
+import {Observable} from 'rxjs/Observable'
 import {_catch} from 'rxjs/operator/catch'
+import {_do} from 'rxjs/operator/do'
 import {_finally} from 'rxjs/operator/finally'
-import {distinctKey} from 'rxjs/operator/distinctKey'
-import {retryWhen} from 'rxjs/operator/retryWhen'
-import {expand} from 'rxjs/operator/expand'
 import {concat} from 'rxjs/operator/concat'
+import {distinctKey} from 'rxjs/operator/distinctKey'
+import {expand} from 'rxjs/operator/expand'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {merge} from 'rxjs/operator/merge'
+import {retryWhen} from 'rxjs/operator/retryWhen'
 import {share} from 'rxjs/operator/share'
 import {skip} from 'rxjs/operator/skip'
+import crypto from 'crypto'
 
 import * as cache from './fs_cache'
 import * as registry from './registry'
 import * as util from './util'
-import {EntryDep} from './entry_dep'
-import {Dep} from './dep'
-import {download} from './tarball'
+import * as config from './config'
 import status from './status'
+import {Dep} from './dep'
+import {EntryDep} from './entry_dep'
+
+/**
+ * properties of project-level `package.json` files that will be checked for
+ * dependencies.
+ * @type {Array.<String>}
+ * @readonly
+ */
+export const ENTRY_DEPENDENCY_FIELDS = ['dependencies', 'devDependencies']
+
+/**
+ * properties of `package.json` of sub-dependencies that will be checked for
+ * dependences.
+ * @type {Array.<String>}
+ */
+export const DEPENDENCY_FIELDS = ['dependencies']
 
 /**
  * resolve an individual sub-dependency based on the parent's target and the
@@ -33,13 +50,17 @@ import status from './status'
  * wrapped into dependency objects representing the resolved sub-dependency.
  */
 export function resolve (cwd, target) {
-  return this::mergeMap(([name, version]) =>
-    registry.resolve(name, version)::map((pkgJSON) => new Dep({
-      pkgJSON,
-      target: path.join(cwd, 'node_modules', pkgJSON.dist.shasum),
-      path: path.join(target, 'node_modules', name)
-    }))
-  )
+  return this
+    ::_do(logResolving)
+    ::mergeMap(([name, version]) =>
+      registry.resolve(name, version)::map((pkgJSON) => new Dep({
+        pkgJSON,
+        target: path.join(cwd, 'node_modules', pkgJSON.dist.shasum),
+        path: path.join(target, 'node_modules', name)
+      }))
+      ::_catch((err) => logResolveError(name, version, err))
+    )
+    ::_do(logResolved)
 }
 
 /**
@@ -85,28 +106,12 @@ export function logResolved ({pkgJSON: {name, version, dist: {shasum}}}) {
  * @param  {Error} err - error object.
  * @return {EmptyObservable} - empty observable sequence.
  */
-function logResolveError (err) {
-  status.complete()
-  status.clear()
-  console.error(err)
+function logResolveError (name, version, err) {
+  status.complete().clear()
+  console.error(`failed to resolve ${name}@${version}`, err, err.stack)
   status.draw()
   return EmptyObservable.create()
 }
-
-/**
- * properties of project-level `package.json` files that will be checked for
- * dependencies.
- * @type {Array.<String>}
- * @readonly
- */
-export const ENTRY_DEPENDENCY_FIELDS = ['dependencies', 'devDependencies']
-
-/**
- * properties of `package.json` of sub-dependencies that will be checked for
- * dependences.
- * @type {Array.<String>}
- */
-export const DEPENDENCY_FIELDS = ['dependencies']
 
 /**
  * resolve all dependencies starting at the current working directory.
@@ -123,8 +128,7 @@ export function resolveAll (cwd) {
 
     const isEntry = target === cwd
     const fields = isEntry ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
-    return extractDependencies(pkgJSON, fields)::_do(logResolving)
-      ::resolve(cwd, target)::_catch(logResolveError)::_do(logResolved)
+    return extractDependencies(pkgJSON, fields)::resolve(cwd, target)
   })
   ::_finally(status.clear)
 }
@@ -149,6 +153,86 @@ export function linkAll () {
   return this::distinctKey('path')::mergeMap(link)
 }
 
+function download (tarball) {
+  return util.httpGet(tarball)
+    ::mergeMap((resp) => Observable.create((observer) => {
+      const shasum = crypto.createHash('sha1')
+
+      const errHandler = (err) => {
+        observer.error(err)
+      }
+
+      const finHandler = () => {
+        const tmpPath = cached.path
+        const hex = shasum.digest('hex')
+        observer.next({ tmpPath, shasum: hex })
+        observer.complete()
+      }
+
+      resp.on('data', (chunk) => shasum.update(chunk))
+
+      const cached = resp.pipe(cache.write())
+        .on('error', errHandler)
+        .on('finish', finHandler)
+    }))
+    ::mergeMap(({ tmpPath, shasum }) => {
+      const newPath = path.join(config.cacheDir, shasum)
+      return util.rename(tmpPath, newPath)
+        // ::concat({ shasum, path: newPath })
+    })
+    ::_do((x) => {
+      status.clear()
+      console.log(x)
+      status.draw()
+    })
+}
+
+class CorruptedPackageError extends Error {
+  /**
+   * create instance.
+   * @param  {String} tarball  - tarball url from which the corresponding
+   * tarball has been downloaded.
+   * @param  {String} expected - expected shasum.
+   * @param  {String} actual   - actual shasum.
+   */
+  constructor (tarball, expected, actual) {
+    super(`shasum mismatch while downloading ${tarball}: ${actual} <-> ${expected}`)
+    this.name = 'CorruptedPackageError'
+    this.tarball = tarball
+    this.expected = expected
+    this.actual = actual
+  }
+
+  /**
+   * name of the error.
+   * @name CorruptedPackageError#name
+   * @type String
+   * @default "CorruptedPackageError"
+   * @readonly
+   */
+  
+  /**
+   * tarball url from which the corresponding tarball has been downloaded.
+   * @name CorruptedPackageError#tarball
+   * @type String
+   * @readonly
+   */
+  
+  /**
+   * expected shasum.
+   * @name CorruptedPackageError#expected
+   * @type String
+   * @readonly
+   */
+  
+  /**
+   * actual shasum.
+   * @name CorruptedPackageError#actual
+   * @type String
+   * @readonly
+   */  
+}
+
 /**
  * download the tarball of the package into the `target` path.
  * @param {Dep} dep - dependency to be fetched.
@@ -156,9 +240,19 @@ export function linkAll () {
  * once the dependency has been downloaded.
  */
 export function fetch ({target, pkgJSON: {dist: {tarball, shasum}}}) {
-  // console.log('fetch', target, tarball)
-  return EmptyObservable.create()
-  // return download(tarball)
+  const o = cache.extract(target, shasum)
+  return o::_catch((err) => {
+    if (err.code === 'ENOENT') {
+      return download(tarball)
+        ::_do(({ shasum: actual }) => {
+          if (actual !== expected) {
+            throw new CorruptedPackageError(tarball, expected, actual)
+          }
+        })
+        ::concat(o)
+    }
+    throw err
+  })
 }
 
 /**
@@ -167,34 +261,8 @@ export function fetch ({target, pkgJSON: {dist: {tarball, shasum}}}) {
  * once all dependencies have been downloaded.
  */
 export function fetchAll () {
-  return this::distinctKey('target')
-    ::mergeMap(fetch)
-}
-
-/**
- * write the package.json package root JSON documents into their respective
- * target paths.
- * @param  {Deo} dep - dependency to be persisted to disk.
- * @return {Observable} - an observable sequence that will be completed once
- * the `package.json` has been written to disk.
- */
-export function writePkgJSON ({target, pkgJSON}) {
-  const raw = JSON.stringify(pkgJSON, null, 2)
-  const file = path.join(target, 'package.json')
-  const o = util.writeFile(file, raw, 'utf8')
-  return o::_catch((err) => {
-    switch (err.code) {
-      case 'ENOENT':
-        return util.mkdirp(target)::concat(o)
-      default:
-        throw err
-    }
-  })
-}
-
-export function writeAllPkgJSONs () {
-  return this::distinctKey('target')
-    ::mergeMap(writePkgJSON)
+  return cache.init()
+    ::concat(this::distinctKey('target')::mergeMap(fetch))
 }
 
 /**
@@ -216,5 +284,4 @@ export default function installCmd (cwd, argv) {
   return EmptyObservable.create()
     ::merge(resolved::fetchAll())
     ::merge(resolved::linkAll())
-    ::merge(resolved::writeAllPkgJSONs())
 }

@@ -1,10 +1,11 @@
 import {setTerminalTitle} from './util'
 
-class Status {
-  constructor () {
+export class Status {
+  constructor ({ width = 50 } = { width: 50 }) {
     this.started = 0
     this.completed = 0
     this.status = ''
+    this.width = width
   }
 
   complete (n = 1) {
@@ -35,12 +36,12 @@ class Status {
     setTerminalTitle(title)
 
     process.stderr.cursorTo(0)
-    let barWidth = Math.floor(Status.WIDTH * ratio)
-    let bar = '['
-    for (let i = 0; i < Status.WIDTH; i++) {
-      bar += i <= barWidth ? '#' : ' '
+    let barWidth = Math.floor(this.width * ratio)
+    let bar = ''
+    for (let i = 0; i < this.width; i++) {
+      bar += i <= barWidth ? '▓' : '░'
     }
-    bar += '] '
+    bar += ' '
     process.stderr.write(bar + percentage.toFixed(2) + '%')
     process.stderr.clearLine(1)
   }
@@ -51,7 +52,5 @@ class Status {
     process.stderr.cursorTo(0)
   }
 }
-
-Status.WIDTH = 50
 
 export default new Status()

@@ -54,13 +54,3 @@ export function _download (dest, tarball, shasum) {
     }, errHandler)
   })
 }
-
-export function download (dest, tarball, shasum) {
-  return cache.extract(dest, shasum)
-    ::_catch((err) => {
-      if (err.code === 'ENOENT') {
-        return _download(dest, tarball, shasum)
-      }
-      throw err
-    })
-}
