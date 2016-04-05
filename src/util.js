@@ -8,11 +8,7 @@ import _mkdirp from 'mkdirp'
 import _forceSymlink from 'force-symlink'
 
 import {map} from 'rxjs/operator/map'
-import {takeUntil} from 'rxjs/operator/takeUntil'
-import {toArray} from 'rxjs/operator/toArray'
-import {race} from 'rxjs/operator/race'
 import {mergeMap} from 'rxjs/operator/mergeMap'
-import {FromEventObservable} from 'rxjs/observable/FromEventObservable'
 
 import * as config from './config'
 import HttpProxyAgent from 'https-proxy-agent'
@@ -56,16 +52,37 @@ export function httpGet (options) {
  */
 export function httpGetJSON (options) {
   return httpGet(options)
-    ::mergeMap((res) => {
-      const error = FromEventObservable.create(res, 'error')
-        ::mergeMap(Observable.throwError)
-      const end = FromEventObservable.create(res, 'end')
-      return FromEventObservable.create(res, 'data')
-        ::takeUntil(end::race(error))
-    })
-    ::toArray()
-    ::map((chunks) => Buffer.concat(chunks).toString())
-    ::map(JSON.parse)
+    ::mergeMap((resp) => Observable.create((observer) => {
+      let data = ''
+      resp.on('data', (chunk) => {
+        data += chunk.toString()
+      })
+      resp.on('error', (err) => observer.error(err))
+      resp.on('end', () => {
+        try {
+          observer.next(JSON.parse(data))
+        } catch (e) {
+          console.log(data)
+        }
+        observer.complete()
+      })
+    }))
+
+  // return httpGet(options)
+  //   ::mergeMap((res) => {
+  //     const error = FromEventObservable.create(res, 'error')
+  //       ::mergeMap(Observable.throwError)
+  //     const end = FromEventObservable.create(res, 'end')
+  //     return FromEventObservable.create(res, 'data')
+  //       ::takeUntil(end::race(error))
+  //   })
+  //   ::toArray()
+  //   ::map((chunks) => Buffer.concat(chunks).toString())
+  //   ::_do((x) => console.log(x))
+  //   ::map(JSON.parse)
+  //   ::_catch((err) => {
+  //     console.log('>>>', err)
+  //   })
 }
 
 export function readFile (file, options) {
