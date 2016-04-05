@@ -2,7 +2,6 @@ import semver from 'semver'
 import url from 'url'
 import {map} from 'rxjs/operator/map'
 import {_do} from 'rxjs/operator/do'
-import {retry} from 'rxjs/operator/retry'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGetJSON} from './util'
 import * as config from './config'
@@ -46,7 +45,7 @@ export class VersionError extends Error {
    * @type String
    * @readonly
    */
-  
+
   /**
    * target version that could not be found.
    *
@@ -54,7 +53,7 @@ export class VersionError extends Error {
    * @type String
    * @readonly
    */
-  
+
   /**
    * all available version numbers of the supplied package.
    *
@@ -85,7 +84,7 @@ export class PackageRootError extends Error {
     this.url = url
     this.body = body
   }
-  
+
   /**
    * name of the error.
    *
@@ -101,16 +100,16 @@ export class PackageRootError extends Error {
    * @type String
    * @readonly
    */
-  
+
   /**
    * body of the invalid package root.
    * @name PackageRootError#body
    * @type Object
    * @readonly
    */
-  
+
   /**
-   * Validate the given bo
+   * Validate the given body.
    * @param  {String} url  - url from which the document has been retrieved.
    * @param  {Object} body - package root as JSON object.
    * @throws {PackageRootError}

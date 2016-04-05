@@ -1,9 +1,8 @@
-/* global describe context it afterEach */
+/* global describe context it beforeEach afterEach */
 
 import assert from 'assert'
 import sinon from 'sinon'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
-import {ErrorObservable} from 'rxjs/observable/ErrorObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import semver from 'semver'
@@ -22,7 +21,7 @@ afterEach(() => {
 
 describe('registry.httpGetPackageRoot', () => {
   context('when requesting a package for the first time', () => {
-    it('should forward registry response', () => {  
+    it('should forward registry response', () => {
       const next = sinon.spy()
       const error = sinon.spy()
       const complete = sinon.spy()

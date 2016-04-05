@@ -12,21 +12,21 @@ const sandbox = sinon.sandbox.create()
 afterEach(() => sandbox.restore())
 
 describe('NullPkgJSON', () => {
-  context('when no arguments are given', () => {  
+  context('when no arguments are given', () => {
     it('should default to empty dependencies', () => {
       const pkgJSON = new NullPkgJSON()
       assert.deepEqual(pkgJSON, { dependencies: {}, devDependencies: {} })
     })
   })
 
-  context('when empty object is given', () => {  
+  context('when empty object is given', () => {
     it('should default to empty dependencies', () => {
       const pkgJSON = new NullPkgJSON({})
       assert.deepEqual(pkgJSON, { dependencies: {}, devDependencies: {} })
     })
   })
 
-  context('when dependencies are given', () => {  
+  context('when dependencies are given', () => {
     it('should use supplied dependencies', () => {
       const pkgJSON = new NullPkgJSON({
         dependencies: { tap: '*' },

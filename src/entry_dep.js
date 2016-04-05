@@ -1,12 +1,9 @@
 import path from 'path'
-import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
 import {_catch} from 'rxjs/operator/catch'
 import {map} from 'rxjs/operator/map'
 import {readFileJSON} from './util'
 import fromPairs from 'lodash.frompairs'
-import objectEntries from 'object.entries'
-import xtend from 'xtend'
 import {Dep} from './dep'
 
 /**

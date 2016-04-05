@@ -12,7 +12,6 @@ import {expand} from 'rxjs/operator/expand'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {merge} from 'rxjs/operator/merge'
-import {retryWhen} from 'rxjs/operator/retryWhen'
 import {share} from 'rxjs/operator/share'
 import {skip} from 'rxjs/operator/skip'
 import crypto from 'crypto'
@@ -115,7 +114,7 @@ function logResolveError (name, version, err) {
 
 /**
  * resolve all dependencies starting at the current working directory.
- * 
+ *
  * @param  {String} cwd - current working directory.
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
@@ -210,27 +209,27 @@ class CorruptedPackageError extends Error {
    * @default "CorruptedPackageError"
    * @readonly
    */
-  
+
   /**
    * tarball url from which the corresponding tarball has been downloaded.
    * @name CorruptedPackageError#tarball
    * @type String
    * @readonly
    */
-  
+
   /**
    * expected shasum.
    * @name CorruptedPackageError#expected
    * @type String
    * @readonly
    */
-  
+
   /**
    * actual shasum.
    * @name CorruptedPackageError#actual
    * @type String
    * @readonly
-   */  
+   */
 }
 
 /**
@@ -245,8 +244,8 @@ export function fetch ({target, pkgJSON: {dist: {tarball, shasum}}}) {
     if (err.code === 'ENOENT') {
       return download(tarball)
         ::_do(({ shasum: actual }) => {
-          if (actual !== expected) {
-            throw new CorruptedPackageError(tarball, expected, actual)
+          if (actual !== shasum) {
+            throw new CorruptedPackageError(tarball, shasum, actual)
           }
         })
         ::concat(o)
