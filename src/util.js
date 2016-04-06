@@ -1,14 +1,13 @@
 import {Observable} from 'rxjs/Observable'
 import http from 'http'
 import https from 'https'
-import {Buffer} from 'buffer'
 import fs from 'fs'
 import url from 'url'
 import _mkdirp from 'mkdirp'
 import _forceSymlink from 'force-symlink'
+import needle from 'needle'
 
 import {map} from 'rxjs/operator/map'
-import {mergeMap} from 'rxjs/operator/mergeMap'
 
 import * as config from './config'
 import HttpProxyAgent from 'https-proxy-agent'
@@ -28,61 +27,37 @@ export function httpGet (options) {
     if (typeof options === 'string') {
       options = url.parse(options)
     }
-    switch (options.protocol) {
-      case 'https:':
-        options.agent = httpsProxy || https.globalAgent
-        break
-      case 'http:':
-        options.agent = httpProxy || http.globalAgent
-    }
+    options.headers = options.headers || {}
+    options.headers['content-type'] = 'application/json'
+
+    const agent = options.protocol === 'https:'
+      ? https
+      : http
 
     const handler = (response) => {
       observer.next(response)
       observer.complete()
     }
     const errHandler = (err) => observer.error(err)
-    http.get(options, handler).on('error', errHandler)
+    agent.get(options, handler).on('error', errHandler)
   })
 }
 
 /**
  * GETs JSON documents from an HTTP endpoint.
- * @param  {Object|String} options Options as accepted by [httpGet]{@link httpGet}.
+ * @param  {String} url - endpoint to which the GET request should be made
  * @return {Object} An observable sequence of the fetched JSON document.
  */
-export function httpGetJSON (options) {
-  return httpGet(options)
-    ::mergeMap((resp) => Observable.create((observer) => {
-      let data = ''
-      resp.on('data', (chunk) => {
-        data += chunk.toString()
-      })
-      resp.on('error', (err) => observer.error(err))
-      resp.on('end', () => {
-        try {
-          observer.next(JSON.parse(data))
-        } catch (e) {
-          console.log(data)
-        }
+export function httpGetJSON (url) {
+  return Observable.create((observer) => {
+    needle.get(url, { json: true }, (error, response) => {
+      if (error) observer.error(error)
+      else {
+        observer.next(response.body)
         observer.complete()
-      })
-    }))
-
-  // return httpGet(options)
-  //   ::mergeMap((res) => {
-  //     const error = FromEventObservable.create(res, 'error')
-  //       ::mergeMap(Observable.throwError)
-  //     const end = FromEventObservable.create(res, 'end')
-  //     return FromEventObservable.create(res, 'data')
-  //       ::takeUntil(end::race(error))
-  //   })
-  //   ::toArray()
-  //   ::map((chunks) => Buffer.concat(chunks).toString())
-  //   ::_do((x) => console.log(x))
-  //   ::map(JSON.parse)
-  //   ::_catch((err) => {
-  //     console.log('>>>', err)
-  //   })
+      }
+    })
+  })
 }
 
 export function readFile (file, options) {
@@ -171,7 +146,7 @@ export function readFileJSON (filename) {
  * set the terminal title using the required ANSI escape codes.
  * @param {String} title - title to be set.
  */
-export function setTerminalTitle (title) {
+export function setTitle (title) {
   process.stdout.write(
     String.fromCharCode(27) + ']0;' + title + String.fromCharCode(7)
   )

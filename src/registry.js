@@ -2,6 +2,7 @@ import semver from 'semver'
 import url from 'url'
 import {map} from 'rxjs/operator/map'
 import {_do} from 'rxjs/operator/do'
+import {retry} from 'rxjs/operator/retry'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGetJSON} from './util'
 import * as config from './config'
@@ -133,6 +134,7 @@ export function httpGetPackageRoot (name) {
   const cached = imCache.get(uri)
   if (cached) return cached
   const result = httpGetJSON(uri)
+    ::retry(5)
     ::_do((body) => PackageRootError.validate(uri, body))
     ::publishReplay().refCount()
   return imCache.set(uri, result)

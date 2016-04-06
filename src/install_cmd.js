@@ -20,7 +20,8 @@ import * as cache from './fs_cache'
 import * as registry from './registry'
 import * as util from './util'
 import * as config from './config'
-import status from './status'
+import * as tui from './tui'
+import * as status from './status'
 import {Dep} from './dep'
 import {EntryDep} from './entry_dep'
 
@@ -89,7 +90,8 @@ export function extractDependencies (pkgJSON, fields) {
  * @param  {Array.<String>} nameVersion - `[name, version]` tuple
  */
 export function logResolving ([name, version]) {
-  status.update(`resolving ${name}@${version}`).start()
+  status.update(`resolving ${name}@${version}`)
+  status.start()
 }
 
 /**
@@ -97,7 +99,8 @@ export function logResolving ([name, version]) {
  * @param  {Dep} dep - resolved dependency.
  */
 export function logResolved ({pkgJSON: {name, version, dist: {shasum}}}) {
-  status.update(`resolved ${name}@${version} [${shasum.substr(0, 7)}]`).complete()
+  status.update(`resolved ${name}@${version} [${shasum.substr(0, 7)}]`)
+  status.complete()
 }
 
 /**
@@ -106,7 +109,8 @@ export function logResolved ({pkgJSON: {name, version, dist: {shasum}}}) {
  * @return {EmptyObservable} - empty observable sequence.
  */
 function logResolveError (name, version, err) {
-  status.complete().clear()
+  status.complete()
+  status.clear()
   console.error(`failed to resolve ${name}@${version}`, err, err.stack)
   status.draw()
   return EmptyObservable.create()
