@@ -7,7 +7,6 @@ import _mkdirp from 'mkdirp'
 import _forceSymlink from 'force-symlink'
 import needle from 'needle'
 import {map} from 'rxjs/operator/map'
-import * as config from './config'
 
 /**
  * Wrapper around Node's [http#get]{@link https://nodejs.org/api/http.html#http_http_get_options_callback} method.

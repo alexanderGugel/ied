@@ -2,7 +2,9 @@
  * internal in-memory cache primarily used for HTTP responses.
  * @type {Object}
  */
-let cache = Object.create(null)
+let cache
+
+reset()
 
 /**
  * cache a key-value item.

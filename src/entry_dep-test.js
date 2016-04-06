@@ -2,65 +2,36 @@
 
 import assert from 'assert'
 import sinon from 'sinon'
-import {EntryDep, NullPkgJSON} from './entry_dep'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
 import {ErrorObservable} from 'rxjs/observable/ErrorObservable'
 import * as util from './util'
+import * as entryDep from './entry_dep'
 
 const sandbox = sinon.sandbox.create()
 
 afterEach(() => sandbox.restore())
 
-describe('NullPkgJSON', () => {
-  context('when no arguments are given', () => {
-    it('should default to empty dependencies', () => {
-      const pkgJSON = new NullPkgJSON()
-      assert.deepEqual(pkgJSON, { dependencies: {}, devDependencies: {} })
-    })
-  })
-
-  context('when empty object is given', () => {
-    it('should default to empty dependencies', () => {
-      const pkgJSON = new NullPkgJSON({})
-      assert.deepEqual(pkgJSON, { dependencies: {}, devDependencies: {} })
-    })
-  })
-
-  context('when dependencies are given', () => {
-    it('should use supplied dependencies', () => {
-      const pkgJSON = new NullPkgJSON({
-        dependencies: { tap: '*' },
-        devDependencies: { standard: '*' }
-      })
-      assert.deepEqual(pkgJSON, {
-        dependencies: { tap: '*' },
-        devDependencies: { standard: '*' }
-      })
-    })
-  })
-})
-
-describe('EntryDep.fromArgv', () => {
+describe('entryDep.fromArgv', () => {
   it('should return ScalarObservable', () => {
-    const result = EntryDep.fromArgv('/', {_: ['install', 'tap']})
+    const result = entryDep.fromArgv('/', {_: ['install', 'tap']})
     assert(result instanceof ScalarObservable)
   })
 
   it('should create pkgJSON by parsing argv', () => {
     const pkgJSON = { name: 'test' }
-    sandbox.stub(EntryDep, 'parseArgv').returns(pkgJSON)
+    sandbox.stub(entryDep, 'parseArgv').returns(pkgJSON)
     const next = sinon.spy()
     const error = sinon.spy()
     const complete = sinon.spy()
-    EntryDep.fromArgv('/cwd', {_: []}).subscribe(next, error, complete)
-    sinon.assert.calledWith(next, new EntryDep({pkgJSON, target: '/cwd'}))
+    entryDep.fromArgv('/cwd', {_: []}).subscribe(next, error, complete)
+    sinon.assert.calledWith(next, ({pkgJSON, target: '/cwd'}))
     sinon.assert.calledOnce(next)
     sinon.assert.notCalled(error)
     sinon.assert.calledOnce(complete)
   })
 })
 
-describe('EntryDep.parseArgv', () => {
+describe('entryDep.parseArgv', () => {
   const scenarios = [
     {
       argv: { _: ['install', 'tap'] },
@@ -101,14 +72,14 @@ describe('EntryDep.parseArgv', () => {
   scenarios.forEach(({ argv, pkgJSON: expectedPkgJSON }) => {
     context(`when argv are ${JSON.stringify(argv)}`, () => {
       it('should return correct pkgJSON', () => {
-        const actualPkgJSON = EntryDep.parseArgv(argv)
+        const actualPkgJSON = entryDep.parseArgv(argv)
         assert.deepEqual(actualPkgJSON, expectedPkgJSON)
       })
     })
   })
 })
 
-describe('EntryDep.catchReadFileJSON', () => {
+describe('entryDep.catchReadFileJSON', () => {
   context('when there is an ENOENT error', () => {
     it('should return a neutral pkgJSON', () => {
       const err = new Error()
@@ -118,10 +89,10 @@ describe('EntryDep.catchReadFileJSON', () => {
       const error = sinon.spy()
       const complete = sinon.spy()
       ErrorObservable.create(err)
-        ::EntryDep.catchReadFileJSON()
+        ::entryDep.catchReadFileJSON()
         .subscribe(next, error, complete)
       sinon.assert.calledOnce(next)
-      sinon.assert.calledWithExactly(next, new NullPkgJSON())
+      sinon.assert.calledWithExactly(next, {})
       sinon.assert.notCalled(error)
       sinon.assert.calledOnce(complete)
     })
@@ -136,7 +107,7 @@ describe('EntryDep.catchReadFileJSON', () => {
       const error = sinon.spy()
       const complete = sinon.spy()
       ErrorObservable.create(err)
-        ::EntryDep.catchReadFileJSON()
+        ::entryDep.catchReadFileJSON()
         .subscribe(next, error, complete)
       sinon.assert.notCalled(next)
       sinon.assert.calledOnce(error)
@@ -145,7 +116,7 @@ describe('EntryDep.catchReadFileJSON', () => {
   })
 })
 
-describe('EntryDep.fromFS', () => {
+describe('entryDep.fromFS', () => {
   it('should return entry dependency', () => {
     const json = { dependencies: { tap: '*' } }
     const readFileJSON = ScalarObservable.create(json)
@@ -154,14 +125,14 @@ describe('EntryDep.fromFS', () => {
     const next = sinon.spy()
     const error = sinon.spy()
     const complete = sinon.spy()
-    EntryDep.fromFS('/cwd')
+    entryDep.fromFS('/cwd')
       .subscribe(next, error, complete)
 
     sinon.assert.notCalled(error)
     sinon.assert.calledOnce(next)
     sinon.assert.calledOnce(complete)
 
-    const entryDep = new EntryDep({pkgJSON: json, target: '/cwd'})
+    const entryDep = ({pkgJSON: json, target: '/cwd'})
     sinon.assert.calledWithExactly(next, entryDep)
   })
 })

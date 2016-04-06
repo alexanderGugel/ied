@@ -21,8 +21,7 @@ import * as registry from './registry'
 import * as util from './util'
 import * as config from './config'
 import * as status from './status'
-import {Dep} from './dep'
-import {EntryDep} from './entry_dep'
+import * as entryDep from './entry_dep'
 
 /**
  * properties of project-level `package.json` files that will be checked for
@@ -52,7 +51,7 @@ export function resolve (cwd, target) {
   return this
     ::_do(logResolving)
     ::mergeMap(([name, version]) =>
-      registry.resolve(name, version)::map((pkgJSON) => new Dep({
+      registry.resolve(name, version)::map((pkgJSON) => ({
         pkgJSON,
         target: path.join(cwd, 'node_modules', pkgJSON.dist.shasum),
         path: path.join(target, 'node_modules', name)
@@ -271,8 +270,8 @@ export function fetchAll () {
 export default function installCmd (cwd, argv) {
   const explicit = !!(argv._.length - 1)
   const updatedPkgJSONs = explicit
-    ? EntryDep.fromArgv(cwd, argv)
-    : EntryDep.fromFS(cwd)
+    ?entryDep.fromArgv(cwd, argv)
+    :entryDep.fromFS(cwd)
 
   const resolved = updatedPkgJSONs
     ::resolveAll(cwd)::skip(1)::share()
