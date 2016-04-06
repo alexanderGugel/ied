@@ -33,6 +33,7 @@ if (argv.registry) {
   let unlinkCmd
   let helpCmd
   let versionCmd
+  let cacheCmd
 
   if (argv.help) {
     helpCmd = require('./help_cmd').default
@@ -94,6 +95,10 @@ if (argv.registry) {
     case 'unlink':
       unlinkCmd = require('./unlink_cmd').default
       unlinkCmd(cwd, argv)
+      break
+    case 'cache':
+      cacheCmd = require('./cache_cmd').default
+      cacheCmd(cwd, argv)
       break
     case 'version':
       versionCmd = require('./version_cmd').default

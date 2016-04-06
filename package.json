@@ -20,6 +20,7 @@
     "npm-package-arg": "^4.1.0",
     "object-assign": "^3.0.0",
     "object.entries": "^1.0.3",
+    "rimraf": "^2.5.2",
     "rxjs": "^5.0.0-beta.2",
     "semver": "^5.0.1",
     "tar-fs": "^1.8.1",
