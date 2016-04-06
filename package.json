@@ -11,7 +11,6 @@
     "easy-table": "^1.0.0",
     "force-symlink": "0.0.1",
     "gunzip-maybe": "^1.2.1",
-    "https-proxy-agent": "^1.0.0",
     "init-package-json": "^1.9.1",
     "lodash.frompairs": "^4.0.1",
     "minimist": "^1.2.0",
