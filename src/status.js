@@ -3,6 +3,13 @@ import {setTitle} from './util'
 let started = 0
 let completed = 0
 let status = ''
+let active = false
+
+export const HIDE_CURSOR = '\x1B[?25l'
+export const SHOW_CURSOR = '\x1B[?25h'
+
+export const STARTED_BLOCK = '░'
+export const COMPLETED_BLOCK = '▓'
 
 /**
  * complete a task.
@@ -43,8 +50,6 @@ export function draw () {
   const title = `${percentage.toFixed(2)}% - ${status}`
   setTitle(title)
 
-  process.stderr.cursorTo(0)
-
   const maxWidth = Math.min(process.stderr.columns - 8, 50)
   const barWidth = Math.floor(maxWidth * ratio)
 
@@ -52,13 +57,28 @@ export function draw () {
 
   if (maxWidth > 0) {
     for (let i = 0; i < maxWidth; i++) {
-      bar += i <= barWidth ? '▓' : '░'
+      bar += i <= barWidth ? COMPLETED_BLOCK : STARTED_BLOCK
     }
     bar += ' '
   }
 
+  process.stderr.write(HIDE_CURSOR)
+
+  if (active) {
+    process.stderr.moveCursor(0, -1)
+    process.stderr.cursorTo(0)
+  }
+
   process.stderr.write(bar + percentage.toFixed(2) + '%')
   process.stderr.clearLine(1)
+
+  process.stderr.write('\n')
+  process.stderr.write(status)
+  process.stderr.clearLine(1)
+
+  process.stderr.write(SHOW_CURSOR)
+
+  active = true
 }
 
 /**
@@ -66,7 +86,12 @@ export function draw () {
  */
 export function clear () {
   if (!process.stderr.isTTY) return
+  if (!active) return
 
   process.stderr.clearLine()
+  process.stderr.moveCursor(0, -1)
+  process.stderr.clearLine()
   process.stderr.cursorTo(0)
+
+  active = false
 }

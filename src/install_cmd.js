@@ -181,12 +181,6 @@ function download (tarball) {
     ::mergeMap(({ tmpPath, shasum }) => {
       const newPath = path.join(config.cacheDir, shasum)
       return util.rename(tmpPath, newPath)
-        // ::concat({ shasum, path: newPath })
-    })
-    ::_do((x) => {
-      status.clear()
-      console.log(x)
-      status.draw()
     })
 }
 
