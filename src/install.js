@@ -48,9 +48,36 @@ export function logResolving ([name, version]) {
  * log that a package has been successfully resolved.
  * @param  {Dep} dep - resolved dependency.
  */
-export function logResolved ({pkgJSON: {name, version, dist: {shasum}}}) {
+export function logResolved ({pkgJSON: {name, version}, target}) {
+  const shasum = path.basename(target)
   status.update(`resolved ${name}@${version} [${shasum.substr(0, 7)}]`)
   status.complete()
+}
+
+export function createResolved (cwd, target, name, pkgJSON) {
+  return {
+    pkgJSON,
+    target: path.join(cwd, 'node_modules', pkgJSON.dist.shasum),
+    path: path.join(target, 'node_modules', name)
+  }
+}
+
+export function resolveLocal (_path) {
+  return util.readlink(_path)
+    ::map((relTarget) => path.resolve(_path, relTarget))
+    ::mergeMap((target) => {
+      const filename = path.join(target, 'package.json')
+      return util.readFileJSON(filename)
+        ::map((pkgJSON) => ({ pkgJSON, target, path: _path }))
+    })
+}
+
+export function resolveRemote (_path, name, version, cwd) {
+  return registry.resolve(name, version)
+    ::map((pkgJSON) => {
+      const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
+      return { pkgJSON, target, path: _path }
+    })
 }
 
 /**
@@ -63,17 +90,20 @@ export function logResolved ({pkgJSON: {name, version, dist: {shasum}}}) {
  * wrapped into dependency objects representing the resolved sub-dependency.
  */
 export function resolve (cwd, target) {
-  return this
-    ::_do(logResolving)
-    ::mergeMap(([name, version]) =>
-      registry.resolve(name, version)::map((pkgJSON) => ({
-        pkgJSON,
-        target: path.join(cwd, 'node_modules', pkgJSON.dist.shasum),
-        path: path.join(target, 'node_modules', name)
-      }))
+  return this::mergeMap(([name, version]) => {
+    const _path = path.join(target, 'node_modules', name)
+
+    return resolveLocal(_path)
+      ::_catch((err) => {
+        switch (err.code) {
+          case 'ENOENT':
+            return resolveRemote(_path, name, version, cwd)
+          default:
+            throw err
+        }
+      })
       ::_catch((err) => logResolveError(name, version, err))
-    )
-    ::_do(logResolved)
+  })
 }
 
 /**

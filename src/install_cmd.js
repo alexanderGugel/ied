@@ -23,7 +23,6 @@ export default function installCmd (cwd, argv) {
     ::resolveAll(cwd)::skip(1)::share()
 
   return EmptyObservable.create()
-    ::merge(resolved::fetchAll())
+    // ::merge(resolved::fetchAll())
     ::merge(resolved::linkAll())
-    // todo generate node_modules/.bin
 }
