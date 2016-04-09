@@ -1,7 +1,7 @@
 /* global describe it */
 
 import assert from 'assert'
-import initCmd from './init_cmd'
+import initCmd from '../src/init_cmd'
 
 describe('initCmd', () => {
   it('should be a function', () => {

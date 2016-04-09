@@ -9,9 +9,9 @@ import path from 'path'
 import uuid from 'node-uuid'
 import {Observable} from 'rxjs/Observable'
 
-import * as cache from './fs_cache'
-import * as config from './config'
-import * as util from './util'
+import * as cache from '../src/fs_cache'
+import * as config from '../src/config'
+import * as util from '../src/util'
 
 const sandbox = sinon.sandbox.create()
 

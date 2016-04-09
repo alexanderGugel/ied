@@ -1,7 +1,7 @@
 /* global describe it */
 
 import assert from 'assert'
-import * as config from './config'
+import * as config from '../src/config'
 
 describe('config.isWindows', () => {
   it('should be boolean', () => {

@@ -11,7 +11,7 @@ DEPS_BIN_DIR = ./node_modules/.bin
 SRC = $(wildcard src/*.js)
 LIB = $(SRC:src/%.js=lib/%.js)
 
-.PHONY: install
+.PHONY: install test
 
 # http://blog.jgc.org/2015/04/the-one-line-you-should-add-to-every.html
 print-%: ; @echo $*=$($*)
@@ -53,10 +53,10 @@ clean:
 	rm -rf $(BOOTSTRAP_DIR)
 
 test:
-	$(DEPS_BIN_DIR)/mocha src/*-test.js --compilers js:babel-register --reporter min
+	$(DEPS_BIN_DIR)/mocha test/*-test.js --compilers js:babel-register --reporter min
 
 dev:
-	$(DEPS_BIN_DIR)/mocha src/*-test.js --compilers js:babel-register --reporter min --watch
+	$(DEPS_BIN_DIR)/mocha test/*-test.js --compilers js:babel-register --reporter min --watch
 
 watch:
 	$(DEPS_BIN_DIR)/babel -w src --out-dir lib

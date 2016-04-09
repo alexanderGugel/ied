@@ -1,7 +1,7 @@
 /* global describe it afterEach */
 
 import assert from 'assert'
-import * as imCache from './im_cache'
+import * as imCache from '../src/im_cache'
 
 afterEach(() => {
   imCache.reset()

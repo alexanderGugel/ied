@@ -1,7 +1,7 @@
 /* global describe it */
 
 import assert from 'assert'
-import * as errors from './errors'
+import * as errors from '../src/errors'
 
 describe('errors.VersionError', () => {
   it('should have expected properties', () => {

@@ -4,8 +4,8 @@ import assert from 'assert'
 import sinon from 'sinon'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
 import {ErrorObservable} from 'rxjs/observable/ErrorObservable'
-import * as util from './util'
-import * as entryDep from './entry_dep'
+import * as util from '../src/util'
+import * as entryDep from '../src/entry_dep'
 
 const sandbox = sinon.sandbox.create()
 

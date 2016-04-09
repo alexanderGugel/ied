@@ -2,9 +2,9 @@
 
 import assert from 'assert'
 import sinon from 'sinon'
-import shellCmd from './shell_cmd'
+import shellCmd from '../src/shell_cmd'
 import child_process from 'child_process'
-import * as config from './config'
+import * as config from '../src/config'
 
 const sandbox = sinon.sandbox.create()
 
