@@ -8,7 +8,6 @@ import {distinctKey} from 'rxjs/operator/distinctKey'
 import {expand} from 'rxjs/operator/expand'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
-import {filter} from 'rxjs/operator/filter'
 import crypto from 'crypto'
 
 import {CorruptedPackageError} from './errors'

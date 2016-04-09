@@ -1,8 +1,7 @@
-import {merge} from 'rxjs/operator/merge'
 import {share} from 'rxjs/operator/share'
 import {_do} from 'rxjs/operator/do'
 import {skip} from 'rxjs/operator/skip'
-import {filter} from 'rxjs/operator/filter'
+import {merge} from 'rxjs/operator/merge'
 import * as entryDep from './entry_dep'
 import {resolveAll, fetchAll, linkAll} from './install'
 
@@ -19,14 +18,15 @@ export default function installCmd (cwd, argv) {
     ? entryDep.fromArgv(cwd, argv)
     : entryDep.fromFS(cwd)
 
-  const resolved = updatedPkgJSONs::resolveAll(cwd)
+  const resolved = updatedPkgJSONs::resolveAll(cwd)::skip(1)
     ::_do(({pkgJSON: {name, version}}) => {
       console.log(`resolved ${name}@${version}`)
     })
-    ::skip(1)::share()
+
+  const sharedResolved = resolved::share()
 
   // const fetched = resolved::filter(({ local }) => !local)::fetchAll()
-  const linked = resolved::linkAll()
+  const linked = sharedResolved::linkAll()
 
   return linked
 

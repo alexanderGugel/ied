@@ -18,7 +18,7 @@ describe('entryDep.fromArgv', () => {
   })
 
   it('should create pkgJSON by parsing argv', () => {
-    const pkgJSON = { name: 'test' }
+    const pkgJSON = { dependencies: {} }
     sandbox.stub(entryDep, 'parseArgv').returns(pkgJSON)
     const next = sinon.spy()
     const error = sinon.spy()
@@ -36,21 +36,18 @@ describe('entryDep.parseArgv', () => {
     {
       argv: { _: ['install', 'tap'] },
       pkgJSON: {
-        dependencies: { tap: '*' },
-        devDependencies: {}
+        dependencies: { tap: '*' }
       }
     },
     {
       argv: { _: ['install', 'tap'], saveDev: true },
       pkgJSON: {
-        dependencies: {},
         devDependencies: { tap: '*' }
       }
     },
     {
       argv: { _: ['install', 'tap', 'browserify'], saveDev: true },
       pkgJSON: {
-        dependencies: {},
         devDependencies: {
           tap: '*',
           browserify: '*'
@@ -63,8 +60,7 @@ describe('entryDep.parseArgv', () => {
         dependencies: {
           tap: '*',
           browserify: '*'
-        },
-        devDependencies: {}
+        }
       }
     }
   ]
@@ -132,7 +128,6 @@ describe('entryDep.fromFS', () => {
     sinon.assert.calledOnce(next)
     sinon.assert.calledOnce(complete)
 
-    const entryDep = ({pkgJSON: json, target: '/cwd'})
-    sinon.assert.calledWithExactly(next, entryDep)
+    sinon.assert.calledWithExactly(next, ({pkgJSON: json, target: '/cwd'}))
   })
 })

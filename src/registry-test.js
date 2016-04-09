@@ -1,12 +1,12 @@
 /* global describe context it beforeEach afterEach */
 
-import assert from 'assert'
 import sinon from 'sinon'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import semver from 'semver'
 import url from 'url'
+import * as errors from './errors'
 import * as registry from './registry'
 import * as util from './util'
 import * as config from './config'
@@ -128,27 +128,9 @@ describe('registry.resolve', () => {
 
       sinon.assert.notCalled(next)
       sinon.assert.calledOnce(error)
-      const err = new registry.VersionError('tap', '9.0.0', Object.keys(body.versions))
+      const err = new errors.VersionError('tap', '9.0.0', Object.keys(body.versions))
       sinon.assert.calledWithExactly(error, err)
       sinon.assert.notCalled(complete)
     })
-  })
-})
-
-describe('registry.VersionError', () => {
-  it('should have expected properties', () => {
-    const err = new registry.VersionError('tap', '1.0.0', ['0.0.1', '0.0.2'])
-    assert.equal(err.pkgName, 'tap')
-    assert.equal(err.version, '1.0.0')
-    assert.deepEqual(err.available, ['0.0.1', '0.0.2'])
-    assert.equal(err.name, 'VersionError')
-    assert.ok(err.message)
-  })
-
-  it('should include name, version and available versions in message', () => {
-    const err = new registry.VersionError('tap', '1.0.0', ['0.0.1', '0.0.2'])
-    assert(err.message.match(/no satisying version/))
-    assert(err.message.match('1.0.0'))
-    assert(err.message.match('0.0.1, 0.0.2'))
   })
 })

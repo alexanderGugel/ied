@@ -5,6 +5,7 @@ import fs from 'fs'
 import sinon from 'sinon'
 import stream from 'stream'
 import tar from 'tar-fs'
+import path from 'path'
 import uuid from 'node-uuid'
 import {Observable} from 'rxjs/Observable'
 
@@ -26,7 +27,7 @@ describe('fsCache.init', () => {
     sandbox.stub(util, 'mkdirp').returns(o)
     cache.init()
     sinon.assert.calledOnce(util.mkdirp)
-    sinon.assert.calledWithExactly(util.mkdirp, config.cacheDir)
+    sinon.assert.calledWithExactly(util.mkdirp, path.join(config.cacheDir, '.tmp'))
   })
 })
 
