@@ -1,8 +1,8 @@
 import {merge} from 'rxjs/operator/merge'
 import {share} from 'rxjs/operator/share'
+import {_do} from 'rxjs/operator/do'
 import {skip} from 'rxjs/operator/skip'
-import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
-
+import {filter} from 'rxjs/operator/filter'
 import * as entryDep from './entry_dep'
 import {resolveAll, fetchAll, linkAll} from './install'
 
@@ -19,10 +19,16 @@ export default function installCmd (cwd, argv) {
     ? entryDep.fromArgv(cwd, argv)
     : entryDep.fromFS(cwd)
 
-  const resolved = updatedPkgJSONs
-    ::resolveAll(cwd)::skip(1)::share()
+  const resolved = updatedPkgJSONs::resolveAll(cwd)
+    ::_do(({pkgJSON: {name, version}}) => {
+      console.log(`resolved ${name}@${version}`)
+    })
+    ::skip(1)::share()
 
-  return EmptyObservable.create()
-    // ::merge(resolved::fetchAll())
-    ::merge(resolved::linkAll())
+  // const fetched = resolved::filter(({ local }) => !local)::fetchAll()
+  const linked = resolved::linkAll()
+
+  return linked
+
+  // return linked::merge(fetched)
 }

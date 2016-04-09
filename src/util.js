@@ -7,6 +7,7 @@ import _mkdirp from 'mkdirp'
 import _forceSymlink from 'force-symlink'
 import needle from 'needle'
 import {map} from 'rxjs/operator/map'
+import {_catch} from 'rxjs/operator/catch'
 
 /**
  * Wrapper around Node's [http#get]{@link https://nodejs.org/api/http.html#http_http_get_options_callback} method.
@@ -101,6 +102,14 @@ export function stat (path) {
         observer.complete()
       }
     })
+  })
+}
+
+export function catchByCode (handlers) {
+  return this::_catch((err, caught) => {
+    const handler = handlers[err.code]
+    if (!handler) throw err
+    return handler(err, caught)
   })
 }
 

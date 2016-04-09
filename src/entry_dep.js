@@ -67,8 +67,8 @@ export function parseArgv (argv) {
     ? 'devDependencies'
     : 'dependencies'
 
-  const dep = {
+  const pkgJSON = {
     [key]: nameVersionPairs
   }
-  return dep
+  return pkgJSON
 }
