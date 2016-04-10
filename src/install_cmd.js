@@ -24,8 +24,8 @@ export default function installCmd (cwd, argv) {
     : entryDep.fromFS(cwd)
 
   const resolved = updatedPkgJSONs::resolveAll(cwd)::skip(1)
-    ::_do(logResolved)
     ::filter(({ local }) => !local)
+    ::_do(logResolved)
     ::share()
 
   const linked = resolved::linkAll()

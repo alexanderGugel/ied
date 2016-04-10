@@ -48,7 +48,7 @@ export function resolveLocal (_path) {
 
 /**
  * obtain a dependency's `package.json` file using the pre-configured registry.
- * @param  {String} _path - path of the dependency.
+ * @param  {String} _path - path of the dependency.
  * @param  {String} name - name of the dependency that should be looked up in
  * the registry.
  * @param  {String]} version - SemVer compatible version string.
@@ -79,6 +79,30 @@ export function resolve (cwd, target) {
       ::util.catchByCode({
         ENOENT: () => resolveRemote(_path, name, version, cwd)
       })
+  })
+}
+
+/**
+ * resolve all dependencies starting at the current working directory.
+ *
+ * @param  {String} cwd - current working directory.
+ * @return {Observable} - an observable sequence of resolved dependencies.
+ */
+export function resolveAll (cwd) {
+  const targets = Object.create(null)
+
+  return this::expand(({ target, pkgJSON }) => {
+    // cancel when we get into a circular dependency
+    if (target in targets) return EmptyObservable.create()
+    targets[target] = true
+    // install devDependencies of entry dependency (project-level)
+    const fields = target === cwd ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
+    const bundleDependencies = (pkgJSON.bundleDependencies || [])
+      .concat(pkgJSON.bundledDependencies || [])
+
+    return parseDependencies(pkgJSON, fields)
+      ::filter(([name]) => bundleDependencies.indexOf(name) === -1)
+      ::resolve(cwd, target)
   })
 }
 
@@ -120,31 +144,13 @@ export function parseDependencies (pkgJSON, fields) {
 }
 
 /**
- * resolve all dependencies starting at the current working directory.
- *
- * @param  {String} cwd - current working directory.
- * @return {Observable} - an observable sequence of resolved dependencies.
- */
-export function resolveAll (cwd) {
-  const targets = Object.create(null)
-
-  return this::expand(({ target, pkgJSON }) => {
-    // cancel when we get into a circular dependency
-    if (target in targets) return EmptyObservable.create()
-    targets[target] = true
-    // install devDependencies of entry dependency (project-level)
-    const fields = target === cwd ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
-    return parseDependencies(pkgJSON, fields)::resolve(cwd, target)
-  })
-}
-
-/**
  * create a relative symbolic link to a dependency.
  * @param {Dep} dep - dependency to be linked.
  * @return {Observable} - an empty observable sequence that will be completed
  * once the symbolic link has been created.
  */
-export function link ({ path: absPath, target: absTarget }) {
+export function link (dep) {
+  const {path: absPath, target: absTarget} = dep
   const relTarget = path.relative(absPath, absTarget)
   return util.forceSymlink(relTarget, absPath)
 }
