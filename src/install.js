@@ -11,6 +11,7 @@ import {map} from 'rxjs/operator/map'
 import {reduce} from 'rxjs/operator/reduce'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import crypto from 'crypto'
+import {spawn} from 'child_process'
 
 import {CorruptedPackageError} from './errors'
 import * as cache from './fs_cache'
@@ -231,6 +232,14 @@ export function fetchAll () {
 
 export const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall']
 
+export function build (dep) {
+  const {target, script} = dep
+  return Observable.create((observer) => {
+    console.log(spawn)
+    observer.complete()
+  })
+}
+
 export function buildAll () {
   return this
     ::filter(({ local }) => !local)
@@ -242,5 +251,5 @@ export function buildAll () {
       return results
     }, [])
     ::mergeMap((scripts) => ArrayObservable.create(scripts))
-    ::_do(console.log)
+    ::mergeMap(build)
 }
