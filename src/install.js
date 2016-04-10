@@ -1,5 +1,6 @@
 import path from 'path'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
+import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {Observable} from 'rxjs/Observable'
 import {_do} from 'rxjs/operator/do'
 import {concat} from 'rxjs/operator/concat'
@@ -7,6 +8,7 @@ import {filter} from 'rxjs/operator/filter'
 import {distinctKey} from 'rxjs/operator/distinctKey'
 import {expand} from 'rxjs/operator/expand'
 import {map} from 'rxjs/operator/map'
+import {reduce} from 'rxjs/operator/reduce'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import crypto from 'crypto'
 
@@ -225,4 +227,20 @@ export function fetchAll () {
   return this
     ::filter(({ local }) => !local)
     ::distinctKey('target')::mergeMap(fetch)
+}
+
+export const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall']
+
+export function buildAll () {
+  return this
+    ::filter(({ local }) => !local)
+    ::reduce((results, { target, pkgJSON: { scripts = {} } }) => {
+      for (let name of LIFECYCLE_SCRIPTS) {
+        const script = scripts[name]
+        if (script) results.push({ target, script })
+      }
+      return results
+    }, [])
+    ::mergeMap((scripts) => ArrayObservable.create(scripts))
+    ::_do(console.log)
 }

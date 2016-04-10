@@ -4,7 +4,7 @@ import {skip} from 'rxjs/operator/skip'
 import {merge} from 'rxjs/operator/merge'
 import {filter} from 'rxjs/operator/filter'
 import * as entryDep from './entry_dep'
-import {resolveAll, fetchAll, linkAll} from './install'
+import {resolveAll, fetchAll, linkAll, buildAll} from './install'
 
 function logResolved ({pkgJSON: {name, version}}) {
   console.log(`resolved ${name}@${version}`)
@@ -30,7 +30,9 @@ export default function installCmd (cwd, argv) {
 
   const linked = resolved::linkAll()
   const fetched = resolved::fetchAll()
+  const built = resolved::buildAll()
 
   return linked
     ::merge(fetched)
+    ::merge(built)
 }

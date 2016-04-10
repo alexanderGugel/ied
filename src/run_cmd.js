@@ -25,7 +25,7 @@ export default function runCmd (cwd, argv) {
     ].join(path.delimiter)
   })
 
-  async.mapSeries(scripts, function execScript (scriptName, cb) {
+  async.mapSeries(scripts, (scriptName, cb) => {
     const scriptCmd = pkg.scripts[scriptName]
     if (!scriptCmd) return cb(null, null)
     const childProcess = child_process.spawn(sh, [shFlag, scriptCmd], {
