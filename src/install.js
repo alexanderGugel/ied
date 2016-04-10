@@ -1,9 +1,9 @@
 import path from 'path'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {Observable} from 'rxjs/Observable'
-import {_catch} from 'rxjs/operator/catch'
 import {_do} from 'rxjs/operator/do'
 import {concat} from 'rxjs/operator/concat'
+import {filter} from 'rxjs/operator/filter'
 import {distinctKey} from 'rxjs/operator/distinctKey'
 import {expand} from 'rxjs/operator/expand'
 import {map} from 'rxjs/operator/map'
@@ -31,6 +31,11 @@ export const ENTRY_DEPENDENCY_FIELDS = ['dependencies', 'devDependencies']
  */
 export const DEPENDENCY_FIELDS = ['dependencies']
 
+/**
+ * resolve a dependency's `package.json` file from the local file system.
+ * @param  {String} _path - path of the dependency.
+ * @return {Observable} - observable sequence of `package.json` objects.
+ */
 export function resolveLocal (_path) {
   return util.readlink(_path)
     ::mergeMap((relTarget) => {
@@ -41,6 +46,15 @@ export function resolveLocal (_path) {
     })
 }
 
+/**
+ * obtain a dependency's `package.json` file using the pre-configured registry.
+ * @param  {String} _path - path of the dependency.
+ * @param  {String} name - name of the dependency that should be looked up in
+ * the registry.
+ * @param  {String]} version - SemVer compatible version string.
+ * @param  {String} cwd - current working directory.
+ * @return {Observable} - observable sequence of `package.json` objects.
+ */
 export function resolveRemote (_path, name, version, cwd) {
   return registry.resolve(name, version)
     ::map((pkgJSON) => {
@@ -68,6 +82,14 @@ export function resolve (cwd, target) {
   })
 }
 
+/**
+ * merge dependency fields.
+ * @param  {Object} pkgJSON - `package.json` object from which the dependencies
+ * should be obtained.
+ * @param  {Array.<String>} fields - property names of dependencies to be merged
+ * together.
+ * @return {Object} - merged dependencies.
+ */
 function mergeDependencies (pkgJSON, fields) {
   const allDependencies = {}
   for (let field of fields) {
@@ -134,6 +156,10 @@ export function link ({ path: absPath, target: absTarget }) {
  */
 export function linkAll () {
   return this::distinctKey('path')::mergeMap(link)
+    // bundled dependencies
+    ::util.catchByCode({
+      EEXIST: () => EmptyObservable.create()
+    })
 }
 
 function download (tarball) {
@@ -172,17 +198,15 @@ function download (tarball) {
  */
 export function fetch ({target, pkgJSON: {dist: {tarball, shasum}}}) {
   const o = cache.extract(target, shasum)
-  return o::_catch((err) => {
-    if (err.code === 'ENOENT') {
-      return download(tarball)
-        ::_do(({ shasum: actual }) => {
-          if (actual !== shasum) {
-            throw new CorruptedPackageError(tarball, shasum, actual)
-          }
-        })
-        ::concat(o)
-    }
-    throw err
+  // TODO: Create two WriteStreams: One to cache, one to directory
+  return o::util.catchByCode({
+    ENOENT: () => download(tarball)
+      ::_do(({ shasum: actual }) => {
+        if (actual !== shasum) {
+          throw new CorruptedPackageError(tarball, shasum, actual)
+        }
+      })
+      ::concat(o)
   })
 }
 
@@ -192,10 +216,7 @@ export function fetch ({target, pkgJSON: {dist: {tarball, shasum}}}) {
  * once all dependencies have been downloaded.
  */
 export function fetchAll () {
-  return cache.init()
-    ::concat(
-      this
-        ::distinctKey('target')
-        ::mergeMap(fetch)
-    )
+  return this
+    ::filter(({ local }) => !local)
+    ::distinctKey('target')::mergeMap(fetch)
 }
