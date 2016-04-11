@@ -8,7 +8,7 @@ import forceSymlink from 'force-symlink'
  * generate the symlinks to be created in order to link to passed in package.
  * @param {String} cwd - current working directory.
  * @param {Object} pkgJSON - `package.json` file to be linked.
- * @return {[]String} - an array of tuples representing symbolic links to be
+ * @return {Array.<String>} - an array of tuples representing symbolic links to be
  * created.
  */
 export function getSymlinks (cwd, pkgJSON) {

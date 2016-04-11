@@ -36,21 +36,23 @@ export const DEPENDENCY_FIELDS = ['dependencies']
 
 /**
  * resolve a dependency's `package.json` file from the local file system.
+ * @param  {String} baseDir - absolute parent's node_modules path.
  * @param  {String} _path - path of the dependency.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveLocal (_path) {
+export function resolveLocal (baseDir, _path) {
   return util.readlink(_path)
     ::mergeMap((relTarget) => {
       const target = path.resolve(_path, relTarget)
       const filename = path.join(target, 'package.json')
       return util.readFileJSON(filename)
-        ::map((pkgJSON) => ({ pkgJSON, target, path: _path, local: true }))
+        ::map((pkgJSON) => ({ baseDir, pkgJSON, target, path: _path, local: true }))
     })
 }
 
 /**
  * obtain a dependency's `package.json` file using the pre-configured registry.
+ * @param  {String} baseDir - absolute parent's node_modules path.
  * @param  {String} _path - path of the dependency.
  * @param  {String} name - name of the dependency that should be looked up in
  * the registry.
@@ -58,11 +60,11 @@ export function resolveLocal (_path) {
  * @param  {String} cwd - current working directory.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveRemote (_path, name, version, cwd) {
+export function resolveRemote (baseDir, _path, name, version, cwd) {
   return registry.resolve(name, version)
     ::map((pkgJSON) => {
       const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
-      return { pkgJSON, target, path: _path, local: false }
+      return { baseDir, pkgJSON, target, path: _path, local: false }
     })
 }
 
@@ -77,10 +79,11 @@ export function resolveRemote (_path, name, version, cwd) {
  */
 export function resolve (cwd, target) {
   return this::mergeMap(([name, version]) => {
-    const _path = path.join(target, 'node_modules', name)
-    return resolveLocal(_path)
+    const baseDir = path.join(target, 'node_modules')
+    const _path = path.join(baseDir, name)
+    return resolveLocal(baseDir, _path, cwd)
       ::util.catchByCode({
-        ENOENT: () => resolveRemote(_path, name, version, cwd)
+        ENOENT: () => resolveRemote(baseDir, _path, name, version, cwd)
       })
   })
 }
@@ -94,7 +97,9 @@ export function resolve (cwd, target) {
 export function resolveAll (cwd) {
   const targets = Object.create(null)
 
-  return this::expand(({ target, pkgJSON }) => {
+  return this::expand((parent) => {
+    const {target, pkgJSON} = parent
+
     // cancel when we get into a circular dependency
     if (target in targets) return EmptyObservable.create()
     targets[target] = true
@@ -153,9 +158,24 @@ export function parseDependencies (pkgJSON, fields) {
  * once the symbolic link has been created.
  */
 export function link (dep) {
-  const {path: absPath, target: absTarget} = dep
-  const relTarget = path.relative(absPath, absTarget)
-  return util.forceSymlink(relTarget, absPath)
+  const {path: absPath, target: absTarget, baseDir, pkgJSON} = dep
+  const links = [ [absTarget, absPath] ]
+
+  const bin = typeof pkgJSON.bin === 'string'
+    ? ({ [pkgJSON.name]: pkgJSON.bin })
+    : (pkgJSON.bin || {})
+
+  for (let name in bin) {
+    const dst = path.join(baseDir, '.bin', name)
+    const src = path.join(absTarget, bin[name])
+    links.push([src, dst])
+  }
+
+  return ArrayObservable.create(links)
+    ::mergeMap(([src, dst]) => {
+      const relSrc = path.relative(path.dirname(dst), src)
+      return util.forceSymlink(relSrc, dst)
+    })
 }
 
 /**
@@ -165,10 +185,6 @@ export function link (dep) {
  */
 export function linkAll () {
   return this::distinctKey('path')::mergeMap(link)
-    // bundled dependencies
-    ::util.catchByCode({
-      EEXIST: () => EmptyObservable.create()
-    })
 }
 
 function download (tarball) {
@@ -235,7 +251,7 @@ export const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall']
 export function build (dep) {
   const {target, script} = dep
   return Observable.create((observer) => {
-    console.log(spawn)
+    console.log(target, script, spawn)
     observer.complete()
   })
 }
