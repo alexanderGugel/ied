@@ -1,9 +1,9 @@
-import {share} from 'rxjs/operator/share'
 import {_do} from 'rxjs/operator/do'
 import {skip} from 'rxjs/operator/skip'
 import {merge} from 'rxjs/operator/merge'
 import {filter} from 'rxjs/operator/filter'
-import {concatMap} from 'rxjs/operator/concatMap'
+import {concat} from 'rxjs/operator/concat'
+import {publishReplay} from 'rxjs/operator/publishReplay'
 import * as entryDep from './entry_dep'
 import {resolveAll, fetchAll, linkAll, buildAll} from './install'
 
@@ -27,11 +27,11 @@ export default function installCmd (cwd, argv) {
   const resolved = updatedPkgJSONs::resolveAll(cwd)::skip(1)
     ::filter(({ local }) => !local)
     ::_do(logResolved)
-    ::share()
+    ::publishReplay().refCount()
 
   const linked = resolved::linkAll()
   const fetched = resolved::fetchAll()
   const built = resolved::buildAll()
 
-  return linked::merge(fetched)::merge(built)
+  return linked::merge(fetched)::concat(built)
 }

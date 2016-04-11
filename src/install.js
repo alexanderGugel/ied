@@ -272,15 +272,15 @@ export function build ({target, script}) {
       process.env.PATH
     ].join(path.delimiter)
 
-    console.log(script)
-
-    const childProcess = spawn(script, {
+    const childProcess = spawn(config.sh, [config.shFlag, script], {
       cwd: target,
       env: env,
       stdio: 'inherit',
       shell: true
     })
-    childProcess.on('error', (error) => observer.error(error))
+    childProcess.on('error', (error) => {
+      observer.error(error)
+    })
     childProcess.on('close', (code) => {
       observer.next(code)
       observer.complete()
@@ -302,6 +302,6 @@ export function buildAll () {
       return results
     }, [])
     ::mergeMap((scripts) => ArrayObservable.create(scripts))
-    // ::mergeMap(build)
+    ::mergeMap(build)
     ::_do(console.log)
 }
