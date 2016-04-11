@@ -299,10 +299,11 @@ export function buildAll () {
           const script = scripts[name]
           if (script) observer.next({ target, script })
         }
+        observer.complete()
       })
     )
     ::mergeMap(build)
     ::every((code) => code === 0)
-    ::filter((ok) => ok)
+    ::filter((ok) => !ok)
     ::_do((ok) => { throw new FailedBuildError() })
 }
