@@ -168,7 +168,7 @@ export function parseDependencies (pkgJSON, fields) {
 /**
  * create a relative symbolic link to a dependency.
  * @param {Dep} dep - dependency to be linked.
- * @return {Observable} - an empty observable sequence that will be completed
+ * @return {Observable} - empty observable sequence that will be completed
  * once the symbolic link has been created.
  */
 export function link (dep) {
@@ -197,7 +197,7 @@ export function link (dep) {
 
 /**
  * symlink the intermediate results of the underlying observable sequence
- * @return {Observable} - an empty observable sequence that will be completed
+ * @return {Observable} - empty observable sequence that will be completed
  * once all dependencies have been symlinked.
  */
 export function linkAll () {
@@ -235,7 +235,7 @@ function download (tarball) {
 /**
  * download the tarball of the package into the `target` path.
  * @param {Dep} dep - dependency to be fetched.
- * @return {Observable} - an empty observable sequence that will be completed
+ * @return {Observable} - empty observable sequence that will be completed
  * once the dependency has been downloaded.
  */
 export function fetch ({target, pkgJSON: {dist: {tarball, shasum}}}) {
@@ -254,7 +254,7 @@ export function fetch ({target, pkgJSON: {dist: {tarball, shasum}}}) {
 
 /**
  * download the tarballs into their respective `target`.
- * @return {Observable} - an empty observable sequence that will be completed
+ * @return {Observable} - empty observable sequence that will be completed
  * once all dependencies have been downloaded.
  */
 export function fetchAll () {
@@ -288,19 +288,34 @@ export function build ({target, script}) {
   })
 }
 
+/**
+ * extract lifecycle scripts from supplied dependency.
+ * @param {Dep} dep - dependency to be parsed.
+ * @return {Array.<Object>} - array of script targets to be executed.
+ */
+export function parseLifecycleScripts (dep) {
+  const { target, pkgJSON: { scripts = {} } } = dep
+  const results = []
+  for (let i = 0; i < LIFECYCLE_SCRIPTS.length; i++) {
+    const name = LIFECYCLE_SCRIPTS[i]
+    const script = scripts[name]
+    if (script) results.push({ target, script })
+  }
+  return results
+}
+
+/**
+ * run all lifecycle scripts upon completion of the installation process.
+ * ensures that all scripts exit with 0 (success), otherwise an error will be
+ * thrown.
+ * @return {Observable} - empty observable sequence that will be completed once
+ * all lifecycle scripts have been executed.
+ */
 export function buildAll () {
   return this
     ::filter(({ local }) => !local)
-    ::mergeMap(({ target, pkgJSON: { scripts = {} } }) =>
-      Observable.create((observer) => {
-        for (let i = 0; i < LIFECYCLE_SCRIPTS.length; i++) {
-          const name = LIFECYCLE_SCRIPTS[i]
-          const script = scripts[name]
-          if (script) observer.next({ target, script })
-        }
-        observer.complete()
-      })
-    )
+    ::map(parseLifecycleScripts)
+    ::mergeMap((scripts) => ArrayObservable.create(scripts))
     ::mergeMap(build)
     ::every((code) => code === 0)
     ::filter((ok) => !ok)
