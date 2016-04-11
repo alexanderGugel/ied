@@ -67,6 +67,9 @@ if (argv.registry) {
       break
     case 't':
     case 'test':
+    case 'start':
+    case 'build':
+    case 'stop':
       runCmd = require('./run_cmd').default
       const _argv = Object.create(argv)
       _argv._ = ['run'].concat(argv._)
