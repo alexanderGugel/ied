@@ -1,4 +1,5 @@
 import {_do} from 'rxjs/operator/do'
+import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {skip} from 'rxjs/operator/skip'
 import {merge} from 'rxjs/operator/merge'
 import {filter} from 'rxjs/operator/filter'
@@ -31,7 +32,11 @@ export default function installCmd (cwd, argv) {
 
   const linked = resolved::linkAll()
   const fetched = resolved::fetchAll()
-  const built = resolved::buildAll()
+
+  // only build if we're allowed to.
+  const built = argv.build
+    ? resolved::buildAll()
+    : EmptyObservable.create()
 
   return linked::merge(fetched)::concat(built)
 }

@@ -11,7 +11,8 @@ const argv = minimist(process.argv.slice(2), {
     S: 'save',
     D: 'save-dev',
     o: 'only',
-    r: 'registry'
+    r: 'registry',
+    b: 'build'
   }
 })
 

@@ -23,6 +23,7 @@ Flags:
   -S, --save      update package.json dependencies
   -D, --save-dev  update package.json devDependencies
   -r, --registry  use a custom registry (default: http://registry.npmjs.org/)
+  -b, --build     execute lifecycle scripts upon completion (e.g. postinstall)
 
 Example:
   ied install
