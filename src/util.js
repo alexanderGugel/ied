@@ -10,6 +10,34 @@ import {map} from 'rxjs/operator/map'
 import {_catch} from 'rxjs/operator/catch'
 
 /**
+ * Wrapper around Node's [http#get]{@link https://nodejs.org/api/http.html#http_http_get_options_callback} method.
+ * @param  {Object|String} options URL or options object as expected by
+ * [http#request]{@link https://nodejs.org/api/http.html#http_http_request_options_callback}.
+ * @return {Object} An observable sequence of the chunks retrieved from the
+ * specified HTTP endpoint.
+ */
+export function httpGet (options) {
+  return Observable.create((observer) => {
+    if (typeof options === 'string') {
+      options = url.parse(options)
+    }
+    options.headers = options.headers || {}
+    options.headers['content-type'] = 'application/json'
+
+    const agent = options.protocol === 'https:'
+      ? https
+      : http
+
+    const handler = (response) => {
+      observer.next(response)
+      observer.complete()
+    }
+    const errHandler = (err) => observer.error(err)
+    agent.get(options, handler).on('error', errHandler)
+  })
+}
+
+/**
  * GETs JSON documents from an HTTP endpoint.
  * @param  {String} url - endpoint to which the GET request should be made
  * @return {Object} An observable sequence of the fetched JSON document.
