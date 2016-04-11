@@ -12,3 +12,4 @@ export const httpProxy = env.IED_HTTP_PROXY || env.HTTP_PROXY || null
 export const httpsProxy = env.IED_HTTPS_PROXY || env.HTTPS_PROXY || null
 export const requestRetries = parseInt(env.IED_REQUEST_RETRIES, 10) || 5
 export const sh = env.IED_SH || (platform === 'win32' ? env.comspec || 'cmd' : 'sh')
+export const shFlag = env.IED_SH_FLAG || (isWindows ? '/d /s /c' : '-c')

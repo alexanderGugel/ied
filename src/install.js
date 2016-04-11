@@ -31,8 +31,18 @@ export const ENTRY_DEPENDENCY_FIELDS = ['dependencies', 'devDependencies']
  * properties of `package.json` of sub-dependencies that will be checked for
  * dependences.
  * @type {Array.<String>}
+ * @readonly
  */
 export const DEPENDENCY_FIELDS = ['dependencies']
+
+/**
+ * names of lifecycle scripts that should be run as part of the installation
+ * process of a specific package (= properties of `scripts` object in
+ * `package.json`).
+ * @type {Array.<String>}
+ * @readonly
+ */
+export const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall']
 
 /**
  * resolve a dependency's `package.json` file from the local file system.
@@ -56,7 +66,7 @@ export function resolveLocal (baseDir, _path) {
  * @param  {String} _path - path of the dependency.
  * @param  {String} name - name of the dependency that should be looked up in
  * the registry.
- * @param  {String]} version - SemVer compatible version string.
+ * @param  {String} version - SemVer compatible version string.
  * @param  {String} cwd - current working directory.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
@@ -103,12 +113,14 @@ export function resolveAll (cwd) {
     // cancel when we get into a circular dependency
     if (target in targets) return EmptyObservable.create()
     targets[target] = true
+
     // install devDependencies of entry dependency (project-level)
     const fields = target === cwd ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
     const bundleDependencies = (pkgJSON.bundleDependencies || [])
       .concat(pkgJSON.bundledDependencies || [])
 
-    return parseDependencies(pkgJSON, fields)
+    const dependencies = parseDependencies(pkgJSON, fields)
+    return ArrayObservable.create(dependencies)
       ::filter(([name]) => bundleDependencies.indexOf(name) === -1)
       ::resolve(cwd, target)
   })
@@ -124,9 +136,12 @@ export function resolveAll (cwd) {
  */
 function mergeDependencies (pkgJSON, fields) {
   const allDependencies = {}
-  for (let field of fields) {
-    const dependencies = pkgJSON[field]
-    for (let name in dependencies) {
+  for (let i = 0; i < fields.length; i++) {
+    const field = fields[i]
+    const dependencies = pkgJSON[field] || {}
+    const names = Object.keys(dependencies)
+    for (let j = 0; j < names.length; j++) {
+      const name = names[j]
       allDependencies[name] = dependencies[name]
     }
   }
@@ -135,20 +150,20 @@ function mergeDependencies (pkgJSON, fields) {
 
 /**
  * extract specified dependencies from a specific `package.json`.
- * @param  {Object} pkgJSON - a plain JavaScript object representing a
+ * @param  {Object} pkgJSON - plain JavaScript object representing a
  * `package.json` file.
- * @param  {Array.<String>} fields - an array of dependency fields to be
- * followed.
- * @return {Observable} - an observable sequence of `[name, version]` entries.
+ * @param  {Array.<String>} fields - array of dependency fields to be followed.
+ * @return {Array} - array of dependency pairs.
  */
 export function parseDependencies (pkgJSON, fields) {
   const allDependencies = mergeDependencies(pkgJSON, fields)
-  return Observable.create((observer) => {
-    for (let name in allDependencies) {
-      observer.next([name, allDependencies[name]])
-    }
-    observer.complete()
-  })
+  const names = Object.keys(allDependencies)
+  const results = []
+  for (let i = 0; i < names.length; i++) {
+    const name = names[i]
+    results.push([name, allDependencies[name]])
+  }
+  return results
 }
 
 /**
@@ -165,7 +180,9 @@ export function link (dep) {
     ? ({ [pkgJSON.name]: pkgJSON.bin })
     : (pkgJSON.bin || {})
 
-  for (let name in bin) {
+  const names = Object.keys(bin)
+  for (let i = 0; i < names.length; i++) {
+    const name = names[i]
     const dst = path.join(baseDir, '.bin', name)
     const src = path.join(absTarget, bin[name])
     links.push([src, dst])
@@ -173,6 +190,7 @@ export function link (dep) {
 
   return ArrayObservable.create(links)
     ::mergeMap(([src, dst]) => {
+      // use relative pathnames
       const relSrc = path.relative(path.dirname(dst), src)
       return util.forceSymlink(relSrc, dst)
     })
@@ -246,13 +264,27 @@ export function fetchAll () {
     ::distinctKey('target')::mergeMap(fetch)
 }
 
-export const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall']
-
-export function build (dep) {
-  const {target, script} = dep
+export function build ({target, script}) {
   return Observable.create((observer) => {
-    console.log(target, script, spawn)
-    observer.complete()
+    const env = Object.create(process.env)
+    env.PATH = [
+      path.join(target, 'node_modules', '.bin'),
+      process.env.PATH
+    ].join(path.delimiter)
+
+    console.log(script)
+
+    const childProcess = spawn(script, {
+      cwd: target,
+      env: env,
+      stdio: 'inherit',
+      shell: true
+    })
+    childProcess.on('error', (error) => observer.error(error))
+    childProcess.on('close', (code) => {
+      observer.next(code)
+      observer.complete()
+    })
   })
 }
 
@@ -260,12 +292,16 @@ export function buildAll () {
   return this
     ::filter(({ local }) => !local)
     ::reduce((results, { target, pkgJSON: { scripts = {} } }) => {
-      for (let name of LIFECYCLE_SCRIPTS) {
+      for (let i = 0; i < LIFECYCLE_SCRIPTS.length; i++) {
+        const name = LIFECYCLE_SCRIPTS[i]
         const script = scripts[name]
-        if (script) results.push({ target, script })
+        if (script) {
+          results.push({ target, script })
+        }
       }
       return results
     }, [])
     ::mergeMap((scripts) => ArrayObservable.create(scripts))
-    ::mergeMap(build)
+    // ::mergeMap(build)
+    ::_do(console.log)
 }
