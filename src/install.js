@@ -46,23 +46,23 @@ export const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall']
 
 /**
  * resolve a dependency's `package.json` file from the local file system.
- * @param  {String} baseDir - absolute parent's node_modules path.
+ * @param  {String} parentTarget - absolute parent's node_modules path.
  * @param  {String} _path - path of the dependency.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveLocal (baseDir, _path) {
+export function resolveLocal (parentTarget, _path) {
   return util.readlink(_path)
     ::mergeMap((relTarget) => {
       const target = path.resolve(_path, relTarget)
       const filename = path.join(target, 'package.json')
       return util.readFileJSON(filename)
-        ::map((pkgJSON) => ({ baseDir, pkgJSON, target, path: _path, local: true }))
+        ::map((pkgJSON) => ({ parentTarget, pkgJSON, target, path: _path, local: true }))
     })
 }
 
 /**
  * obtain a dependency's `package.json` file using the pre-configured registry.
- * @param  {String} baseDir - absolute parent's node_modules path.
+ * @param  {String} parentTarget - absolute parent's node_modules path.
  * @param  {String} _path - path of the dependency.
  * @param  {String} name - name of the dependency that should be looked up in
  * the registry.
@@ -70,11 +70,11 @@ export function resolveLocal (baseDir, _path) {
  * @param  {String} cwd - current working directory.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveRemote (baseDir, _path, name, version, cwd) {
+export function resolveRemote (parentTarget, _path, name, version, cwd) {
   return registry.resolve(name, version)
     ::map((pkgJSON) => {
       const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
-      return { baseDir, pkgJSON, target, path: _path, local: false }
+      return { parentTarget, pkgJSON, target, path: _path, local: false }
     })
 }
 
@@ -89,11 +89,10 @@ export function resolveRemote (baseDir, _path, name, version, cwd) {
  */
 export function resolve (cwd, target) {
   return this::mergeMap(([name, version]) => {
-    const baseDir = path.join(target, 'node_modules')
-    const _path = path.join(baseDir, name)
-    return resolveLocal(baseDir, _path, cwd)
+    const _path = path.join(target, 'node_modules', name)
+    return resolveLocal(target, _path, cwd)
       ::util.catchByCode({
-        ENOENT: () => resolveRemote(baseDir, _path, name, version, cwd)
+        ENOENT: () => resolveRemote(target, _path, name, version, cwd)
       })
   })
 }
@@ -173,7 +172,7 @@ export function parseDependencies (pkgJSON, fields) {
  * once the symbolic link has been created.
  */
 export function link (dep) {
-  const {path: absPath, target: absTarget, baseDir, pkgJSON} = dep
+  const {path: absPath, target: absTarget, parentTarget, pkgJSON} = dep
   const links = [ [absTarget, absPath] ]
 
   const bin = typeof pkgJSON.bin === 'string'
@@ -183,7 +182,7 @@ export function link (dep) {
   const names = Object.keys(bin)
   for (let i = 0; i < names.length; i++) {
     const name = names[i]
-    const dst = path.join(baseDir, '.bin', name)
+    const dst = path.join(parentTarget, 'node_modules', '.bin', name)
     const src = path.join(absTarget, bin[name])
     links.push([src, dst])
   }

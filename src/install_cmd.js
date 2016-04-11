@@ -1,15 +1,19 @@
-import {_do} from 'rxjs/operator/do'
+import path from 'path'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
-import {skip} from 'rxjs/operator/skip'
-import {merge} from 'rxjs/operator/merge'
-import {filter} from 'rxjs/operator/filter'
+import {_do} from 'rxjs/operator/do'
 import {concat} from 'rxjs/operator/concat'
+import {filter} from 'rxjs/operator/filter'
+import {merge} from 'rxjs/operator/merge'
 import {publishReplay} from 'rxjs/operator/publishReplay'
-import * as entryDep from './entry_dep'
-import {resolveAll, fetchAll, linkAll, buildAll} from './install'
+import {skip} from 'rxjs/operator/skip'
 
-function logResolved ({pkgJSON: {name, version}}) {
-  console.log(`resolved ${name}@${version}`)
+import * as entryDep from './entry_dep'
+import * as install from './install'
+
+function logResolved ({parentTarget, pkgJSON: {name, version}, target}) {
+  parentTarget = path.basename(parentTarget).substr(0, 7)
+  target = path.basename(target).substr(0, 7)
+  console.log(`resolved ${parentTarget} > ${target}: ${name}@${version}`)
 }
 
 /**
@@ -25,17 +29,17 @@ export default function installCmd (cwd, argv) {
     ? entryDep.fromArgv(cwd, argv)
     : entryDep.fromFS(cwd)
 
-  const resolved = updatedPkgJSONs::resolveAll(cwd)::skip(1)
+  const resolved = updatedPkgJSONs::install.resolveAll(cwd)::skip(1)
     ::filter(({ local }) => !local)
     ::_do(logResolved)
     ::publishReplay().refCount()
 
-  const linked = resolved::linkAll()
-  const fetched = resolved::fetchAll()
+  const linked = resolved::install.linkAll()
+  const fetched = resolved::install.fetchAll()
 
   // only build if we're allowed to.
   const built = argv.build
-    ? resolved::buildAll()
+    ? resolved::install.buildAll()
     : EmptyObservable.create()
 
   return linked::merge(fetched)::concat(built)
