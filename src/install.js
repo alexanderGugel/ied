@@ -1,23 +1,23 @@
+import crypto from 'crypto'
 import path from 'path'
-import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
+import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {Observable} from 'rxjs/Observable'
 import {_do} from 'rxjs/operator/do'
 import {concat} from 'rxjs/operator/concat'
-import {every} from 'rxjs/operator/every'
-import {filter} from 'rxjs/operator/filter'
 import {distinctKey} from 'rxjs/operator/distinctKey'
+import {every} from 'rxjs/operator/every'
 import {expand} from 'rxjs/operator/expand'
+import {filter} from 'rxjs/operator/filter'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
-import crypto from 'crypto'
 import {spawn} from 'child_process'
 
-import {CorruptedPackageError, FailedBuildError} from './errors'
 import * as cache from './fs_cache'
+import * as config from './config'
+import * as errors from './errors'
 import * as registry from './registry'
 import * as util from './util'
-import * as config from './config'
 
 /**
  * properties of project-level `package.json` files that will be checked for
@@ -246,7 +246,7 @@ export function fetch ({target, pkgJSON: {dist: {tarball, shasum}}}) {
     ENOENT: () => download(tarball)
       ::_do(({ shasum: actual }) => {
         if (actual !== shasum) {
-          throw new CorruptedPackageError(tarball, shasum, actual)
+          throw new errors.CorruptedPackageError(tarball, shasum, actual)
         }
       })
       ::concat(o)
@@ -305,5 +305,5 @@ export function buildAll () {
     ::mergeMap(build)
     ::every((code) => code === 0)
     ::filter((ok) => !ok)
-    ::_do((ok) => { throw new FailedBuildError() })
+    ::_do((ok) => { throw new errors.FailedBuildError() })
 }
