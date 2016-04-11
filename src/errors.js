@@ -145,3 +145,26 @@ export class PackageRootError extends Error {
    * @readonly
    */
 }
+
+/**
+ * error class used for representing an error that occurs due to a lifecycle
+ * script that exits with a non-zero status code.
+ */
+export class FailedBuildError extends Error {
+  /**
+   * create instance.
+   */
+  constructor () {
+    super('failed to build one or more dependencies that exited with != 0')
+    this.name = FailedBuildError
+  }
+
+  /**
+   * name of the error.
+   *
+   * @name FailedBuildError#name
+   * @type String
+   * @default "FailedBuildError"
+   * @readonly
+   */
+}

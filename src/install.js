@@ -4,16 +4,16 @@ import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {Observable} from 'rxjs/Observable'
 import {_do} from 'rxjs/operator/do'
 import {concat} from 'rxjs/operator/concat'
+import {every} from 'rxjs/operator/every'
 import {filter} from 'rxjs/operator/filter'
 import {distinctKey} from 'rxjs/operator/distinctKey'
 import {expand} from 'rxjs/operator/expand'
 import {map} from 'rxjs/operator/map'
-import {reduce} from 'rxjs/operator/reduce'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import crypto from 'crypto'
 import {spawn} from 'child_process'
 
-import {CorruptedPackageError} from './errors'
+import {CorruptedPackageError, FailedBuildError} from './errors'
 import * as cache from './fs_cache'
 import * as registry from './registry'
 import * as util from './util'
@@ -259,9 +259,9 @@ export function fetch ({target, pkgJSON: {dist: {tarball, shasum}}}) {
  * once all dependencies have been downloaded.
  */
 export function fetchAll () {
-  return this
+  return this::distinctKey('target')
     ::filter(({ local }) => !local)
-    ::distinctKey('target')::mergeMap(fetch)
+    ::mergeMap(fetch)
 }
 
 export function build ({target, script}) {
@@ -269,6 +269,7 @@ export function build ({target, script}) {
     const env = Object.create(process.env)
     env.PATH = [
       path.join(target, 'node_modules', '.bin'),
+      path.resolve(__dirname, '..', 'node_modules', '.bin'),
       process.env.PATH
     ].join(path.delimiter)
 
@@ -291,17 +292,17 @@ export function build ({target, script}) {
 export function buildAll () {
   return this
     ::filter(({ local }) => !local)
-    ::reduce((results, { target, pkgJSON: { scripts = {} } }) => {
-      for (let i = 0; i < LIFECYCLE_SCRIPTS.length; i++) {
-        const name = LIFECYCLE_SCRIPTS[i]
-        const script = scripts[name]
-        if (script) {
-          results.push({ target, script })
+    ::mergeMap(({ target, pkgJSON: { scripts = {} } }) =>
+      Observable.create((observer) => {
+        for (let i = 0; i < LIFECYCLE_SCRIPTS.length; i++) {
+          const name = LIFECYCLE_SCRIPTS[i]
+          const script = scripts[name]
+          if (script) observer.next({ target, script })
         }
-      }
-      return results
-    }, [])
-    ::mergeMap((scripts) => ArrayObservable.create(scripts))
+      })
+    )
     ::mergeMap(build)
-    ::_do(console.log)
+    ::every((code) => code === 0)
+    ::filter((ok) => ok)
+    ::_do((ok) => { throw new FailedBuildError() })
 }
