@@ -16,6 +16,10 @@ The commands are:
   init        initialize a new package
   link        link the current package or into it
   unlink      unlink the current package or from it
+  start       runs `ied run start`
+  stop        runs `ied run stop`
+  build       runs `ied run build`
+  test        runs `ied run test`
 
 Flags:
   -h, --help      show usage information
