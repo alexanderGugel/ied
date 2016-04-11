@@ -12,6 +12,7 @@ import {filter} from 'rxjs/operator/filter'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {spawn} from 'child_process'
+import needle from 'needle'
 
 import * as cache from './fs_cache'
 import * as config from './config'
@@ -205,7 +206,16 @@ export function linkAll () {
 }
 
 function download (tarball) {
-  return util.httpGet(tarball)
+  return Observable
+    .create((observer) => {
+      needle.get(tarball, (error, resp) => {
+        if (error) observer.error(error)
+        else {
+          observer.next(resp)
+          observer.complete()
+        }
+      })
+    })
     ::mergeMap((resp) => Observable.create((observer) => {
       const shasum = crypto.createHash('sha1')
 
