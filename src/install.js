@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 import path from 'path'
+import ProgressBar from 'progress'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {Observable} from 'rxjs/Observable'
@@ -204,10 +205,16 @@ export function linkAll () {
   return this::distinctKey('path')::mergeMap(link)
 }
 
-function download (tarball) {
+function download (tarball, logLevel) {
   return util.httpGet(tarball)
     ::mergeMap((resp) => Observable.create((observer) => {
       const shasum = crypto.createHash('sha1')
+
+      const contentLen = Number(resp.headers['content-length'])
+      let progress
+      if (!isNaN(contentLen) && !logLevel) {
+        progress = new ProgressBar('[:bar] :percent', { width: 30, total: contentLen, clear: true })
+      }
 
       const errHandler = (err) => {
         observer.error(err)
@@ -220,7 +227,10 @@ function download (tarball) {
         observer.complete()
       }
 
-      resp.on('data', (chunk) => shasum.update(chunk))
+      resp.on('data', (chunk) => {
+       if (progress) progress.tick(chunk.length)
+       shasum.update(chunk)
+      })
 
       const cached = resp.pipe(cache.write())
         .on('error', errHandler)
@@ -238,11 +248,13 @@ function download (tarball) {
  * @return {Observable} - empty observable sequence that will be completed
  * once the dependency has been downloaded.
  */
-export function fetch ({target, pkgJSON: {dist: {tarball, shasum}}}) {
+export function fetch (logLevel, {target, pkgJSON: {name, version, dist: {tarball, shasum}}}) {
+  if (logLevel) console.log(`Installing ${name}@${version}`)
+
   const o = cache.extract(target, shasum)
   // TODO: Create two WriteStreams: One to cache, one to directory
   return o::util.catchByCode({
-    ENOENT: () => download(tarball)
+    ENOENT: () => download(tarball, logLevel)
       ::_do(({ shasum: actual }) => {
         if (actual !== shasum) {
           throw new errors.CorruptedPackageError(tarball, shasum, actual)
@@ -257,10 +269,10 @@ export function fetch ({target, pkgJSON: {dist: {tarball, shasum}}}) {
  * @return {Observable} - empty observable sequence that will be completed
  * once all dependencies have been downloaded.
  */
-export function fetchAll () {
+export function fetchAll (logLevel) {
   return this::distinctKey('target')
     ::filter(({ local }) => !local)
-    ::mergeMap(fetch)
+    ::mergeMap(fetch.bind(null, logLevel))
 }
 
 export function build ({target, script}) {

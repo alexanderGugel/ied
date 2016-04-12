@@ -10,10 +10,12 @@ import {skip} from 'rxjs/operator/skip'
 import * as entryDep from './entry_dep'
 import * as install from './install'
 
-function logResolved ({parentTarget, pkgJSON: {name, version}, target}) {
-  parentTarget = path.basename(parentTarget).substr(0, 7)
-  target = path.basename(target).substr(0, 7)
-  console.log(`resolved ${parentTarget} > ${target}: ${name}@${version}`)
+function logResolved (logLevel, {parentTarget, pkgJSON: {name, version}, target}) {
+  if ('debug' === logLevel) {
+    parentTarget = path.basename(parentTarget).substr(0, 7)
+    target = path.basename(target).substr(0, 7)
+    console.log(`resolved ${parentTarget} > ${target}: ${name}@${version}`)
+  }
 }
 
 /**
@@ -24,6 +26,10 @@ function logResolved ({parentTarget, pkgJSON: {name, version}, target}) {
  * the installation is complete.
  */
 export default function installCmd (cwd, argv) {
+  let logLevel = false
+  if (argv.debug) logLevel = 'debug'
+  if (argv.verbose) logLevel = 'info'
+
   const explicit = !!(argv._.length - 1)
   const updatedPkgJSONs = explicit
     ? entryDep.fromArgv(cwd, argv)
@@ -31,11 +37,11 @@ export default function installCmd (cwd, argv) {
 
   const resolved = updatedPkgJSONs::install.resolveAll(cwd)::skip(1)
     ::filter(({ local }) => !local)
-    ::_do(logResolved)
+    ::_do(logResolved.bind(null, logLevel))
     ::publishReplay().refCount()
 
   const linked = resolved::install.linkAll()
-  const fetched = resolved::install.fetchAll()
+  const fetched = resolved::install.fetchAll(logLevel)
 
   // only build if we're allowed to.
   const built = argv.build
