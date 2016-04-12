@@ -41,7 +41,7 @@ export default function installCmd (cwd, argv) {
     ? entryDep.fromArgv(cwd, argv)
     : entryDep.fromFS(cwd)
 
-  const resolved = updatedPkgJSONs::install.resolveAll(progress, cwd, progress)::skip(1)
+  const resolved = updatedPkgJSONs::install.resolveAll(progress, cwd)::skip(1)
     ::filter(({ local }) => !local)
     ::_do(logResolved.bind(null, logLevel))
     ::publishReplay().refCount()
