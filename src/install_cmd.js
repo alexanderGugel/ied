@@ -12,7 +12,7 @@ import * as install from './install'
 import * as fsCache from './fs_cache'
 
 function logResolved (logLevel, {parentTarget, pkgJSON: {name, version}, target}) {
-  if ('debug' === logLevel) {
+  if (logLevel === 'debug') {
     parentTarget = path.basename(parentTarget).substr(0, 7)
     target = path.basename(target).substr(0, 7)
     console.log(`resolved ${parentTarget} > ${target}: ${name}@${version}`)

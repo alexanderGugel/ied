@@ -13,8 +13,7 @@ const argv = minimist(process.argv.slice(2), {
     o: 'only',
     r: 'registry',
     b: 'build',
-    d: 'debug',
-    v: 'verbose'
+    d: 'debug'
   }
 })
 
