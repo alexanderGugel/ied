@@ -10,6 +10,7 @@ import {skip} from 'rxjs/operator/skip'
 
 import * as entryDep from './entry_dep'
 import * as install from './install'
+import * as fsCache from './fs_cache'
 
 function logResolved (logLevel, {parentTarget, pkgJSON: {name, version}, target}) {
   if ('debug' === logLevel) {
@@ -54,7 +55,9 @@ export default function installCmd (cwd, argv) {
     ? resolved::install.buildAll()
     : EmptyObservable.create()
 
-  const merged = linked::merge(fetched)::concat(built)
+  const merged = fsCache.init()
+    ::concat(linked::merge(fetched)::concat(built))
+
   merged.subscribe(null, null, () => progress && progress.tick())
   return merged
 }
