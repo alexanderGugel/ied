@@ -13,6 +13,7 @@ import {filter} from 'rxjs/operator/filter'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {spawn} from 'child_process'
+import needle from 'needle'
 
 import * as cache from './fs_cache'
 import * as config from './config'
@@ -205,41 +206,67 @@ export function linkAll () {
   return this::distinctKey('path')::mergeMap(link)
 }
 
-function download (tarball, logLevel) {
-  return util.httpGet(tarball)
-    ::mergeMap((resp) => Observable.create((observer) => {
-      const shasum = crypto.createHash('sha1')
+// function download (tarball, logLevel) {
+//   return util.httpGet(tarball)
+//     ::mergeMap((resp) => Observable.create((observer) => {
+//       const shasum = crypto.createHash('sha1')
 
-      const contentLen = Number(resp.headers['content-length'])
-      let progress
-      if (!isNaN(contentLen) && !logLevel) {
-        progress = new ProgressBar('[:bar] :percent', { width: 30, total: contentLen, clear: true })
-      }
+//       const contentLen = Number(resp.headers['content-length'])
+//       let progress
+//       if (!isNaN(contentLen) && !logLevel) {
+//         progress = new ProgressBar('[:bar] :percent', { width: 30, total: contentLen, clear: true })
+//       }
 
-      const errHandler = (err) => {
-        observer.error(err)
-      }
+//       const errHandler = (err) => {
+//         observer.error(err)
+//       }
 
-      const finHandler = () => {
-        const tmpPath = cached.path
-        const hex = shasum.digest('hex')
-        observer.next({ tmpPath, shasum: hex })
-        observer.complete()
-      }
+//       const finHandler = () => {
+//         const tmpPath = cached.path
+//         const hex = shasum.digest('hex')
+//         observer.next({ tmpPath, shasum: hex })
+//         observer.complete()
+//       }
 
-      resp.on('data', (chunk) => {
-       if (progress) progress.tick(chunk.length)
-       shasum.update(chunk)
-      })
+//       resp.on('data', (chunk) => {
+//        if (progress) progress.tick(chunk.length)
+//        shasum.update(chunk)
+//       })
 
-      const cached = resp.pipe(cache.write())
-        .on('error', errHandler)
-        .on('finish', finHandler)
-    }))
-    ::mergeMap(({ tmpPath, shasum }) => {
-      const newPath = path.join(config.cacheDir, shasum)
-      return util.rename(tmpPath, newPath)
-    })
+//       const cached = resp.pipe(cache.write())
+//         .on('error', errHandler)
+//         .on('finish', finHandler)
+//     }))
+//     ::mergeMap(({ tmpPath, shasum }) => {
+//       const newPath = path.join(config.cacheDir, shasum)
+//       return util.rename(tmpPath, newPath)
+//     })
+// }
+
+function download (tarball) {
+  return Observable.create((observer) => {
+    const errorHandler = (error) => observer.error(error)
+    const dataHandler = (chunk) => shasum.update(chunk)
+    const finishHandler = () => {
+      const hex = shasum.digest('hex')
+      observer.next({ tmpPath: cached.path, shasum: hex })
+      observer.complete()
+    }
+
+    const shasum = crypto.createHash('sha1')
+    const response = needle.get(tarball)
+    const cached = response.pipe(cache.write())
+
+    response.on('data', dataHandler)
+    response.on('error', errorHandler)
+
+    cached.on('error', errorHandler)
+    cached.on('finish', finishHandler)
+  })
+  ::mergeMap(({ tmpPath, shasum }) => {
+    const newPath = path.join(config.cacheDir, shasum)
+    return util.rename(tmpPath, newPath)
+  })
 }
 
 /**
