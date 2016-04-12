@@ -54,7 +54,7 @@ if (argv.registry) {
     case 'i':
     case 'install':
       installCmd = require('./install_cmd').default
-      installCmd(cwd, argv).subscribe()
+      installCmd(cwd, argv, (obs) => obs.subscribe())
       break
     case 'sh':
     case 'shell':

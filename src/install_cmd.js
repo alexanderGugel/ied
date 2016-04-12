@@ -9,6 +9,7 @@ import {skip} from 'rxjs/operator/skip'
 
 import * as entryDep from './entry_dep'
 import * as install from './install'
+import { init as initCache } from './fs_cache'
 
 function logResolved (logLevel, {parentTarget, pkgJSON: {name, version}, target}) {
   if ('debug' === logLevel) {
@@ -25,28 +26,30 @@ function logResolved (logLevel, {parentTarget, pkgJSON: {name, version}, target}
  * @return {Observable} - an observable sequence that will be completed once
  * the installation is complete.
  */
-export default function installCmd (cwd, argv) {
+export default function installCmd (cwd, argv, cb) {
   let logLevel = false
   if (argv.debug) logLevel = 'debug'
   if (argv.verbose) logLevel = 'info'
 
-  const explicit = !!(argv._.length - 1)
-  const updatedPkgJSONs = explicit
-    ? entryDep.fromArgv(cwd, argv)
-    : entryDep.fromFS(cwd)
+  initCache().subscribe(null, null, () => {
+    const explicit = !!(argv._.length - 1)
+    const updatedPkgJSONs = explicit
+      ? entryDep.fromArgv(cwd, argv)
+      : entryDep.fromFS(cwd)
 
-  const resolved = updatedPkgJSONs::install.resolveAll(cwd)::skip(1)
-    ::filter(({ local }) => !local)
-    ::_do(logResolved.bind(null, logLevel))
-    ::publishReplay().refCount()
+    const resolved = updatedPkgJSONs::install.resolveAll(cwd)::skip(1)
+      ::filter(({ local }) => !local)
+      ::_do(logResolved.bind(null, logLevel))
+      ::publishReplay().refCount()
 
-  const linked = resolved::install.linkAll()
-  const fetched = resolved::install.fetchAll(logLevel)
+    const linked = resolved::install.linkAll()
+    const fetched = resolved::install.fetchAll(logLevel)
 
-  // only build if we're allowed to.
-  const built = argv.build
-    ? resolved::install.buildAll()
-    : EmptyObservable.create()
+    // only build if we're allowed to.
+    const built = argv.build
+      ? resolved::install.buildAll()
+      : EmptyObservable.create()
 
-  return linked::merge(fetched)::concat(built)
+    cb(linked::merge(fetched)::concat(built))
+  })
 }
