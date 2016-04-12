@@ -1,4 +1,5 @@
 import path from 'path'
+import ProgressBar from 'progress'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {_do} from 'rxjs/operator/do'
 import {concat} from 'rxjs/operator/concat'
@@ -30,23 +31,30 @@ export default function installCmd (cwd, argv) {
   if (argv.debug) logLevel = 'debug'
   if (argv.verbose) logLevel = 'info'
 
+  let progress
+  if (!logLevel) {
+    progress = new ProgressBar(':percent    :current / :total', { total: 1 })
+  }
+
   const explicit = !!(argv._.length - 1)
   const updatedPkgJSONs = explicit
     ? entryDep.fromArgv(cwd, argv)
     : entryDep.fromFS(cwd)
 
-  const resolved = updatedPkgJSONs::install.resolveAll(cwd)::skip(1)
+  const resolved = updatedPkgJSONs::install.resolveAll(progress, cwd, progress)::skip(1)
     ::filter(({ local }) => !local)
     ::_do(logResolved.bind(null, logLevel))
     ::publishReplay().refCount()
 
   const linked = resolved::install.linkAll()
-  const fetched = resolved::install.fetchAll(logLevel)
+  const fetched = resolved::install.fetchAll(logLevel, progress)
 
   // only build if we're allowed to.
   const built = argv.build
     ? resolved::install.buildAll()
     : EmptyObservable.create()
 
-  return linked::merge(fetched)::concat(built)
+  const merged = linked::merge(fetched)::concat(built)
+  merged.subscribe(null, null, () => progress && progress.tick())
+  return merged
 }
