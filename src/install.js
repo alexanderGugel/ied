@@ -1,6 +1,5 @@
 import crypto from 'crypto'
 import path from 'path'
-import ProgressBar from 'progress'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {Observable} from 'rxjs/Observable'
@@ -89,13 +88,14 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
  * @return {Obserable} - observable sequence of `package.json` root documents
  * wrapped into dependency objects representing the resolved sub-dependency.
  */
-export function resolve (cwd, target) {
+export function resolve (progress, cwd, target) {
   return this::mergeMap(([name, version]) => {
     const _path = path.join(target, 'node_modules', name)
     return resolveLocal(target, _path, cwd)
       ::util.catchByCode({
         ENOENT: () => resolveRemote(target, _path, name, version, cwd)
       })
+      ::_do(() => progress && progress.tick())
   })
 }
 
@@ -105,7 +105,7 @@ export function resolve (cwd, target) {
  * @param  {String} cwd - current working directory.
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
-export function resolveAll (cwd) {
+export function resolveAll (progress, cwd) {
   const targets = Object.create(null)
 
   return this::expand((parent) => {
@@ -121,9 +121,10 @@ export function resolveAll (cwd) {
       .concat(pkgJSON.bundledDependencies || [])
 
     const dependencies = parseDependencies(pkgJSON, fields)
+    if (progress) progress.total += dependencies.length
     return ArrayObservable.create(dependencies)
       ::filter(([name]) => bundleDependencies.indexOf(name) === -1)
-      ::resolve(cwd, target)
+      ::resolve(progress, cwd, target)
   })
 }
 
@@ -216,7 +217,7 @@ export function linkAll () {
   return this::distinctKey('path')::mergeMap(link)
 }
 
-function download (tarball, logLevel) {
+function download (tarball) {
   return Observable.create((observer) => {
     let progress
     const errorHandler = (error) => observer.error(error)
@@ -229,18 +230,10 @@ function download (tarball, logLevel) {
       observer.next({ tmpPath: cached.path, shasum: hex })
       observer.complete()
     }
-    const headersHandler = ({ ['content-length']: total }) => {
-      total = Number(total)
-      if (!isNaN(total) && !logLevel) {
-        progress = new ProgressBar('[:bar] :percent', { width: 30, total, clear: true })
-      }
-    }
 
     const shasum = crypto.createHash('sha1')
     const response = needle.get(tarball)
     const cached = response.pipe(cache.write())
-
-    response.on('headers', headersHandler)
 
     response.on('data', dataHandler)
     response.on('error', errorHandler)
@@ -271,18 +264,19 @@ function fixPermissions (target, bin) {
  * @return {Observable} - empty observable sequence that will be completed
  * once the dependency has been downloaded.
  */
-export function fetch (logLevel, {target, pkgJSON: {name, version, bin, dist: {tarball, shasum}}}) {
+export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin, dist: {tarball, shasum}}}) {
   if (logLevel) console.log(`Installing ${name}@${version}`)
 
   const o = cache.extract(target, shasum)
   // TODO: Create two WriteStreams: One to cache, one to directory
   return o::util.catchByCode({
-    ENOENT: () => download(tarball, logLevel)
+    ENOENT: () => download(tarball)
       ::_do(({ shasum: actual }) => {
         if (actual !== shasum) {
           throw new errors.CorruptedPackageError(tarball, shasum, actual)
         }
       })
+      ::_do(() => progress && progress.tick())
       ::concat(o)
   })::concat(fixPermissions(target, normalizeBin({ name, bin })))
 }
@@ -292,10 +286,10 @@ export function fetch (logLevel, {target, pkgJSON: {name, version, bin, dist: {t
  * @return {Observable} - empty observable sequence that will be completed
  * once all dependencies have been downloaded.
  */
-export function fetchAll (logLevel) {
+export function fetchAll (logLevel, progress) {
   return this::distinctKey('target')
     ::filter(({ local }) => !local)
-    ::mergeMap(fetch.bind(null, logLevel))
+    ::mergeMap(fetch.bind(null, logLevel, progress))
 }
 
 export function build ({target, script}) {

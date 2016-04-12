@@ -26,23 +26,19 @@ function logResolved (logLevel, {parentTarget, pkgJSON: {name, version}, target}
  * @return {Observable} - an observable sequence that will be completed once
  * the installation is complete.
  */
-export default function installCmd (cwd, argv) {
-  let logLevel = false
-  if (argv.debug) logLevel = 'debug'
-  if (argv.verbose) logLevel = 'info'
-
+export default function installCmd (cwd, argv, logLevel, progress) {
   const explicit = !!(argv._.length - 1)
   const updatedPkgJSONs = explicit
     ? entryDep.fromArgv(cwd, argv)
     : entryDep.fromFS(cwd)
 
-  const resolved = updatedPkgJSONs::install.resolveAll(cwd)::skip(1)
+  const resolved = updatedPkgJSONs::install.resolveAll(progress, cwd)::skip(1)
     ::filter(({ local }) => !local)
     ::_do(logResolved.bind(null, logLevel))
     ::publishReplay().refCount()
 
   const linked = resolved::install.linkAll()
-  const fetched = resolved::install.fetchAll(logLevel)
+  const fetched = resolved::install.fetchAll(logLevel, progress)
 
   // only build if we're allowed to.
   const built = argv.build
