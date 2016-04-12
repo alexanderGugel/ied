@@ -1,5 +1,4 @@
 import path from 'path'
-import ProgressBar from 'progress'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {_do} from 'rxjs/operator/do'
 import {concat} from 'rxjs/operator/concat'
@@ -27,16 +26,7 @@ function logResolved (logLevel, {parentTarget, pkgJSON: {name, version}, target}
  * @return {Observable} - an observable sequence that will be completed once
  * the installation is complete.
  */
-export default function installCmd (cwd, argv) {
-  let logLevel = false
-  if (argv.debug) logLevel = 'debug'
-  if (argv.verbose) logLevel = 'info'
-
-  let progress
-  if (!logLevel) {
-    progress = new ProgressBar(':percent    :current / :total   installing modules', { total: 1 })
-  }
-
+export default function installCmd (cwd, argv, logLevel, progress) {
   const explicit = !!(argv._.length - 1)
   const updatedPkgJSONs = explicit
     ? entryDep.fromArgv(cwd, argv)
@@ -55,9 +45,6 @@ export default function installCmd (cwd, argv) {
     ? resolved::install.buildAll()
     : EmptyObservable.create()
 
-  const merged = fsCache.init()
+  return fsCache.init()
     ::concat(linked::merge(fetched)::concat(built))
-
-  merged.subscribe(null, null, () => progress && progress.tick())
-  return merged
 }

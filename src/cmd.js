@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import minimist from 'minimist'
+import ProgressBar from 'progress'
 import * as config from './config'
 
 const cwd = process.cwd()
@@ -20,6 +21,14 @@ const argv = minimist(process.argv.slice(2), {
 
 if (argv.registry) {
   config.registry = argv.registry
+}
+
+if (argv.verbose) {
+  config.logLevel = 'verbose'
+}
+
+if (argv.debug) {
+  config.logLevel = 'debug'
 }
 
 // This doesn't have to be an IIFE, since Node wraps everything in a function
@@ -53,8 +62,15 @@ if (argv.registry) {
   switch (subCommand) {
     case 'i':
     case 'install':
+      let progress
+      if (!config.logLevel) {
+        progress = new ProgressBar(':percent    :current / :total   installing modules', { total: 1 })
+      }
+
       installCmd = require('./install_cmd').default
-      installCmd(cwd, argv).subscribe()
+      installCmd(cwd, argv, config.logLevel, progress).subscribe(null, null, () => {
+        progress && progress.tick()
+      })
       break
     case 'sh':
     case 'shell':
