@@ -167,6 +167,13 @@ export function parseDependencies (pkgJSON, fields) {
   return results
 }
 
+/**
+ * normalize the `bin` property in `package.json`, which could either be a
+ * string, object or undefined.
+ * @param  {Object} pkgJSON - plain JavaScript object representing a
+ * `package.json` file.
+ * @return {Object} - normalized `bin` property.
+ */
 function normalizeBin (pkgJSON) {
   return typeof pkgJSON.bin === 'string'
     ? ({ [pkgJSON.name]: pkgJSON.bin })
