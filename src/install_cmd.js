@@ -33,7 +33,7 @@ export default function installCmd (cwd, argv) {
 
   let progress
   if (!logLevel) {
-    progress = new ProgressBar(':percent    :current / :total', { total: 1 })
+    progress = new ProgressBar(':percent    :current / :total   installing modules', { total: 1 })
   }
 
   const explicit = !!(argv._.length - 1)
