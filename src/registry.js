@@ -29,7 +29,12 @@ export function validatePackageRoot (uri, body) {
  * the package root.
  */
 export function httpGetPackageRoot (name) {
-  const uri = url.resolve(config.registry, name)
+  const isScoped = name.charAt(0) === '@'
+  const escapedName = isScoped
+    ? '@' + encodeURIComponent(name.substr(1))
+    : encodeURIComponent(name)
+
+  const uri = url.resolve(config.registry, escapedName)
   const cached = imCache.get(uri)
   if (cached) return cached
   const result = httpGetJSON(uri)
