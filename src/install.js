@@ -167,6 +167,12 @@ export function parseDependencies (pkgJSON, fields) {
   return results
 }
 
+function normalizeBin (pkgJSON) {
+  return typeof pkgJSON.bin === 'string'
+    ? ({ [pkgJSON.name]: pkgJSON.bin })
+    : (pkgJSON.bin || {})
+}
+
 /**
  * create a relative symbolic link to a dependency.
  * @param {Dep} dep - dependency to be linked.
@@ -176,10 +182,7 @@ export function parseDependencies (pkgJSON, fields) {
 export function link (dep) {
   const {path: absPath, target: absTarget, parentTarget, pkgJSON} = dep
   const links = [ [absTarget, absPath] ]
-
-  const bin = typeof pkgJSON.bin === 'string'
-    ? ({ [pkgJSON.name]: pkgJSON.bin })
-    : (pkgJSON.bin || {})
+  const bin = normalizeBin(pkgJSON)
 
   const names = Object.keys(bin)
   for (let i = 0; i < names.length; i++) {
@@ -244,13 +247,24 @@ function download (tarball, logLevel) {
   })
 }
 
+const execMode = parseInt('0777', 8) & (~process.umask())
+
+function fixPermissions (target, bin) {
+  const paths = []
+  for (let name in bin) {
+    paths.push(path.resolve(target, bin[name]))
+  }
+  return ArrayObservable.create(paths)
+    ::mergeMap((path) => util.chmod(path, execMode))
+}
+
 /**
  * download the tarball of the package into the `target` path.
  * @param {Dep} dep - dependency to be fetched.
  * @return {Observable} - empty observable sequence that will be completed
  * once the dependency has been downloaded.
  */
-export function fetch (logLevel, {target, pkgJSON: {name, version, dist: {tarball, shasum}}}) {
+export function fetch (logLevel, {target, pkgJSON: {name, version, bin, dist: {tarball, shasum}}}) {
   if (logLevel) console.log(`Installing ${name}@${version}`)
 
   const o = cache.extract(target, shasum)
@@ -263,7 +277,7 @@ export function fetch (logLevel, {target, pkgJSON: {name, version, dist: {tarbal
         }
       })
       ::concat(o)
-  })
+  })::concat(fixPermissions(target, normalizeBin({ name, bin })))
 }
 
 /**
