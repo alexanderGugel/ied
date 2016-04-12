@@ -12,6 +12,7 @@ import {filter} from 'rxjs/operator/filter'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {spawn} from 'child_process'
+import needle from 'needle'
 
 import * as cache from './fs_cache'
 import * as config from './config'
@@ -168,6 +169,19 @@ export function parseDependencies (pkgJSON, fields) {
 }
 
 /**
+ * normalize the `bin` property in `package.json`, which could either be a
+ * string, object or undefined.
+ * @param  {Object} pkgJSON - plain JavaScript object representing a
+ * `package.json` file.
+ * @return {Object} - normalized `bin` property.
+ */
+function normalizeBin (pkgJSON) {
+  return typeof pkgJSON.bin === 'string'
+    ? ({ [pkgJSON.name]: pkgJSON.bin })
+    : (pkgJSON.bin || {})
+}
+
+/**
  * create a relative symbolic link to a dependency.
  * @param {Dep} dep - dependency to be linked.
  * @return {Observable} - empty observable sequence that will be completed
@@ -176,10 +190,7 @@ export function parseDependencies (pkgJSON, fields) {
 export function link (dep) {
   const {path: absPath, target: absTarget, parentTarget, pkgJSON} = dep
   const links = [ [absTarget, absPath] ]
-
-  const bin = typeof pkgJSON.bin === 'string'
-    ? ({ [pkgJSON.name]: pkgJSON.bin })
-    : (pkgJSON.bin || {})
+  const bin = normalizeBin(pkgJSON)
 
   const names = Object.keys(bin)
   for (let i = 0; i < names.length; i++) {
@@ -207,33 +218,44 @@ export function linkAll () {
 }
 
 function download (tarball) {
-  return util.httpGet(tarball)
-    ::mergeMap((resp) => Observable.create((observer) => {
-      const shasum = crypto.createHash('sha1')
+  return Observable.create((observer) => {
+    let progress
+    const errorHandler = (error) => observer.error(error)
+    const dataHandler = (chunk) => {
+      if (progress) progress.tick(chunk.length)
+      shasum.update(chunk)
+    }
+    const finishHandler = () => {
+      const hex = shasum.digest('hex')
+      observer.next({ tmpPath: cached.path, shasum: hex })
+      observer.complete()
+    }
 
-      const errHandler = (err) => {
-        observer.error(err)
-      }
+    const shasum = crypto.createHash('sha1')
+    const response = needle.get(tarball)
+    const cached = response.pipe(cache.write())
 
-      const finHandler = () => {
-        const tmpPath = cached.path
-        const hex = shasum.digest('hex')
-        observer.next({ tmpPath, shasum: hex })
-        observer.complete()
-      }
+    response.on('data', dataHandler)
+    response.on('error', errorHandler)
 
-      resp.on('data', (chunk) => {
-       shasum.update(chunk)
-      })
+    cached.on('error', errorHandler)
+    cached.on('finish', finishHandler)
+  })
+  ::mergeMap(({ tmpPath, shasum }) => {
+    const newPath = path.join(config.cacheDir, shasum)
+    return util.rename(tmpPath, newPath)
+  })
+}
 
-      const cached = resp.pipe(cache.write())
-        .on('error', errHandler)
-        .on('finish', finHandler)
-    }))
-    ::mergeMap(({ tmpPath, shasum }) => {
-      const newPath = path.join(config.cacheDir, shasum)
-      return util.rename(tmpPath, newPath)
-    })
+const execMode = parseInt('0777', 8) & (~process.umask())
+
+function fixPermissions (target, bin) {
+  const paths = []
+  for (let name in bin) {
+    paths.push(path.resolve(target, bin[name]))
+  }
+  return ArrayObservable.create(paths)
+    ::mergeMap((path) => util.chmod(path, execMode))
 }
 
 /**
@@ -242,7 +264,7 @@ function download (tarball) {
  * @return {Observable} - empty observable sequence that will be completed
  * once the dependency has been downloaded.
  */
-export function fetch (logLevel, progress, {target, pkgJSON: {name, version, dist: {tarball, shasum}}}) {
+export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin, dist: {tarball, shasum}}}) {
   if (logLevel) console.log(`Installing ${name}@${version}`)
 
   const o = cache.extract(target, shasum)
@@ -256,7 +278,7 @@ export function fetch (logLevel, progress, {target, pkgJSON: {name, version, dis
       })
       ::_do(() => progress && progress.tick())
       ::concat(o)
-  })
+  })::concat(fixPermissions(target, normalizeBin({ name, bin })))
 }
 
 /**

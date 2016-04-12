@@ -144,6 +144,15 @@ export function readFileJSON (file) {
   return readFile(file, 'utf8')::map(JSON.parse)
 }
 
+export function chmod (path, mode) {
+  return Observable.create((observer) => {
+    fs.chmod(path, mode, (err) => {
+      if (err) observer.error(err)
+      else observer.complete()
+    })
+  })
+}
+
 /**
  * set the terminal title using the required ANSI escape codes.
  * @param {String} title - title to be set.
