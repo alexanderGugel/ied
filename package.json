@@ -43,7 +43,8 @@
     "mockmock": "0.0.5",
     "nock": "^5.2.1",
     "proxyquire": "^1.7.3",
-    "rimraf": "^2.4.3",
+    "resolve": "^1.1.7",
+    "rimraf": "^2.5.2",
     "sinon": "^1.17.3",
     "snazzy": "^2.0.1",
     "standard": "^5.3.1"
