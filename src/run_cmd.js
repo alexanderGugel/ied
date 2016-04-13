@@ -52,7 +52,7 @@ export default function runCmd (cwd, argv) {
     if (err) throw err
     const info = scripts.map((script, i) => {
       const scriptStatus = statuses[i].every((code) => { return code === 0 })
-      return `${script} exited with status ${scriptStatus ? 0 : 1}`
+      return `${pkg.name}: ${script} exited with status ${scriptStatus ? 0 : 1}`
     }).join('\n')
     console.log(info)
 
