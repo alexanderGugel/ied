@@ -325,7 +325,7 @@ function fixPermissions (target, bin) {
  * @return {Observable} - empty observable sequence that will be completed
  * once the dependency has been downloaded.
  */
-export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin, dist }}) {
+export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin, dist}}) {
   if (logLevel) console.log(`Installing ${name}@${version}`)
 
    // Remote module
