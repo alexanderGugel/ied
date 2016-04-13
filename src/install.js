@@ -51,9 +51,10 @@ export const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall']
  * resolve a dependency's `package.json` file from the local file system.
  * @param  {String} parentTarget - absolute parent's node_modules path.
  * @param  {String} _path - path of the dependency.
+ * @param  {Boolean} local - specify if "truly local". can be used set `resolveRemote`
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveLocal (parentTarget, _path) {
+export function resolveLocal (parentTarget, _path, cwd) {
   return util.readlink(_path)
     ::mergeMap((relTarget) => {
       const target = path.resolve(_path, relTarget)
@@ -61,6 +62,19 @@ export function resolveLocal (parentTarget, _path) {
       return util.readFileJSON(filename)
         ::map((pkgJSON) => ({ parentTarget, pkgJSON, target, path: _path, local: true }))
     })
+}
+
+/**
+ * resolve a dependency's `package.json` file from the local file system.
+ * @param  {String} parentTarget - absolute parent's node_modules path.
+ * @param  {String} _path - path of the dependency.
+ * @return {Observable} - observable sequence of `package.json` objects.
+ */
+export function resolveDownloaded (parentTarget, target, _path, cwd, tarballData) {
+  const pkgPath = path.join(target, 'package.json')
+
+  return util.readFileJSON(pkgPath)
+    ::map((pkgJSON) => ({ parentTarget, pkgJSON, target, path: _path, local: false, tarballData, type: 'remote' }))
 }
 
 /**
@@ -88,18 +102,44 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
         })
     case 'remote':
       const pkgJSON = tarball.resolve(name, version, parsedPkg.spec)
+      const shasum = pkgJSON.dist.shasum
       const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
+      let cached
 
-      return Observable.create((observable) => {
-        observable.next({ parentTarget, pkgJSON, target, path: _path, local: false })
-        observable.complete()
+      return Observable.create((observer) => {
+        let resolved
+        const errorHandler = (error) => observer.error(error)
+        const finishHandler = () => {
+          const newPath = path.join(config.cacheDir, shasum)
+          return util.rename(cached.path, newPath).subscribe(null, null, () => {
+
+           cache.extract(target, shasum).subscribe(null, null, () => {
+             resolveDownloaded(parentTarget, path.join(cwd, 'node_modules', pkgJSON.dist.shasum), _path, cwd, { sha: shasum, tmpPath: cached.path }).subscribe((x) => resolved = x, null, (v) => {
+               observer.next(resolved)
+               observer.complete()
+             })
+           })
+         })
+        }
+
+        const response = needle.get(version, {
+          follow_max: 5
+        })
+
+        cached = response
+          .pipe(cache.write())
+
+        cached.on('error', errorHandler)
+        cached.on('finish', finishHandler)
+
+        response.on('error', errorHandler)
       })
+
     case 'hosted':
       throw new Error('GitHub dependencies are not yet supported')
     default:
      throw new Error(`Unknown package spec: ${parsedPkg.type} on ${pkgName}`)
   }
-
 }
 
 /**
@@ -240,7 +280,7 @@ export function linkAll () {
   return this::distinctKey('path')::mergeMap(link)
 }
 
-function download (tarball, tarballSHA) {
+function download (tarball) {
   return Observable.create((observer) => {
     const errorHandler = (error) => observer.error(error)
     const dataHandler = (chunk) => {
@@ -248,7 +288,7 @@ function download (tarball, tarballSHA) {
     }
     const finishHandler = () => {
       const hex = shasum.digest('hex')
-      observer.next({ tmpPath: cached.path, shasum: tarballSHA || hex })
+      observer.next({ tmpPath: cached.path, shasum: hex })
       observer.complete()
     }
 
@@ -263,7 +303,7 @@ function download (tarball, tarballSHA) {
     cached.on('finish', finishHandler)
   })
   ::mergeMap(({ tmpPath, shasum }) => {
-    const newPath = path.join(config.cacheDir, tarballSHA || shasum)
+    const newPath = path.join(config.cacheDir, shasum)
     return util.rename(tmpPath, newPath)
   })
 }
@@ -285,20 +325,27 @@ function fixPermissions (target, bin) {
  * @return {Observable} - empty observable sequence that will be completed
  * once the dependency has been downloaded.
  */
-export function fetch (logLevel, progress, {target, pkgJSON: {name, version, type, bin, dist: {tarball, shasum}}}) {
+export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin, dist }}) {
   if (logLevel) console.log(`Installing ${name}@${version}`)
+
+   // Remote module
+  if (!dist) {
+    return fixPermissions(target, normalizeBin({ name, bin }))
+  }
+
+  const { shasum, tarball } = dist
 
   const o = cache.extract(target, shasum)
   // TODO: Create two WriteStreams: One to cache, one to directory
   return o::util.catchByCode({
-    ENOENT: () => download(tarball, type === 'tarball' ? shasum : null)
-      ::_do(({ shasum: actual }) => {
-        if (actual !== shasum) {
-          throw new errors.CorruptedPackageError(tarball, shasum, actual)
-        }
-      })
-      ::_do(() => progress && progress.tick())
-      ::concat(o)
+    ENOENT: () => download(tarball)
+   ::_do(({ shasum: actual }) => {
+    if (actual !== shasum) {
+     throw new errors.CorruptedPackageError(tarball, shasum, actual)
+    }
+   })
+  ::_do(() => progress && progress.tick())
+   ::concat(o)
   })::concat(fixPermissions(target, normalizeBin({ name, bin })))
 }
 
