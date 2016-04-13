@@ -339,13 +339,13 @@ export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin
   // TODO: Create two WriteStreams: One to cache, one to directory
   return o::util.catchByCode({
     ENOENT: () => download(tarball)
-   ::_do(({ shasum: actual }) => {
-    if (actual !== shasum) {
-     throw new errors.CorruptedPackageError(tarball, shasum, actual)
-    }
-   })
-  ::_do(() => progress && progress.tick())
-   ::concat(o)
+      ::_do(({ shasum: actual }) => {
+        if (actual !== shasum) {
+          throw new errors.CorruptedPackageError(tarball, shasum, actual)
+        }
+      })
+      ::_do(() => progress && progress.tick())
+      ::concat(o)
   })::concat(fixPermissions(target, normalizeBin({ name, bin })))
 }
 
