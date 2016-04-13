@@ -219,10 +219,8 @@ export function linkAll () {
 
 function download (tarball) {
   return Observable.create((observer) => {
-    let progress
     const errorHandler = (error) => observer.error(error)
     const dataHandler = (chunk) => {
-      if (progress) progress.tick(chunk.length)
       shasum.update(chunk)
     }
     const finishHandler = () => {
