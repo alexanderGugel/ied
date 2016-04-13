@@ -40,83 +40,21 @@ export function httpGetJSON (url) {
   })
 }
 
-export function readFile (file, options) {
-  return Observable.create((observer) => {
-    fs.readFile(file, options, (error, data) => {
-      if (error) observer.error(error)
-      else {
-        observer.next(data)
-        observer.complete()
-      }
-    })
-  })
-}
+export const readFile = wrapIntoObservable(fs.readFile, fs)
+export const writeFile = wrapIntoObservable(fs.writeFile, fs)
+export const stat = wrapIntoObservable(fs.stat, fs)
+export const rename = wrapIntoObservable(fs.rename, fs)
+export const readlink = wrapIntoObservable(fs.readlink, fs)
+export const chmod = wrapIntoObservable(fs.chmod, fs)
 
-export function writeFile (file, data, options) {
-  return Observable.create((observer) => {
-    fs.writeFile(file, data, options, (error) => {
-      if (error) observer.error(error)
-      else observer.complete()
-    })
-  })
-}
-
-export function forceSymlink (target, path, type) {
-  return Observable.create((observer) => {
-    _forceSymlink(target, path, type, (error) => {
-      if (error) observer.error(error)
-      else observer.complete()
-    })
-  })
-}
-
-export function mkdirp (dir, opts) {
-  return Observable.create((observer) => {
-    _mkdirp(dir, opts, (error) => {
-      if (error) observer.error(error)
-      else observer.complete()
-    })
-  })
-}
-
-export function stat (path) {
-  return Observable.create((observer) => {
-    fs.stat(path, (err, stat) => {
-      if (err) observer.error(err)
-      else {
-        observer.next(stat)
-        observer.complete()
-      }
-    })
-  })
-}
+export const forceSymlink = wrapIntoObservable(_forceSymlink)
+export const mkdirp = wrapIntoObservable(_mkdirp)
 
 export function catchByCode (handlers) {
   return this::_catch((err, caught) => {
     const handler = handlers[err.code]
     if (!handler) throw err
     return handler(err, caught)
-  })
-}
-
-export function rename (oldPath, newPath) {
-  return Observable.create((observer) => {
-    fs.rename(oldPath, newPath, (err) => {
-      if (err) observer.error(err)
-      else observer.complete()
-    })
-  })
-}
-
-export function readlink (path) {
-  return Observable.create((observer) => {
-    fs.readlink(path, (err, linkString) => {
-      if (err) observer.error(err)
-      else {
-        observer.next(linkString)
-        observer.complete()
-      }
-    })
   })
 }
 
@@ -128,15 +66,6 @@ export function readlink (path) {
  */
 export function readFileJSON (file) {
   return readFile(file, 'utf8')::map(JSON.parse)
-}
-
-export function chmod (path, mode) {
-  return Observable.create((observer) => {
-    fs.chmod(path, mode, (err) => {
-      if (err) observer.error(err)
-      else observer.complete()
-    })
-  })
 }
 
 /**
