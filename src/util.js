@@ -7,6 +7,22 @@ import {map} from 'rxjs/operator/map'
 import {_catch} from 'rxjs/operator/catch'
 import * as config from './config'
 
+export function wrapIntoObservable (fn, thisArg) {
+  return function () {
+    return Observable.create((observer) => {
+      fn.apply(thisArg, [...arguments, (error, ...results) => {
+        if (error) observer.error(error)
+        else {
+          for (let result of results) {
+            observer.next(result)
+          }
+          observer.complete()
+        }
+      }])
+    })
+  }
+}
+
 /**
  * GETs JSON documents from an HTTP endpoint.
  * @param  {String} url - endpoint to which the GET request should be made
