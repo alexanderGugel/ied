@@ -51,10 +51,9 @@ export const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall']
  * resolve a dependency's `package.json` file from the local file system.
  * @param  {String} parentTarget - absolute parent's node_modules path.
  * @param  {String} _path - path of the dependency.
- * @param  {Boolean} local - specify if "truly local". can be used set `resolveRemote`
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveLocal (parentTarget, _path, cwd) {
+export function resolveLocal (parentTarget, _path) {
   return util.readlink(_path)
     ::mergeMap((relTarget) => {
       const target = path.resolve(_path, relTarget)
