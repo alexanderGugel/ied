@@ -37,7 +37,9 @@ export default function runCmd (cwd, argv) {
   }, function (err, statuses) {
     if (err) throw err
     const info = scripts.map((script, i) =>
-      script + ' exited with status ' + statuses[i]
+      pkg.name + ': '
+      + script + ' exited with status ' + statuses[i] + ' '
+      + 'in directory ' + cwd
     ).join('\n')
     console.log(info)
     const success = statuses.every(function (code) { return code === 0 })
