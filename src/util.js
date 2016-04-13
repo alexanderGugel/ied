@@ -5,6 +5,7 @@ import _forceSymlink from 'force-symlink'
 import needle from 'needle'
 import {map} from 'rxjs/operator/map'
 import {_catch} from 'rxjs/operator/catch'
+import {proxy} from './config'
 
 /**
  * GETs JSON documents from an HTTP endpoint.
@@ -13,7 +14,7 @@ import {_catch} from 'rxjs/operator/catch'
  */
 export function httpGetJSON (url) {
   return Observable.create((observer) => {
-    needle.get(url, { json: true }, (error, response) => {
+    needle.get(url, { json: true, proxy }, (error, response) => {
       if (error) observer.error(error)
       else {
         observer.next(response.body)
