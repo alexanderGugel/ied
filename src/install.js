@@ -70,11 +70,11 @@ export function resolveLocal (parentTarget, _path, cwd) {
  * @param  {String} _path - path of the dependency.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveDownloaded (parentTarget, target, _path, cwd, tarballData) {
+export function resolveDownloaded (parentTarget, target, _path, cwd) {
   const pkgPath = path.join(target, 'package.json')
 
   return util.readFileJSON(pkgPath)
-    ::map((pkgJSON) => ({ parentTarget, pkgJSON, target, path: _path, local: false, tarballData, type: 'remote' }))
+    ::map((pkgJSON) => ({ parentTarget, pkgJSON, target, path: _path, local: false, type: 'remote' }))
 }
 
 /**
