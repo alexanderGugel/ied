@@ -12,3 +12,9 @@ export const proxy = env.IED_PROXY || env.http_proxy || null
 export const requestRetries = parseInt(env.IED_REQUEST_RETRIES, 10) || 5
 export const sh = env.IED_SH || (platform === 'win32' ? env.comspec || 'cmd' : 'sh')
 export const shFlag = env.IED_SH_FLAG || (isWindows ? '/d /s /c' : '-c')
+export const bearerToken = env.IED_BEARER_TOKEN || null
+
+export const httpOptions = { proxy, headers: {} }
+if (bearerToken) {
+  httpOptions.headers.authorization = `Bearer ${bearerToken}`
+}

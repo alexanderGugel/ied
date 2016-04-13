@@ -232,7 +232,7 @@ function download (tarball) {
     }
 
     const shasum = crypto.createHash('sha1')
-    const response = needle.get(tarball, { proxy: config.proxy })
+    const response = needle.get(tarball, config.httpOptions)
     const cached = response.pipe(cache.write())
 
     response.on('data', dataHandler)
