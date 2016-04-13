@@ -7,10 +7,10 @@ const sandbox = sinon.sandbox.create()
 
 afterEach(() => sandbox.restore())
 
-describe('util.wrapIntoObservable', () => {
+describe('util.createObservableFactory', () => {
   it('should handle successful callbacks with a single result', () => {
     const fn = sandbox.stub().yields(null, 'some data')
-    const createObservable = util.wrapIntoObservable(fn)
+    const createObservable = util.createObservableFactory(fn)
     const next = sandbox.spy()
     const error = sandbox.spy()
     const complete = sandbox.spy()
@@ -26,7 +26,7 @@ describe('util.wrapIntoObservable', () => {
   it('should handle callback errors', () => {
     const errorObject = new Error()
     const fn = sandbox.stub().yields(errorObject)
-    const createObservable = util.wrapIntoObservable(fn)
+    const createObservable = util.createObservableFactory(fn)
     const next = sandbox.spy()
     const error = sandbox.spy()
     const complete = sandbox.spy()

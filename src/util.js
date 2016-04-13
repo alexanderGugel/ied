@@ -7,12 +7,13 @@ import {map} from 'rxjs/operator/map'
 import {_catch} from 'rxjs/operator/catch'
 import * as config from './config'
 
-export function wrapIntoObservable (fn, thisArg) {
+export function createObservableFactory (fn, thisArg) {
   return function () {
     return Observable.create((observer) => {
       fn.apply(thisArg, [...arguments, (error, ...results) => {
-        if (error) observer.error(error)
-        else {
+        if (error) {
+          observer.error(error)
+        } else {
           for (let result of results) {
             observer.next(result)
           }
@@ -40,15 +41,15 @@ export function httpGetJSON (url) {
   })
 }
 
-export const readFile = wrapIntoObservable(fs.readFile, fs)
-export const writeFile = wrapIntoObservable(fs.writeFile, fs)
-export const stat = wrapIntoObservable(fs.stat, fs)
-export const rename = wrapIntoObservable(fs.rename, fs)
-export const readlink = wrapIntoObservable(fs.readlink, fs)
-export const chmod = wrapIntoObservable(fs.chmod, fs)
+export const readFile = createObservableFactory(fs.readFile, fs)
+export const writeFile = createObservableFactory(fs.writeFile, fs)
+export const stat = createObservableFactory(fs.stat, fs)
+export const rename = createObservableFactory(fs.rename, fs)
+export const readlink = createObservableFactory(fs.readlink, fs)
+export const chmod = createObservableFactory(fs.chmod, fs)
 
-export const forceSymlink = wrapIntoObservable(_forceSymlink)
-export const mkdirp = wrapIntoObservable(_mkdirp)
+export const forceSymlink = createObservableFactory(_forceSymlink)
+export const mkdirp = createObservableFactory(_mkdirp)
 
 export function catchByCode (handlers) {
   return this::_catch((err, caught) => {
