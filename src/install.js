@@ -13,11 +13,13 @@ import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {spawn} from 'child_process'
 import needle from 'needle'
+import npa from 'npm-package-arg'
 
 import * as cache from './fs_cache'
 import * as config from './config'
 import * as errors from './errors'
 import * as registry from './registry'
+import * as tarball from './tarball'
 import * as util from './util'
 
 /**
@@ -72,11 +74,32 @@ export function resolveLocal (parentTarget, _path) {
  * @return {Observable} - observable sequence of `package.json` objects.
  */
 export function resolveRemote (parentTarget, _path, name, version, cwd) {
-  return registry.resolve(name, version)
-    ::map((pkgJSON) => {
+  const pkgName = `${name}@${version}`
+  const parsedPkg = npa(pkgName)
+
+  switch (parsedPkg.type) {
+    case 'range':
+    case 'version':
+    case 'tag':
+      return registry.resolve(name, version)
+        ::map((pkgJSON) => {
+          const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
+          return { parentTarget, pkgJSON, target, path: _path, local: false }
+        })
+    case 'remote':
+      const pkgJSON = tarball.resolve(name, version, parsedPkg.spec)
       const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
-      return { parentTarget, pkgJSON, target, path: _path, local: false }
-    })
+
+      return Observable.create((observable) => {
+        observable.next({ parentTarget, pkgJSON, target, path: _path, local: false })
+        observable.complete()
+      })
+    case 'hosted':
+      throw new Error('GitHub dependencies are not yet supported')
+    default:
+     throw new Error(`Unknown package spec: ${parsedPkg.type} on ${pkgName}`)
+  }
+
 }
 
 /**
@@ -217,17 +240,15 @@ export function linkAll () {
   return this::distinctKey('path')::mergeMap(link)
 }
 
-function download (tarball) {
+function download (tarball, tarballSHA) {
   return Observable.create((observer) => {
-    let progress
     const errorHandler = (error) => observer.error(error)
     const dataHandler = (chunk) => {
-      if (progress) progress.tick(chunk.length)
       shasum.update(chunk)
     }
     const finishHandler = () => {
       const hex = shasum.digest('hex')
-      observer.next({ tmpPath: cached.path, shasum: hex })
+      observer.next({ tmpPath: cached.path, shasum: tarballSHA || hex })
       observer.complete()
     }
 
@@ -242,7 +263,7 @@ function download (tarball) {
     cached.on('finish', finishHandler)
   })
   ::mergeMap(({ tmpPath, shasum }) => {
-    const newPath = path.join(config.cacheDir, shasum)
+    const newPath = path.join(config.cacheDir, tarballSHA || shasum)
     return util.rename(tmpPath, newPath)
   })
 }
@@ -264,13 +285,13 @@ function fixPermissions (target, bin) {
  * @return {Observable} - empty observable sequence that will be completed
  * once the dependency has been downloaded.
  */
-export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin, dist: {tarball, shasum}}}) {
+export function fetch (logLevel, progress, {target, pkgJSON: {name, version, type, bin, dist: {tarball, shasum}}}) {
   if (logLevel) console.log(`Installing ${name}@${version}`)
 
   const o = cache.extract(target, shasum)
   // TODO: Create two WriteStreams: One to cache, one to directory
   return o::util.catchByCode({
-    ENOENT: () => download(tarball)
+    ENOENT: () => download(tarball, type === 'tarball' ? shasum : null)
       ::_do(({ shasum: actual }) => {
         if (actual !== shasum) {
           throw new errors.CorruptedPackageError(tarball, shasum, actual)
