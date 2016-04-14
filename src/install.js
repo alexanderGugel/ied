@@ -13,13 +13,11 @@ import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {spawn} from 'child_process'
 import needle from 'needle'
-import npa from 'npm-package-arg'
 
 import * as cache from './fs_cache'
 import * as config from './config'
 import * as errors from './errors'
 import * as registry from './registry'
-import * as tarball from './tarball'
 import * as util from './util'
 
 /**
@@ -64,19 +62,6 @@ export function resolveLocal (parentTarget, _path) {
 }
 
 /**
- * resolve a dependency's `package.json` file from the local file system.
- * @param  {String} parentTarget - absolute parent's node_modules path.
- * @param  {String} _path - path of the dependency.
- * @return {Observable} - observable sequence of `package.json` objects.
- */
-export function resolveDownloaded (parentTarget, target, _path, cwd) {
-  const pkgPath = path.join(target, 'package.json')
-
-  return util.readFileJSON(pkgPath)
-    ::map((pkgJSON) => ({ parentTarget, pkgJSON, target, path: _path, local: false, type: 'remote' }))
-}
-
-/**
  * obtain a dependency's `package.json` file using the pre-configured registry.
  * @param  {String} parentTarget - absolute parent's node_modules path.
  * @param  {String} _path - path of the dependency.
@@ -87,57 +72,11 @@ export function resolveDownloaded (parentTarget, target, _path, cwd) {
  * @return {Observable} - observable sequence of `package.json` objects.
  */
 export function resolveRemote (parentTarget, _path, name, version, cwd) {
-  const pkgName = `${name}@${version}`
-  const parsedPkg = npa(pkgName)
-
-  switch (parsedPkg.type) {
-    case 'range':
-    case 'version':
-    case 'tag':
-      return registry.resolve(name, version)
-        ::map((pkgJSON) => {
-          const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
-          return { parentTarget, pkgJSON, target, path: _path, local: false }
-        })
-    case 'remote':
-      const pkgJSON = tarball.resolve(name, version, parsedPkg.spec)
-      const shasum = pkgJSON.dist.shasum
+  return registry.resolve(name, version)
+    ::map((pkgJSON) => {
       const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
-      let cached
-
-      return Observable.create((observer) => {
-        let resolved
-        const errorHandler = (error) => observer.error(error)
-        const finishHandler = () => {
-          const newPath = path.join(config.cacheDir, shasum)
-          return util.rename(cached.path, newPath).subscribe(null, null, () => {
-            cache.extract(target, shasum).subscribe(null, null, () => {
-              resolveDownloaded(parentTarget, path.join(cwd, 'node_modules', pkgJSON.dist.shasum), _path, cwd, { sha: shasum, tmpPath: cached.path }).subscribe((x) => resolved = x, null, (v) => {
-                observer.next(resolved)
-                observer.complete()
-              })
-            })
-          })
-        }
-
-        const response = needle.get(version, {
-          follow_max: 5
-        })
-
-        cached = response
-          .pipe(cache.write())
-
-        cached.on('error', errorHandler)
-        cached.on('finish', finishHandler)
-
-        response.on('error', errorHandler)
-      })
-
-    case 'hosted':
-      throw new Error('GitHub dependencies are not yet supported')
-    default:
-      throw new Error(`Unknown package spec: ${parsedPkg.type} on ${pkgName}`)
-  }
+      return { parentTarget, pkgJSON, target, path: _path, local: false }
+    })
 }
 
 /**
@@ -321,9 +260,7 @@ function fixPermissions (target, bin) {
  * @return {Observable} - empty observable sequence that will be completed
  * once the dependency has been downloaded.
  */
-export function fetch ({target, pkgJSON: {name, version, bin, dist}}) {
-  const { shasum, tarball } = dist
-
+export function fetch ({target, pkgJSON: {name, version, bin, dist: { shasum, tarball }}}) {
   const o = cache.extract(target, shasum)
   return o::util.catchByCode({
     ENOENT: () => download(tarball)
