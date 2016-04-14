@@ -322,15 +322,9 @@ function fixPermissions (target, bin) {
  * once the dependency has been downloaded.
  */
 export function fetch ({target, pkgJSON: {name, version, bin, dist}}) {
-   // Remote module
-  if (!dist) {
-    return fixPermissions(target, normalizeBin({ name, bin }))
-  }
-
   const { shasum, tarball } = dist
 
   const o = cache.extract(target, shasum)
-  // TODO: Create two WriteStreams: One to cache, one to directory
   return o::util.catchByCode({
     ENOENT: () => download(tarball)
       ::_do(({ shasum: actual }) => {
