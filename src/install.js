@@ -152,7 +152,7 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
 export function resolve (cwd, target) {
   return this::mergeMap(([name, version]) => {
     const _path = path.join(target, 'node_modules', name)
-    return resolveLocal(target, _path, cwd)
+    return resolveLocal(target, _path)
       ::util.catchByCode({
         ENOENT: () => resolveRemote(target, _path, name, version, cwd)
       })
@@ -321,9 +321,7 @@ function fixPermissions (target, bin) {
  * @return {Observable} - empty observable sequence that will be completed
  * once the dependency has been downloaded.
  */
-export function fetch (logLevel, {target, pkgJSON: {name, version, bin, dist}}) {
-  if (logLevel) console.log(`Installing ${name}@${version}`)
-
+export function fetch ({target, pkgJSON: {name, version, bin, dist}}) {
    // Remote module
   if (!dist) {
     return fixPermissions(target, normalizeBin({ name, bin }))
@@ -349,10 +347,10 @@ export function fetch (logLevel, {target, pkgJSON: {name, version, bin, dist}}) 
  * @return {Observable} - empty observable sequence that will be completed
  * once all dependencies have been downloaded.
  */
-export function fetchAll (logLevel) {
+export function fetchAll () {
   return this::distinctKey('target')
     ::filter(({ local }) => !local)
-    ::mergeMap(fetch.bind(null, logLevel))
+    ::mergeMap(fetch)
 }
 
 export function build ({target, script}) {
