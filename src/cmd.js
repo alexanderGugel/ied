@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import minimist from 'minimist'
-import ProgressBar from 'progress'
 import * as config from './config'
 
 const cwd = process.cwd()
@@ -61,15 +60,8 @@ if (argv.debug) {
   switch (subCommand) {
     case 'i':
     case 'install':
-      let progress
-      if (!config.logLevel) {
-        progress = new ProgressBar(':percent    :current / :total   installing modules', { total: 1 })
-      }
-
       installCmd = require('./install_cmd').default
-      installCmd(cwd, argv, config.logLevel, progress).subscribe(null, null, () => {
-        progress && progress.tick()
-      })
+      installCmd(cwd, argv, config.logLevel).subscribe()
       break
     case 'sh':
     case 'shell':

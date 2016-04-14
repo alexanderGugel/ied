@@ -111,14 +111,13 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
         const finishHandler = () => {
           const newPath = path.join(config.cacheDir, shasum)
           return util.rename(cached.path, newPath).subscribe(null, null, () => {
-
-           cache.extract(target, shasum).subscribe(null, null, () => {
-             resolveDownloaded(parentTarget, path.join(cwd, 'node_modules', pkgJSON.dist.shasum), _path, cwd, { sha: shasum, tmpPath: cached.path }).subscribe((x) => resolved = x, null, (v) => {
-               observer.next(resolved)
-               observer.complete()
-             })
-           })
-         })
+            cache.extract(target, shasum).subscribe(null, null, () => {
+              resolveDownloaded(parentTarget, path.join(cwd, 'node_modules', pkgJSON.dist.shasum), _path, cwd, { sha: shasum, tmpPath: cached.path }).subscribe((x) => resolved = x, null, (v) => {
+                observer.next(resolved)
+                observer.complete()
+              })
+            })
+          })
         }
 
         const response = needle.get(version, {
@@ -137,7 +136,7 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
     case 'hosted':
       throw new Error('GitHub dependencies are not yet supported')
     default:
-     throw new Error(`Unknown package spec: ${parsedPkg.type} on ${pkgName}`)
+      throw new Error(`Unknown package spec: ${parsedPkg.type} on ${pkgName}`)
   }
 }
 
@@ -150,14 +149,13 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
  * @return {Obserable} - observable sequence of `package.json` root documents
  * wrapped into dependency objects representing the resolved sub-dependency.
  */
-export function resolve (progress, cwd, target) {
+export function resolve (cwd, target) {
   return this::mergeMap(([name, version]) => {
     const _path = path.join(target, 'node_modules', name)
     return resolveLocal(target, _path, cwd)
       ::util.catchByCode({
         ENOENT: () => resolveRemote(target, _path, name, version, cwd)
       })
-      ::_do(() => progress && progress.tick())
   })
 }
 
@@ -167,7 +165,7 @@ export function resolve (progress, cwd, target) {
  * @param  {String} cwd - current working directory.
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
-export function resolveAll (progress, cwd) {
+export function resolveAll (cwd) {
   const targets = Object.create(null)
 
   return this::expand((parent) => {
@@ -183,10 +181,9 @@ export function resolveAll (progress, cwd) {
       .concat(pkgJSON.bundledDependencies || [])
 
     const dependencies = parseDependencies(pkgJSON, fields)
-    if (progress) progress.total += dependencies.length
     return ArrayObservable.create(dependencies)
       ::filter(([name]) => bundleDependencies.indexOf(name) === -1)
-      ::resolve(progress, cwd, target)
+      ::resolve(cwd, target)
   })
 }
 
@@ -324,7 +321,7 @@ function fixPermissions (target, bin) {
  * @return {Observable} - empty observable sequence that will be completed
  * once the dependency has been downloaded.
  */
-export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin, dist}}) {
+export function fetch (logLevel, {target, pkgJSON: {name, version, bin, dist}}) {
   if (logLevel) console.log(`Installing ${name}@${version}`)
 
    // Remote module
@@ -343,7 +340,6 @@ export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin
           throw new errors.CorruptedPackageError(tarball, shasum, actual)
         }
       })
-      ::_do(() => progress && progress.tick())
       ::concat(o)
   })::concat(fixPermissions(target, normalizeBin({ name, bin })))
 }
@@ -353,10 +349,10 @@ export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin
  * @return {Observable} - empty observable sequence that will be completed
  * once all dependencies have been downloaded.
  */
-export function fetchAll (logLevel, progress) {
+export function fetchAll (logLevel) {
   return this::distinctKey('target')
     ::filter(({ local }) => !local)
-    ::mergeMap(fetch.bind(null, logLevel, progress))
+    ::mergeMap(fetch.bind(null, logLevel))
 }
 
 export function build ({target, script}) {
