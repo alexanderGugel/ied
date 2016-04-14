@@ -1,4 +1,5 @@
 import crypto from 'crypto'
+import url from 'url'
 import path from 'path'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
@@ -73,7 +74,7 @@ export function resolveDownloaded (parentTarget, target, _path, cwd) {
   const pkgPath = path.join(target, 'package.json')
 
   return util.readFileJSON(pkgPath)
-    ::map((pkgJSON) => ({ parentTarget, pkgJSON, target, path: _path, local: false, type: 'remote' }))
+    ::map((pkgJSON) => ({ parentTarget, pkgJSON, target, path: _path, local: false }))
 }
 
 /**
@@ -99,6 +100,20 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
           const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
           return { parentTarget, pkgJSON, target, path: _path, local: false }
         })
+    case 'hosted':
+      const directUrl = parsedPkg.hosted.directUrl
+      const parsedUrl = url.parse(directUrl)
+
+      // Modify URL for a tarball link
+      const splitPath = parsedUrl.pathname.split('/')
+      splitPath.pop() // Drop `/package.json`
+      splitPath.splice(splitPath.length - 2, 1, splitPath[splitPath.length - 2], 'archive')
+      splitPath[splitPath.length - 1] += '.tar.gz'
+
+      parsedUrl.host = 'github.com'
+      parsedUrl.pathname = splitPath.join('/')
+
+      version = url.format(parsedUrl)
     case 'remote':
       const pkgJSON = tarball.resolve(name, version, parsedPkg.spec)
       const shasum = pkgJSON.dist.shasum
@@ -113,7 +128,7 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
           return util.rename(cached.path, newPath).subscribe(null, null, () => {
 
            cache.extract(target, shasum).subscribe(null, null, () => {
-             resolveDownloaded(parentTarget, path.join(cwd, 'node_modules', pkgJSON.dist.shasum), _path, cwd, { sha: shasum, tmpPath: cached.path }).subscribe((x) => resolved = x, null, (v) => {
+             resolveDownloaded(parentTarget, path.join(cwd, 'node_modules', pkgJSON.dist.shasum), _path, cwd).subscribe((x) => resolved = x, null, (v) => {
                observer.next(resolved)
                observer.complete()
              })
@@ -133,9 +148,7 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
 
         response.on('error', errorHandler)
       })
-
-    case 'hosted':
-      throw new Error('GitHub dependencies are not yet supported')
+      break
     default:
      throw new Error(`Unknown package spec: ${parsedPkg.type} on ${pkgName}`)
   }
