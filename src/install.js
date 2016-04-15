@@ -1,10 +1,8 @@
-import crypto from 'crypto'
 import path from 'path'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {Observable} from 'rxjs/Observable'
 import {_do} from 'rxjs/operator/do'
-import {concat} from 'rxjs/operator/concat'
 import {distinctKey} from 'rxjs/operator/distinctKey'
 import {every} from 'rxjs/operator/every'
 import {expand} from 'rxjs/operator/expand'
@@ -12,12 +10,11 @@ import {filter} from 'rxjs/operator/filter'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {spawn} from 'child_process'
-import needle from 'needle'
 
-import * as cache from './fs_cache'
 import * as config from './config'
 import * as errors from './errors'
-import * as registry from './registry'
+import * as registry from './strategies/registry'
+import * as local from './strategies/local'
 import * as util from './util'
 
 /**
@@ -46,40 +43,6 @@ export const DEPENDENCY_FIELDS = ['dependencies']
 export const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall']
 
 /**
- * resolve a dependency's `package.json` file from the local file system.
- * @param  {String} parentTarget - absolute parent's node_modules path.
- * @param  {String} _path - path of the dependency.
- * @return {Observable} - observable sequence of `package.json` objects.
- */
-export function resolveLocal (parentTarget, _path) {
-  return util.readlink(_path)
-    ::mergeMap((relTarget) => {
-      const target = path.resolve(_path, relTarget)
-      const filename = path.join(target, 'package.json')
-      return util.readFileJSON(filename)
-        ::map((pkgJSON) => ({ parentTarget, pkgJSON, target, path: _path, local: true }))
-    })
-}
-
-/**
- * obtain a dependency's `package.json` file using the pre-configured registry.
- * @param  {String} parentTarget - absolute parent's node_modules path.
- * @param  {String} _path - path of the dependency.
- * @param  {String} name - name of the dependency that should be looked up in
- * the registry.
- * @param  {String} version - SemVer compatible version string.
- * @param  {String} cwd - current working directory.
- * @return {Observable} - observable sequence of `package.json` objects.
- */
-export function resolveRemote (parentTarget, _path, name, version, cwd) {
-  return registry.resolve(name, version)
-    ::map((pkgJSON) => {
-      const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
-      return { parentTarget, pkgJSON, target, path: _path, local: false }
-    })
-}
-
-/**
  * resolve an individual sub-dependency based on the parent's target and the
  * current working directory.
  * @param  {String} cwd - current working directory.
@@ -89,13 +52,12 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
  * wrapped into dependency objects representing the resolved sub-dependency.
  */
 export function resolve (cwd, target) {
-  return this::mergeMap(([name, version]) => {
-    const _path = path.join(target, 'node_modules', name)
-    return resolveLocal(target, _path)
+  return this::mergeMap(([name, version]) =>
+    local.resolve(target, name, version, cwd)
       ::util.catchByCode({
-        ENOENT: () => resolveRemote(target, _path, name, version, cwd)
+        ENOENT: () => registry.resolve(target, name, version, cwd)
       })
-  })
+  )
 }
 
 /**
@@ -167,19 +129,6 @@ export function parseDependencies (pkgJSON, fields) {
 }
 
 /**
- * normalize the `bin` property in `package.json`, which could either be a
- * string, object or undefined.
- * @param  {Object} pkgJSON - plain JavaScript object representing a
- * `package.json` file.
- * @return {Object} - normalized `bin` property.
- */
-function normalizeBin (pkgJSON) {
-  return typeof pkgJSON.bin === 'string'
-    ? ({ [pkgJSON.name]: pkgJSON.bin })
-    : (pkgJSON.bin || {})
-}
-
-/**
  * create a relative symbolic link to a dependency.
  * @param {Dep} dep - dependency to be linked.
  * @return {Observable} - empty observable sequence that will be completed
@@ -188,7 +137,7 @@ function normalizeBin (pkgJSON) {
 export function link (dep) {
   const {path: absPath, target: absTarget, parentTarget, pkgJSON} = dep
   const links = [ [absTarget, absPath] ]
-  const bin = normalizeBin(pkgJSON)
+  const bin = util.normalizeBin(pkgJSON)
 
   const names = Object.keys(bin)
   for (let i = 0; i < names.length; i++) {
@@ -215,64 +164,6 @@ export function linkAll () {
   return this::distinctKey('path')::mergeMap(link)
 }
 
-function download (tarball) {
-  return Observable.create((observer) => {
-    const errorHandler = (error) => observer.error(error)
-    const dataHandler = (chunk) => {
-      shasum.update(chunk)
-    }
-    const finishHandler = () => {
-      const hex = shasum.digest('hex')
-      observer.next({ tmpPath: cached.path, shasum: hex })
-      observer.complete()
-    }
-
-    const shasum = crypto.createHash('sha1')
-    const response = needle.get(tarball, config.httpOptions)
-    const cached = response.pipe(cache.write())
-
-    response.on('data', dataHandler)
-    response.on('error', errorHandler)
-
-    cached.on('error', errorHandler)
-    cached.on('finish', finishHandler)
-  })
-  ::mergeMap(({ tmpPath, shasum }) => {
-    const newPath = path.join(config.cacheDir, shasum)
-    return util.rename(tmpPath, newPath)
-  })
-}
-
-const execMode = parseInt('0777', 8) & (~process.umask())
-
-function fixPermissions (target, bin) {
-  const paths = []
-  for (let name in bin) {
-    paths.push(path.resolve(target, bin[name]))
-  }
-  return ArrayObservable.create(paths)
-    ::mergeMap((path) => util.chmod(path, execMode))
-}
-
-/**
- * download the tarball of the package into the `target` path.
- * @param {Dep} dep - dependency to be fetched.
- * @return {Observable} - empty observable sequence that will be completed
- * once the dependency has been downloaded.
- */
-export function fetch ({target, pkgJSON: {name, version, bin, dist: { shasum, tarball }}}) {
-  const o = cache.extract(target, shasum)
-  return o::util.catchByCode({
-    ENOENT: () => download(tarball)
-      ::_do(({ shasum: actual }) => {
-        if (actual !== shasum) {
-          throw new errors.CorruptedPackageError(tarball, shasum, actual)
-        }
-      })
-      ::concat(o)
-  })::concat(fixPermissions(target, normalizeBin({ name, bin })))
-}
-
 /**
  * download the tarballs into their respective `target`.
  * @return {Observable} - empty observable sequence that will be completed
@@ -281,7 +172,7 @@ export function fetch ({target, pkgJSON: {name, version, bin, dist: { shasum, ta
 export function fetchAll () {
   return this::distinctKey('target')
     ::filter(({ local }) => !local)
-    ::mergeMap(fetch)
+    ::mergeMap(dep => dep.fetch())
 }
 
 export function build ({target, script}) {

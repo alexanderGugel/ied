@@ -1,10 +1,14 @@
-import {Observable} from 'rxjs/Observable'
 import fs from 'fs'
-import _mkdirp from 'mkdirp'
-import _forceSymlink from 'force-symlink'
 import needle from 'needle'
+import path from 'path'
+import _mkdirp from 'mkdirp'
+import {Observable} from 'rxjs/Observable'
+import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
+import _forceSymlink from 'force-symlink'
 import {map} from 'rxjs/operator/map'
+import {mergeMap} from 'rxjs/operator/mergeMap'
 import {_catch} from 'rxjs/operator/catch'
+
 import * as config from './config'
 
 export function createObservableFactory (fn, thisArg) {
@@ -24,6 +28,17 @@ export function createObservableFactory (fn, thisArg) {
   }
 }
 
+export const execMode = parseInt('0777', 8) & (~process.umask())
+
+export function fixPermissions (target, bin) {
+  const paths = []
+  for (let name in bin) {
+    paths.push(path.resolve(target, bin[name]))
+  }
+  return ArrayObservable.create(paths)
+    ::mergeMap((path) => chmod(path, execMode))
+}
+
 /**
  * GETs JSON documents from an HTTP endpoint.
  * @param  {String} url - endpoint to which the GET request should be made
@@ -39,6 +54,19 @@ export function httpGetJSON (url) {
       }
     })
   })
+}
+
+/**
+ * normalize the `bin` property in `package.json`, which could either be a
+ * string, object or undefined.
+ * @param  {Object} pkgJSON - plain JavaScript object representing a
+ * `package.json` file.
+ * @return {Object} - normalized `bin` property.
+ */
+export function normalizeBin (pkgJSON) {
+  return typeof pkgJSON.bin === 'string'
+    ? ({ [pkgJSON.name]: pkgJSON.bin })
+    : (pkgJSON.bin || {})
 }
 
 export const readFile = createObservableFactory(fs.readFile, fs)

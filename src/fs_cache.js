@@ -1,11 +1,13 @@
-import {Observable} from 'rxjs/Observable'
-import gunzip from 'gunzip-maybe'
-import tar from 'tar-fs'
-import fs from 'fs'
-import path from 'path'
-import uuid from 'node-uuid'
-import {mkdirp} from './util'
 import * as config from './config'
+import crypto from 'crypto'
+import fs from 'fs'
+import gunzip from 'gunzip-maybe'
+import needle from 'needle'
+import path from 'path'
+import tar from 'tar-fs'
+import uuid from 'node-uuid'
+import {Observable} from 'rxjs/Observable'
+import * as util from './util'
 
 /**
  * initialize the cache.
@@ -13,7 +15,7 @@ import * as config from './config'
  * the base directory of the cache has been created.
  */
 export function init () {
-  return mkdirp(path.join(config.cacheDir, '.tmp'))
+  return util.mkdirp(path.join(config.cacheDir, '.tmp'))
 }
 
 /**
@@ -54,5 +56,34 @@ export function extract (dest, shasum) {
       .pipe(gunzip()).on('error', errHandler)
       .pipe(untar).on('error', errHandler)
       .on('finish', handler)
+  })
+}
+
+/**
+ * download a tarball into the temporary directory of the cache.
+ * @param  {String} tarball - tarball URL.
+ * @return {Observable} - observable sequence of `tmpPath` and `shasum`.
+ */
+export function download (tarball) {
+  return Observable.create((observer) => {
+    const errorHandler = (error) => observer.error(error)
+    const dataHandler = (chunk) => {
+      shasum.update(chunk)
+    }
+    const finishHandler = () => {
+      const hex = shasum.digest('hex')
+      observer.next({ tmpPath: cached.path, shasum: hex })
+      observer.complete()
+    }
+
+    const shasum = crypto.createHash('sha1')
+    const response = needle.get(tarball, config.httpOptions)
+    const cached = response.pipe(write())
+
+    response.on('data', dataHandler)
+    response.on('error', errorHandler)
+
+    cached.on('error', errorHandler)
+    cached.on('finish', finishHandler)
   })
 }
