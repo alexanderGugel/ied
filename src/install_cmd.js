@@ -1,6 +1,5 @@
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {concat} from 'rxjs/operator/concat'
-import {filter} from 'rxjs/operator/filter'
 import {merge} from 'rxjs/operator/merge'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import {skip} from 'rxjs/operator/skip'
@@ -17,13 +16,13 @@ import * as fsCache from './fs_cache'
  * the installation is complete.
  */
 export default function installCmd (cwd, argv, logLevel) {
-  const explicit = !!(argv._.length - 1)
-  const updatedPkgJSONs = explicit
+  const isExplicit = Boolean(argv._.length - 1)
+  const updatedPkgJSONs = isExplicit
     ? entryDep.fromArgv(cwd, argv)
     : entryDep.fromFS(cwd)
 
-  const resolved = updatedPkgJSONs::install.resolveAll(cwd)::skip(1)
-    ::filter(({ local }) => !local)
+  const resolved = updatedPkgJSONs
+    ::install.resolveAll(cwd)::skip(1)
     ::publishReplay().refCount()
 
   const linked = resolved::install.linkAll()

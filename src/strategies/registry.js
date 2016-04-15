@@ -86,51 +86,28 @@ export function resolve (parentTarget, name, version, baseDir) {
   return match(name, version)
     ::map((pkgJSON) => {
       const target = path.join(baseDir, 'node_modules', pkgJSON.dist.shasum)
-      return new RegistryDependency(parentTarget, pkgJSON, target, _path)
+      return { parentTarget, pkgJSON, target, path: _path, fetch }
     })
 }
 
 /**
- * represents a dependency that has been resolved from a Common JS registry
- * (usually npm).
+ * fetch the dependency from the resolved package endpoint. verify integrity
+ * of package through shasum supplied by the registry.
+ * @return {Observable} - observable sequence that will be completed once the
+ * fetch is successful.
  */
-export class RegistryDependency {
-  /**
-   * create instance.
-   * @param  {String} parentTarget - absolute parent's node_modules path.
-   * @param  {String} target - final destination of the extracted tarball.
-   * @param  {String} path - path of the parent dependency's symlink used for
-   * exposing the dependency.
-   */
-  constructor (parentTarget, pkgJSON, target, path) {
-    this.parentTarget = parentTarget
-    this.pkgJSON = pkgJSON
-    this.target = target
-    this.path = path
-  }
-
-  /**
-   * fetch the dependency from the resolved package endpoint. verify integrity
-   * of package through shasum supplied by the registry.
-   * @return {Observable} - observable sequence that will be completed once the
-   * fetch is successful.
-   */
-  fetch () {
-    const {target, pkgJSON: {name, bin, dist: { shasum, tarball }}} = this
-
-    const o = fsCache.extract(this.target, shasum)
-    return o::util.catchByCode({
-      ENOENT: () => fsCache.download(tarball)
-        ::_do(({ shasum: actual }) => {
-          if (actual !== shasum) {
-            throw new CorruptedPackageError(tarball, shasum, actual)
-          }
-        })
-        ::mergeMap(({ tmpPath, shasum }) => {
-          const newPath = path.join(config.cacheDir, shasum)
-          return util.rename(tmpPath, newPath)
-        })
-        ::concat(o)
-    })::concat(util.fixPermissions(target, util.normalizeBin({ name, bin })))
-  }
+export function fetch () {
+  const {target, pkgJSON: {name, bin, dist: { shasum: expectedShasum, tarball }}} = this
+  const o = fsCache.extract(this.target, expectedShasum)
+  return o::util.catchByCode({
+    ENOENT: () => fsCache.download(tarball)
+      ::mergeMap(({ tmpPath, shasum: actualShasum }) => {
+        if (expectedShasum !== actualShasum) {
+          throw new CorruptedPackageError(tarball, expectedShasum, actualShasum)
+        }
+        const newPath = path.join(config.cacheDir, actualShasum)
+        return util.rename(tmpPath, newPath)
+      })
+      ::concat(o)
+  })::concat(util.fixPermissions(target, util.normalizeBin({ name, bin })))
 }

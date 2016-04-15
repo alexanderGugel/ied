@@ -170,9 +170,7 @@ export function linkAll () {
  * once all dependencies have been downloaded.
  */
 export function fetchAll () {
-  return this::distinctKey('target')
-    ::filter(({ local }) => !local)
-    ::mergeMap(dep => dep.fetch())
+  return this::distinctKey('target')::mergeMap((dep) => dep.fetch())
 }
 
 export function build ({target, script}) {
