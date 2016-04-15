@@ -27,7 +27,9 @@ function logResolved (logLevel, {parentTarget, pkgJSON: {name, version}, target}
  * the installation is complete.
  */
 export default function installCmd (cwd, argv, logLevel, progress) {
-  const explicit = !!(argv._.length - 1)
+  // Packages are optional. If none are provided, get packages to update from
+  // the package.json.
+  const explicit = Boolean(argv.packages.length)
   const updatedPkgJSONs = explicit
     ? entryDep.fromArgv(cwd, argv)
     : entryDep.fromFS(cwd)
