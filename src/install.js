@@ -27,7 +27,7 @@ export const ENTRY_DEPENDENCY_FIELDS = ['dependencies', 'devDependencies']
 
 /**
  * properties of `package.json` of sub-dependencies that will be checked for
- * dependences.
+ * dependencies.
  * @type {Array.<String>}
  * @readonly
  */
