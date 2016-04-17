@@ -56,7 +56,7 @@ export const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall']
 export function resolveFromNodeModules (parentTarget, _path) {
   return util.readlink(_path)::mergeMap((relTarget) => {
     const target = path.resolve(path.dirname(_path), relTarget)
-    const filename = path.join(target, 'package.json')
+    const filename = path.join(target, 'package', 'package.json')
     return util.readFileJSON(filename)::map((pkgJSON) => ({
       parentTarget, pkgJSON, target, path: _path, local: true
     }))
@@ -96,7 +96,6 @@ export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
     case 'tag':
       return registry.match(name, version)::map((pkgJSON) => {
         const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
-        const tmpTarget = cache.getTmp()
         return { parentTarget, pkgJSON, target, path: _path, local: false }
       })
     case 'remote':
@@ -264,13 +263,13 @@ export function link (dep) {
   const links = [ [absTarget, absPath] ]
   const bin = normalizeBin(pkgJSON)
 
-  const names = Object.keys(bin)
-  for (let i = 0; i < names.length; i++) {
-    const name = names[i]
-    const dst = path.join(parentTarget, 'node_modules', '.bin', name)
-    const src = path.join(absTarget, bin[name])
-    links.push([src, dst])
-  }
+  // const names = Object.keys(bin)
+  // for (let i = 0; i < names.length; i++) {
+  //   const name = names[i]
+  //   const dst = path.join(parentTarget, 'node_modules', '.bin', name)
+  //   const src = path.join(absTarget, bin[name])
+  //   links.push([src, dst])
+  // }
 
   return ArrayObservable.create(links)
     ::mergeMap(([src, dst]) => {
@@ -336,15 +335,14 @@ function fixPermissions (target, bin) {
  */
 export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin, dist}}) {
   if (logLevel) console.log(`Installing ${name}@${version}`)
+  const fixedPermissions = fixPermissions(path.join(target, 'package'), normalizeBin({ name, bin }))
 
    // Remote module
-  if (!dist) {
-    return fixPermissions(target, normalizeBin({ name, bin }))
-  }
+  if (!dist) return fixedPermissions
 
   const { shasum, tarball } = dist
 
-  const o = cache.extract(target, shasum)
+  const o = cache.extract(path.join(target, 'package'), shasum)
   return o::util.catchByCode({
     ENOENT: () => download(tarball)
       ::_do(({ shasum: actual }) => {
@@ -354,7 +352,7 @@ export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin
       })
       ::_do(() => progress && progress.tick())
       ::concat(o)
-  })::concat(fixPermissions(target, normalizeBin({ name, bin })))
+  })::concat(fixedPermissions)
 }
 
 /**

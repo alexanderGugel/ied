@@ -1,6 +1,7 @@
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {Observable} from 'rxjs/Observable'
 import {mergeMap} from 'rxjs/operator/mergeMap'
+import {concat} from 'rxjs/operator/concat'
 import gunzip from 'gunzip-maybe'
 import tar from 'tar-fs'
 import fs from 'fs'
@@ -46,6 +47,11 @@ export function read (id) {
   return fs.ReadStream(filename)
 }
 
+export function stat (is) {
+  const filename = path.join(config.cacheDir, id)
+  return util.stat(filename)
+}
+
 /**
  * extract a dependency from the cache.
  * @param {String} dest - pathname into which the cached dependency should be
@@ -70,5 +76,8 @@ export function extract (dest, id) {
       .pipe(untar).on('error', errorHandler)
       .on('finish', completeHandler)
   })
-    ::mergeMap((tmpDest) => util.rename(tmpDest, dest))
+    ::mergeMap((tmpDest) => {
+      return util.mkdirp(path.dirname(dest))
+        ::concat(util.rename(tmpDest, dest))
+    })
 }
