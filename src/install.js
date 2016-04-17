@@ -179,14 +179,10 @@ export function resolveAll (progress, cwd) {
 
     // install devDependencies of entry dependency (project-level)
     const fields = target === cwd ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
-    const bundleDependencies = (pkgJSON.bundleDependencies || [])
-      .concat(pkgJSON.bundledDependencies || [])
 
     const dependencies = parseDependencies(pkgJSON, fields)
     if (progress) progress.total += dependencies.length
-    return ArrayObservable.create(dependencies)
-      ::filter(([name]) => bundleDependencies.indexOf(name) === -1)
-      ::resolve(progress, cwd, target)
+    return ArrayObservable.create(dependencies)::resolve(progress, cwd, target)
   })
 }
 
@@ -213,6 +209,20 @@ function mergeDependencies (pkgJSON, fields) {
 }
 
 /**
+ * extract an array of bundled dependency names from the passed in
+ * `package.json`. uses the `bundleDependencies` and `bundledDependencies`
+ * properties.
+ * @param  {Object} pkgJSON - plain JavaScript object representing a
+ * `package.json` file.
+ * @return {Array.<String>} - array of bundled dependency names.
+ */
+function parseBundleDependencies (pkgJSON) {
+  const bundleDependencies = (pkgJSON.bundleDependencies || [])
+    .concat(pkgJSON.bundledDependencies || [])
+  return bundleDependencies
+}
+
+/**
  * extract specified dependencies from a specific `package.json`.
  * @param  {Object} pkgJSON - plain JavaScript object representing a
  * `package.json` file.
@@ -220,12 +230,17 @@ function mergeDependencies (pkgJSON, fields) {
  * @return {Array} - array of dependency pairs.
  */
 export function parseDependencies (pkgJSON, fields) {
+  // bundleDependencies and bundledDependencies are optional. we need to
+  // exclude those form the final [name, version] pairs that we're generating.
+  const bundleDependencies = parseBundleDependencies(pkgJSON)
   const allDependencies = mergeDependencies(pkgJSON, fields)
   const names = Object.keys(allDependencies)
   const results = []
   for (let i = 0; i < names.length; i++) {
     const name = names[i]
-    results.push([name, allDependencies[name]])
+    if (bundleDependencies.indexOf(name) === -1) {
+      results.push([name, allDependencies[name]])
+    }
   }
   return results
 }
