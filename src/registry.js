@@ -51,7 +51,7 @@ export function httpGetPackageRoot (name) {
  * @param {String} version - semantic version string to be used as a target.
  * @return {Object} - observable sequence of the `package.json` file.
  */
-export function resolve (name, version) {
+export function match (name, version) {
   return httpGetPackageRoot(name)::map((packageRoot) => {
     const available = Object.keys(packageRoot.versions)
     const targetVersion = semver.maxSatisfying(available, version)

@@ -53,7 +53,7 @@ export const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall']
  * @param  {String} _path - path of the dependency.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveLocal (parentTarget, _path) {
+export function resolveFromNodeModules (parentTarget, _path) {
   return util.readlink(_path)::mergeMap((relTarget) => {
     const target = path.resolve(path.dirname(_path), relTarget)
     const filename = path.join(target, 'package.json')
@@ -86,7 +86,7 @@ export function resolveDownloaded (parentTarget, target, _path, cwd) {
  * @param  {String} cwd - current working directory.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveRemote (parentTarget, _path, name, version, cwd) {
+export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
   const pkgName = `${name}@${version}`
   const parsedPkg = npa(pkgName)
 
@@ -94,8 +94,9 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
     case 'range':
     case 'version':
     case 'tag':
-      return registry.resolve(name, version)::map((pkgJSON) => {
+      return registry.match(name, version)::map((pkgJSON) => {
         const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
+        const tmpTarget = cache.getTmp()
         return { parentTarget, pkgJSON, target, path: _path, local: false }
       })
     case 'remote':
@@ -152,9 +153,9 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
 export function resolve (progress, cwd, parentTarget) {
   return this::mergeMap(([name, version]) => {
     const _path = path.join(parentTarget, 'node_modules', name)
-    return resolveLocal(parentTarget, _path, cwd)
+    return resolveFromNodeModules(parentTarget, _path)
       ::util.catchByCode({
-        ENOENT: () => resolveRemote(parentTarget, _path, name, version, cwd)
+        ENOENT: () => resolveFromRemote(parentTarget, _path, name, version, cwd)
       })
       ::_do(() => progress && progress.tick())
   })
