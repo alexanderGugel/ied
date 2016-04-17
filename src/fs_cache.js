@@ -38,11 +38,11 @@ export function write () {
 
 /**
  * open a read stream to a cached dependency.
- * @param  {String} shasum - shasum (unique identifier) of the cached tarball.
+ * @param  {String} id - id (unique identifier) of the cached tarball.
  * @return {ReadStream} - Read Stream
  */
-export function read (shasum) {
-  const filename = path.join(config.cacheDir, shasum)
+export function read (id) {
+  const filename = path.join(config.cacheDir, id)
   return fs.ReadStream(filename)
 }
 
@@ -50,11 +50,11 @@ export function read (shasum) {
  * extract a dependency from the cache.
  * @param {String} dest - pathname into which the cached dependency should be
  * extracted.
- * @param {String} shasum - shasum (unique identifier) of the cached tarball.
+ * @param {String} id - id (unique identifier) of the cached tarball.
  * @return {Observable} - observable sequence that will be completed once
  * the cached dependency has been fetched.
  */
-export function extract (dest, shasum) {
+export function extract (dest, id) {
   return Observable.create((observer) => {
     const tmpDest = getTmp()
     const untar = tar.extract(tmpDest, {strip: 1})
@@ -65,7 +65,7 @@ export function extract (dest, shasum) {
     }
     const errorHandler = (err) => observer.error(err)
 
-    this.read(shasum).on('error', errorHandler)
+    this.read(id).on('error', errorHandler)
       .pipe(gunzip()).on('error', errorHandler)
       .pipe(untar).on('error', errorHandler)
       .on('finish', completeHandler)

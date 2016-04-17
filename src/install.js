@@ -54,13 +54,13 @@ export const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall']
  * @return {Observable} - observable sequence of `package.json` objects.
  */
 export function resolveLocal (parentTarget, _path) {
-  return util.readlink(_path)
-    ::mergeMap((relTarget) => {
-      const target = path.resolve(_path, relTarget)
-      const filename = path.join(target, 'package.json')
-      return util.readFileJSON(filename)
-        ::map((pkgJSON) => ({ parentTarget, pkgJSON, target, path: _path, local: true }))
-    })
+  return util.readlink(_path)::mergeMap((relTarget) => {
+    const target = path.resolve(path.dirname(_path), relTarget)
+    const filename = path.join(target, 'package.json')
+    return util.readFileJSON(filename)::map((pkgJSON) => ({
+      parentTarget, pkgJSON, target, path: _path, local: true
+    }))
+  })
 }
 
 /**
@@ -144,17 +144,17 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
  * resolve an individual sub-dependency based on the parent's target and the
  * current working directory.
  * @param  {String} cwd - current working directory.
- * @param  {String} target - target path used for determining the sub-
+ * @param  {String} parentTarget - target path used for determining the sub-
  * dependency's path.
  * @return {Obserable} - observable sequence of `package.json` root documents
  * wrapped into dependency objects representing the resolved sub-dependency.
  */
-export function resolve (progress, cwd, target) {
+export function resolve (progress, cwd, parentTarget) {
   return this::mergeMap(([name, version]) => {
-    const _path = path.join(target, 'node_modules', name)
-    return resolveLocal(target, _path, cwd)
+    const _path = path.join(parentTarget, 'node_modules', name)
+    return resolveLocal(parentTarget, _path, cwd)
       ::util.catchByCode({
-        ENOENT: () => resolveRemote(target, _path, name, version, cwd)
+        ENOENT: () => resolveRemote(parentTarget, _path, name, version, cwd)
       })
       ::_do(() => progress && progress.tick())
   })
