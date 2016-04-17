@@ -153,34 +153,29 @@ export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
 export function resolve (progress, cwd, parentTarget) {
   return this::mergeMap(([name, version]) => {
     const _path = path.join(parentTarget, 'node_modules', name)
-    return resolveFromNodeModules(parentTarget, _path)
-      ::util.catchByCode({
-        ENOENT: () => resolveFromRemote(parentTarget, _path, name, version, cwd)
-      })
-      ::_do(() => progress && progress.tick())
+    return resolveFromNodeModules(parentTarget, _path)::util.catchByCode({
+      ENOENT: () => resolveFromRemote(parentTarget, _path, name, version, cwd)
+    })
+    ::_do(() => progress && progress.tick())
   })
 }
 
 /**
  * resolve all dependencies starting at the current working directory.
- *
  * @param  {String} cwd - current working directory.
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
 export function resolveAll (progress, cwd) {
   const targets = Object.create(null)
-
-  return this::expand((parent) => {
-    const {target, pkgJSON} = parent
-
+  return this::expand(({target, pkgJSON}) => {
     // cancel when we get into a circular dependency
     if (target in targets) return EmptyObservable.create()
-    targets[target] = true
+    else targets[target] = true
 
     // install devDependencies of entry dependency (project-level)
     const fields = target === cwd ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
-
     const dependencies = parseDependencies(pkgJSON, fields)
+
     if (progress) progress.total += dependencies.length
     return ArrayObservable.create(dependencies)::resolve(progress, cwd, target)
   })
