@@ -286,7 +286,8 @@ export function link (dep) {
  * once all dependencies have been symlinked.
  */
 export function linkAll () {
-  return this::distinctKey('path')::mergeMap(link)
+  return this::distinctKey('path')
+    ::mergeMap(link)
 }
 
 function download (tarball) {
