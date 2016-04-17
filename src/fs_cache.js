@@ -1,19 +1,30 @@
+import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {Observable} from 'rxjs/Observable'
+import {mergeMap} from 'rxjs/operator/mergeMap'
 import gunzip from 'gunzip-maybe'
 import tar from 'tar-fs'
 import fs from 'fs'
 import path from 'path'
 import uuid from 'node-uuid'
-import {mkdirp} from './util'
+import * as util from './util'
 import * as config from './config'
 
 /**
  * initialize the cache.
- * @return {Observable} - an observable sequence that will be completed once
- * the base directory of the cache has been created.
+ * @return {Observable} - observable sequence that will be completed once the
+ * base directory of the cache has been created.
  */
 export function init () {
-  return mkdirp(path.join(config.cacheDir, '.tmp'))
+  return util.mkdirp(path.join(config.cacheDir, '.tmp'))
+}
+
+/**
+ * get a random temporary filename.
+ * @return {String} - temporary filename.
+ */
+export function getTmp () {
+  const filename = path.join(config.cacheDir, '.tmp', uuid.v4())
+  return filename
 }
 
 /**
@@ -22,8 +33,7 @@ export function init () {
  * @return {WriteStream} - Write Stream
  */
 export function write () {
-  const filename = path.join(config.cacheDir, '.tmp', uuid.v4())
-  return fs.WriteStream(filename)
+  return fs.WriteStream(getTmp())
 }
 
 /**
@@ -46,13 +56,19 @@ export function read (shasum) {
  */
 export function extract (dest, shasum) {
   return Observable.create((observer) => {
-    const handler = () => observer.complete()
-    const errHandler = (err) => observer.error(err)
+    const tmpDest = getTmp()
+    const untar = tar.extract(tmpDest, {strip: 1})
 
-    const untar = tar.extract(dest, {strip: 1})
-    this.read(shasum).on('error', errHandler)
-      .pipe(gunzip()).on('error', errHandler)
-      .pipe(untar).on('error', errHandler)
-      .on('finish', handler)
+    const completeHandler = () => {
+      observer.next(tmpDest)
+      observer.complete()
+    }
+    const errorHandler = (err) => observer.error(err)
+
+    this.read(shasum).on('error', errorHandler)
+      .pipe(gunzip()).on('error', errorHandler)
+      .pipe(untar).on('error', errorHandler)
+      .on('finish', completeHandler)
   })
+    ::mergeMap((tmpDest) => util.rename(tmpDest, dest))
 }

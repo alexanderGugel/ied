@@ -94,11 +94,10 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
     case 'range':
     case 'version':
     case 'tag':
-      return registry.resolve(name, version)
-        ::map((pkgJSON) => {
-          const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
-          return { parentTarget, pkgJSON, target, path: _path, local: false }
-        })
+      return registry.resolve(name, version)::map((pkgJSON) => {
+        const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
+        return { parentTarget, pkgJSON, target, path: _path, local: false }
+      })
     case 'remote':
       const pkgJSON = tarball.resolve(name, version, parsedPkg.spec)
       const shasum = pkgJSON.dist.shasum
@@ -335,7 +334,6 @@ export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin
   const { shasum, tarball } = dist
 
   const o = cache.extract(target, shasum)
-  // TODO: Create two WriteStreams: One to cache, one to directory
   return o::util.catchByCode({
     ENOENT: () => download(tarball)
       ::_do(({ shasum: actual }) => {
