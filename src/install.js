@@ -53,14 +53,14 @@ export const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall']
  * @param  {String} _path - path of the dependency.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveLocal (parentTarget, _path) {
-  return util.readlink(_path)
-    ::mergeMap((relTarget) => {
-      const target = path.resolve(_path, relTarget)
-      const filename = path.join(target, 'package.json')
-      return util.readFileJSON(filename)
-        ::map((pkgJSON) => ({ parentTarget, pkgJSON, target, path: _path, local: true }))
-    })
+export function resolveFromNodeModules (parentTarget, _path) {
+  return util.readlink(_path)::mergeMap((relTarget) => {
+    const target = path.resolve(path.dirname(_path), relTarget)
+    const filename = path.join(target, 'package.json')
+    return util.readFileJSON(filename)::map((pkgJSON) => ({
+      parentTarget, pkgJSON, target, path: _path, local: true
+    }))
+  })
 }
 
 /**
@@ -86,7 +86,7 @@ export function resolveDownloaded (parentTarget, target, _path, cwd) {
  * @param  {String} cwd - current working directory.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveRemote (parentTarget, _path, name, version, cwd) {
+export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
   const pkgName = `${name}@${version}`
   const parsedPkg = npa(pkgName)
 
@@ -94,11 +94,11 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
     case 'range':
     case 'version':
     case 'tag':
-      return registry.resolve(name, version)
-        ::map((pkgJSON) => {
-          const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
-          return { parentTarget, pkgJSON, target, path: _path, local: false }
-        })
+      return registry.match(name, version)::map((pkgJSON) => {
+        const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
+        const tmpTarget = cache.getTmp()
+        return { parentTarget, pkgJSON, target, path: _path, local: false }
+      })
     case 'remote':
       const pkgJSON = tarball.resolve(name, version, parsedPkg.spec)
       const shasum = pkgJSON.dist.shasum
@@ -145,48 +145,39 @@ export function resolveRemote (parentTarget, _path, name, version, cwd) {
  * resolve an individual sub-dependency based on the parent's target and the
  * current working directory.
  * @param  {String} cwd - current working directory.
- * @param  {String} target - target path used for determining the sub-
+ * @param  {String} parentTarget - target path used for determining the sub-
  * dependency's path.
  * @return {Obserable} - observable sequence of `package.json` root documents
  * wrapped into dependency objects representing the resolved sub-dependency.
  */
-export function resolve (progress, cwd, target) {
+export function resolve (progress, cwd, parentTarget) {
   return this::mergeMap(([name, version]) => {
-    const _path = path.join(target, 'node_modules', name)
-    return resolveLocal(target, _path, cwd)
-      ::util.catchByCode({
-        ENOENT: () => resolveRemote(target, _path, name, version, cwd)
-      })
-      ::_do(() => progress && progress.tick())
+    const _path = path.join(parentTarget, 'node_modules', name)
+    return resolveFromNodeModules(parentTarget, _path)::util.catchByCode({
+      ENOENT: () => resolveFromRemote(parentTarget, _path, name, version, cwd)
+    })
+    ::_do(() => progress && progress.tick())
   })
 }
 
 /**
  * resolve all dependencies starting at the current working directory.
- *
  * @param  {String} cwd - current working directory.
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
 export function resolveAll (progress, cwd) {
   const targets = Object.create(null)
-
-  return this::expand((parent) => {
-    const {target, pkgJSON} = parent
-
+  return this::expand(({target, pkgJSON}) => {
     // cancel when we get into a circular dependency
     if (target in targets) return EmptyObservable.create()
-    targets[target] = true
+    else targets[target] = true
 
     // install devDependencies of entry dependency (project-level)
     const fields = target === cwd ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
-    const bundleDependencies = (pkgJSON.bundleDependencies || [])
-      .concat(pkgJSON.bundledDependencies || [])
-
     const dependencies = parseDependencies(pkgJSON, fields)
+
     if (progress) progress.total += dependencies.length
-    return ArrayObservable.create(dependencies)
-      ::filter(([name]) => bundleDependencies.indexOf(name) === -1)
-      ::resolve(progress, cwd, target)
+    return ArrayObservable.create(dependencies)::resolve(progress, cwd, target)
   })
 }
 
@@ -213,6 +204,20 @@ function mergeDependencies (pkgJSON, fields) {
 }
 
 /**
+ * extract an array of bundled dependency names from the passed in
+ * `package.json`. uses the `bundleDependencies` and `bundledDependencies`
+ * properties.
+ * @param  {Object} pkgJSON - plain JavaScript object representing a
+ * `package.json` file.
+ * @return {Array.<String>} - array of bundled dependency names.
+ */
+function parseBundleDependencies (pkgJSON) {
+  const bundleDependencies = (pkgJSON.bundleDependencies || [])
+    .concat(pkgJSON.bundledDependencies || [])
+  return bundleDependencies
+}
+
+/**
  * extract specified dependencies from a specific `package.json`.
  * @param  {Object} pkgJSON - plain JavaScript object representing a
  * `package.json` file.
@@ -220,12 +225,17 @@ function mergeDependencies (pkgJSON, fields) {
  * @return {Array} - array of dependency pairs.
  */
 export function parseDependencies (pkgJSON, fields) {
+  // bundleDependencies and bundledDependencies are optional. we need to
+  // exclude those form the final [name, version] pairs that we're generating.
+  const bundleDependencies = parseBundleDependencies(pkgJSON)
   const allDependencies = mergeDependencies(pkgJSON, fields)
   const names = Object.keys(allDependencies)
   const results = []
   for (let i = 0; i < names.length; i++) {
     const name = names[i]
-    results.push([name, allDependencies[name]])
+    if (bundleDependencies.indexOf(name) === -1) {
+      results.push([name, allDependencies[name]])
+    }
   }
   return results
 }
@@ -276,7 +286,8 @@ export function link (dep) {
  * once all dependencies have been symlinked.
  */
 export function linkAll () {
-  return this::distinctKey('path')::mergeMap(link)
+  return this::distinctKey('path')
+    ::mergeMap(link)
 }
 
 function download (tarball) {
@@ -335,7 +346,6 @@ export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin
   const { shasum, tarball } = dist
 
   const o = cache.extract(target, shasum)
-  // TODO: Create two WriteStreams: One to cache, one to directory
   return o::util.catchByCode({
     ENOENT: () => download(tarball)
       ::_do(({ shasum: actual }) => {
