@@ -96,7 +96,6 @@ export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
     case 'tag':
       return registry.match(name, version)::map((pkgJSON) => {
         const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
-        const tmpTarget = cache.getTmp()
         return { parentTarget, pkgJSON, target, path: _path, local: false }
       })
     case 'remote':
@@ -150,13 +149,12 @@ export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
  * @return {Obserable} - observable sequence of `package.json` root documents
  * wrapped into dependency objects representing the resolved sub-dependency.
  */
-export function resolve (progress, cwd, parentTarget) {
+export function resolve (cwd, parentTarget) {
   return this::mergeMap(([name, version]) => {
     const _path = path.join(parentTarget, 'node_modules', name)
     return resolveFromNodeModules(parentTarget, _path)::util.catchByCode({
       ENOENT: () => resolveFromRemote(parentTarget, _path, name, version, cwd)
     })
-    ::_do(() => progress && progress.tick())
   })
 }
 
@@ -165,8 +163,9 @@ export function resolve (progress, cwd, parentTarget) {
  * @param  {String} cwd - current working directory.
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
-export function resolveAll (progress, cwd) {
+export function resolveAll (cwd) {
   const targets = Object.create(null)
+
   return this::expand(({target, pkgJSON}) => {
     // cancel when we get into a circular dependency
     if (target in targets) return EmptyObservable.create()
@@ -175,9 +174,7 @@ export function resolveAll (progress, cwd) {
     // install devDependencies of entry dependency (project-level)
     const fields = target === cwd ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
     const dependencies = parseDependencies(pkgJSON, fields)
-
-    if (progress) progress.total += dependencies.length
-    return ArrayObservable.create(dependencies)::resolve(progress, cwd, target)
+    return ArrayObservable.create(dependencies)::resolve(cwd, target)
   })
 }
 
@@ -259,8 +256,7 @@ function normalizeBin (pkgJSON) {
  * @return {Observable} - empty observable sequence that will be completed
  * once the symbolic link has been created.
  */
-export function link (dep) {
-  const {path: absPath, target: absTarget, parentTarget, pkgJSON} = dep
+export function link ({path: absPath, target: absTarget, parentTarget, pkgJSON}) {
   const links = [ [absTarget, absPath] ]
   const bin = normalizeBin(pkgJSON)
 
@@ -274,7 +270,7 @@ export function link (dep) {
 
   return ArrayObservable.create(links)
     ::mergeMap(([src, dst]) => {
-      // use relative pathnames
+      // use relative pathnames.
       const relSrc = path.relative(path.dirname(dst), src)
       return util.forceSymlink(relSrc, dst)
     })
@@ -286,8 +282,7 @@ export function link (dep) {
  * once all dependencies have been symlinked.
  */
 export function linkAll () {
-  return this::distinctKey('path')
-    ::mergeMap(link)
+  return this::distinctKey('path')::mergeMap(link)
 }
 
 function download (tarball) {
@@ -335,10 +330,8 @@ function fixPermissions (target, bin) {
  * @return {Observable} - empty observable sequence that will be completed
  * once the dependency has been downloaded.
  */
-export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin, dist}}) {
-  if (logLevel) console.log(`Installing ${name}@${version}`)
-
-   // Remote module
+export function fetch ({target, pkgJSON: {name, version, bin, dist}}) {
+  // Remote module
   if (!dist) {
     return fixPermissions(target, normalizeBin({ name, bin }))
   }
@@ -353,7 +346,6 @@ export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin
           throw new errors.CorruptedPackageError(tarball, shasum, actual)
         }
       })
-      ::_do(() => progress && progress.tick())
       ::concat(o)
   })::concat(fixPermissions(target, normalizeBin({ name, bin })))
 }
@@ -363,10 +355,8 @@ export function fetch (logLevel, progress, {target, pkgJSON: {name, version, bin
  * @return {Observable} - empty observable sequence that will be completed
  * once all dependencies have been downloaded.
  */
-export function fetchAll (logLevel, progress) {
-  return this::distinctKey('target')
-    ::filter(({ local }) => !local)
-    ::mergeMap(fetch.bind(null, logLevel, progress))
+export function fetchAll () {
+  return this::distinctKey('target')::mergeMap(fetch)
 }
 
 export function build ({target, script}) {
@@ -419,7 +409,6 @@ export function parseLifecycleScripts (dep) {
  */
 export function buildAll () {
   return this
-    ::filter(({ local }) => !local)
     ::map(parseLifecycleScripts)
     ::mergeMap((scripts) => ArrayObservable.create(scripts))
     ::mergeMap(build)

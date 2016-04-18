@@ -12,14 +12,6 @@ import * as install from './install'
 import * as fsCache from './fs_cache'
 import * as util from './util'
 
-function logResolved (logLevel, {parentTarget, pkgJSON: {name, version}, target}) {
-  if (logLevel === 'debug') {
-    parentTarget = path.basename(parentTarget).substr(0, 7)
-    target = path.basename(target).substr(0, 7)
-    console.log(`resolved ${parentTarget} > ${target}: ${name}@${version}`)
-  }
-}
-
 /**
  * run the installation command.
  * @param  {String} cwd - current working directory (absolute path).
@@ -27,28 +19,30 @@ function logResolved (logLevel, {parentTarget, pkgJSON: {name, version}, target}
  * @return {Observable} - an observable sequence that will be completed once
  * the installation is complete.
  */
-export default function installCmd (cwd, argv, logLevel, progress) {
+export default function installCmd (cwd, argv) {
   const explicit = !!(argv._.length - 1)
   const updatedPkgJSONs = explicit
     ? entryDep.fromArgv(cwd, argv)
     : entryDep.fromFS(cwd)
 
-  const resolved = updatedPkgJSONs::install.resolveAll(progress, cwd)::skip(1)
+  const resolved = updatedPkgJSONs
+    ::install.resolveAll(cwd)::skip(1)
     ::filter(({ local }) => !local)
-    ::_do(logResolved.bind(null, logLevel))
     ::publishReplay().refCount()
 
   const linked = resolved::install.linkAll()
-  const fetched = resolved::install.fetchAll(logLevel, progress)
+  const fetched = resolved::install.fetchAll()
 
-  // only build if we're allowed to.
+  // only build if we're asked to.
   const built = argv.build
     ? resolved::install.buildAll()
     : EmptyObservable.create()
 
-  return fsCache.init()
-    ::concat(util.mkdirp(path.join(cwd, 'node_modules')))
+  const initialized = util.mkdirp(path.join(cwd, 'node_modules'))
+
+  return fsCache.init()::concat(initialized)
     ::concat(fetched)
     ::concat(linked)
     ::concat(built)
+    .subscribe()
 }
