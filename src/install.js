@@ -270,6 +270,23 @@ function normalizeBin (pkgJSON) {
     : (pkgJSON.bin || {})
 }
 
+function resolveSymlink (src, dst) {
+  return [ path.relative(path.dirname(dst), src), dst ]
+}
+
+function getLinks (pkgJSON, parentTarget, absTarget, absPath) {
+  const links = [ resolveSymlink(absTarget, absPath) ]
+  const bin = normalizeBin(pkgJSON)
+  const names = Object.keys(bin)
+  for (let i = 0; i < names.length; i++) {
+    const name = names[i]
+    const dst = path.join(parentTarget, 'node_modules', '.bin', name)
+    const src = path.join(absTarget, bin[name])
+    links.push(resolveSymlink(src, dst))
+  }
+  return links
+}
+
 /**
  * create a relative symbolic link to a dependency.
  * @param {Dep} dep - dependency to be linked.
@@ -277,23 +294,9 @@ function normalizeBin (pkgJSON) {
  * once the symbolic link has been created.
  */
 export function link ({path: absPath, target: absTarget, parentTarget, pkgJSON}) {
-  const links = [ [absTarget, absPath] ]
-  const bin = normalizeBin(pkgJSON)
-
-  const names = Object.keys(bin)
-  for (let i = 0; i < names.length; i++) {
-    const name = names[i]
-    const dst = path.join(parentTarget, 'node_modules', '.bin', name)
-    const src = path.join(absTarget, bin[name])
-    links.push([src, dst])
-  }
-
+  const links = getLinks(pkgJSON, parentTarget, absTarget, absPath)
   return ArrayObservable.create(links)
-    ::mergeMap(([src, dst]) => {
-      // use relative pathnames.
-      const relSrc = path.relative(path.dirname(dst), src)
-      return util.forceSymlink(relSrc, dst)
-    })
+    ::mergeMap(([src, dst]) => util.forceSymlink(src, dst))
 }
 
 /**
