@@ -5,25 +5,25 @@ import sinon from 'sinon'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
 import {ErrorObservable} from 'rxjs/observable/ErrorObservable'
 import * as util from '../src/util'
-import * as entryDep from '../src/entry_dep'
+import * as installCmd from '../src/install_cmd'
 
 const sandbox = sinon.sandbox.create()
 
 afterEach(() => sandbox.restore())
 
-describe('entryDep.fromArgv', () => {
+describe('installCmd.fromArgv', () => {
   it('should return ScalarObservable', () => {
-    const result = entryDep.fromArgv('/', {_: ['install', 'tap']})
+    const result = installCmd.fromArgv('/', {_: ['install', 'tap']})
     assert(result instanceof ScalarObservable)
   })
 
   it('should create pkgJSON by parsing argv', () => {
     const pkgJSON = { dependencies: {} }
-    sandbox.stub(entryDep, 'parseArgv').returns(pkgJSON)
+    sandbox.stub(installCmd, 'parseArgv').returns(pkgJSON)
     const next = sinon.spy()
     const error = sinon.spy()
     const complete = sinon.spy()
-    entryDep.fromArgv('/cwd', {_: []}).subscribe(next, error, complete)
+    installCmd.fromArgv('/cwd', {_: []}).subscribe(next, error, complete)
     sinon.assert.calledWith(next, ({pkgJSON, target: '/cwd'}))
     sinon.assert.calledOnce(next)
     sinon.assert.notCalled(error)
@@ -31,7 +31,7 @@ describe('entryDep.fromArgv', () => {
   })
 })
 
-describe('entryDep.parseArgv', () => {
+describe('installCmd.parseArgv', () => {
   const scenarios = [
     {
       argv: { _: ['install', 'tap'] },
@@ -68,14 +68,14 @@ describe('entryDep.parseArgv', () => {
   scenarios.forEach(({ argv, pkgJSON: expectedPkgJSON }) => {
     context(`when argv are ${JSON.stringify(argv)}`, () => {
       it('should return correct pkgJSON', () => {
-        const actualPkgJSON = entryDep.parseArgv(argv)
+        const actualPkgJSON = installCmd.parseArgv(argv)
         assert.deepEqual(actualPkgJSON, expectedPkgJSON)
       })
     })
   })
 })
 
-describe('entryDep.catchReadFileJSON', () => {
+describe('installCmd.catchReadFileJSON', () => {
   context('when there is an ENOENT error', () => {
     it('should return a neutral pkgJSON', () => {
       const err = new Error()
@@ -85,7 +85,7 @@ describe('entryDep.catchReadFileJSON', () => {
       const error = sinon.spy()
       const complete = sinon.spy()
       ErrorObservable.create(err)
-        ::entryDep.catchReadFileJSON()
+        ::installCmd.catchReadFileJSON()
         .subscribe(next, error, complete)
       sinon.assert.calledOnce(next)
       sinon.assert.calledWithExactly(next, {})
@@ -103,7 +103,7 @@ describe('entryDep.catchReadFileJSON', () => {
       const error = sinon.spy()
       const complete = sinon.spy()
       ErrorObservable.create(err)
-        ::entryDep.catchReadFileJSON()
+        ::installCmd.catchReadFileJSON()
         .subscribe(next, error, complete)
       sinon.assert.notCalled(next)
       sinon.assert.calledOnce(error)
@@ -112,7 +112,7 @@ describe('entryDep.catchReadFileJSON', () => {
   })
 })
 
-describe('entryDep.fromFS', () => {
+describe('installCmd.fromFS', () => {
   it('should return entry dependency', () => {
     const json = { dependencies: { tap: '*' } }
     const readFileJSON = ScalarObservable.create(json)
@@ -121,7 +121,7 @@ describe('entryDep.fromFS', () => {
     const next = sinon.spy()
     const error = sinon.spy()
     const complete = sinon.spy()
-    entryDep.fromFS('/cwd')
+    installCmd.fromFS('/cwd')
       .subscribe(next, error, complete)
 
     sinon.assert.notCalled(error)
