@@ -76,6 +76,22 @@ export function resolveDownloaded (parentTarget, target, _path, cwd) {
     ::map((pkgJSON) => ({ parentTarget, pkgJSON, target, path: _path, local: false, type: 'remote' }))
 }
 
+export function fetchFromRegistry () {
+  const {target, pkgJSON: {name, version, bin, dist: {shasum, tarball}}} = this
+
+  const o = cache.extract(target, shasum)
+  return o::util.catchByCode({
+    ENOENT: () => download(tarball)
+      ::_do(({ shasum: actual }) => {
+        if (actual !== shasum) {
+          throw new errors.CorruptedPackageError(tarball, shasum, actual)
+        }
+      })
+      ::concat(o)
+  })
+}
+
+
 /**
  * obtain a dependency's `package.json` file using the pre-configured registry.
  * @param  {String} parentTarget - absolute parent's node_modules path.
@@ -96,7 +112,9 @@ export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
     case 'tag':
       return registry.match(name, version)::map((pkgJSON) => {
         const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
-        return { parentTarget, pkgJSON, target, path: _path, local: false }
+        const fetch = fetchFromRegistry
+        const local = false
+        return { parentTarget, pkgJSON, target, path: _path, local, fetch }
       })
     case 'remote':
       const pkgJSON = tarball.resolve(name, version, parsedPkg.spec)
@@ -111,13 +129,14 @@ export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
           const newPath = path.join(config.cacheDir, shasum)
           return util.rename(cached.path, newPath).subscribe(null, null, () => {
 
-           cache.extract(target, shasum).subscribe(null, null, () => {
-             resolveDownloaded(parentTarget, path.join(cwd, 'node_modules', pkgJSON.dist.shasum), _path, cwd, { sha: shasum, tmpPath: cached.path }).subscribe((x) => resolved = x, null, (v) => {
-               observer.next(resolved)
-               observer.complete()
-             })
-           })
-         })
+          cache.extract(target, shasum).subscribe(null, null, () => {
+            resolveDownloaded(parentTarget, path.join(cwd, 'node_modules', pkgJSON.dist.shasum), _path, cwd, { sha: shasum, tmpPath: cached.path }).subscribe((x) => resolved = x, null, (v) => {
+              resolved.fetch = () => EmptyObservable.create()
+              observer.next(resolved)
+              observer.complete()
+            })
+          })
+          })
         }
 
         const response = needle.get(version, {
@@ -172,7 +191,8 @@ export function resolveAll (cwd) {
     else targets[target] = true
 
     // install devDependencies of entry dependency (project-level)
-    const fields = target === cwd ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
+    const isEntry = target === cwd
+    const fields = isEntry ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
     const dependencies = parseDependencies(pkgJSON, fields)
     return ArrayObservable.create(dependencies)::resolve(cwd, target)
   })
@@ -313,9 +333,8 @@ function download (tarball) {
   })
 }
 
-const execMode = parseInt('0777', 8) & (~process.umask())
-
 function fixPermissions (target, bin) {
+  const execMode = parseInt('0777', 8) & (~process.umask())
   const paths = []
   for (let name in bin) {
     paths.push(path.resolve(target, bin[name]))
@@ -325,38 +344,17 @@ function fixPermissions (target, bin) {
 }
 
 /**
- * download the tarball of the package into the `target` path.
- * @param {Dep} dep - dependency to be fetched.
- * @return {Observable} - empty observable sequence that will be completed
- * once the dependency has been downloaded.
- */
-export function fetch ({target, pkgJSON: {name, version, bin, dist}}) {
-  // Remote module
-  if (!dist) {
-    return fixPermissions(target, normalizeBin({ name, bin }))
-  }
-
-  const { shasum, tarball } = dist
-
-  const o = cache.extract(target, shasum)
-  return o::util.catchByCode({
-    ENOENT: () => download(tarball)
-      ::_do(({ shasum: actual }) => {
-        if (actual !== shasum) {
-          throw new errors.CorruptedPackageError(tarball, shasum, actual)
-        }
-      })
-      ::concat(o)
-  })::concat(fixPermissions(target, normalizeBin({ name, bin })))
-}
-
-/**
  * download the tarballs into their respective `target`.
  * @return {Observable} - empty observable sequence that will be completed
  * once all dependencies have been downloaded.
  */
 export function fetchAll () {
-  return this::distinctKey('target')::mergeMap(fetch)
+  return this::distinctKey('target')
+    ::mergeMap((dep) => {
+      const {target, pkgJSON: {name, bin}} = dep
+      return dep.fetch()
+        ::concat(fixPermissions(target, normalizeBin({ name, bin })))
+    })
 }
 
 export function build ({target, script}) {

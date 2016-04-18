@@ -20,8 +20,8 @@ import * as util from './util'
  * the installation is complete.
  */
 export default function installCmd (cwd, argv) {
-  const explicit = !!(argv._.length - 1)
-  const updatedPkgJSONs = explicit
+  const isExplicit = argv._.length - 1
+  const updatedPkgJSONs = isExplicit
     ? entryDep.fromArgv(cwd, argv)
     : entryDep.fromFS(cwd)
 
@@ -41,8 +41,5 @@ export default function installCmd (cwd, argv) {
   const initialized = util.mkdirp(path.join(cwd, 'node_modules'))
 
   return fsCache.init()::concat(initialized)
-    ::concat(fetched)
-    ::concat(linked)
-    ::concat(built)
-    .subscribe()
+    ::concat(fetched)::concat(linked)::concat(built).subscribe()
 }
