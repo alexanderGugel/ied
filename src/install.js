@@ -20,6 +20,7 @@ import * as config from './config'
 import * as errors from './errors'
 import * as registry from './registry'
 import * as util from './util'
+import * as tarball from './tarball'
 
 /**
  * properties of project-level `package.json` files that will be checked for
@@ -126,14 +127,14 @@ export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
         const finishHandler = () => {
           const newPath = path.join(config.cacheDir, shasum)
           return util.rename(cached.path, newPath).subscribe(null, null, () => {
-
-          cache.extract(target, shasum).subscribe(null, null, () => {
-            resolveDownloaded(parentTarget, path.join(cwd, 'node_modules', pkgJSON.dist.shasum), _path, cwd, { sha: shasum, tmpPath: cached.path }).subscribe((x) => resolved = x, null, (v) => {
-              resolved.fetch = () => EmptyObservable.create()
-              observer.next(resolved)
-              observer.complete()
+            cache.extract(target, shasum).subscribe(null, null, () => {
+              resolveDownloaded(parentTarget, path.join(cwd, 'node_modules', pkgJSON.dist.shasum), _path, cwd, { sha: shasum, tmpPath: cached.path })
+                .subscribe((x) => resolved = x, null, (v) => {
+                  resolved.fetch = () => EmptyObservable.create()
+                  observer.next(resolved)
+                  observer.complete()
+                })
             })
-          })
           })
         }
 
@@ -153,7 +154,7 @@ export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
     case 'hosted':
       throw new Error('GitHub dependencies are not yet supported')
     default:
-     throw new Error(`Unknown package spec: ${parsedPkg.type} on ${pkgName}`)
+      throw new Error(`Unknown package spec: ${parsedPkg.type} on ${pkgName}`)
   }
 }
 
