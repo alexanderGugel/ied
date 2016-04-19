@@ -2,6 +2,7 @@ import crypto from 'crypto'
 import path from 'path'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
+import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
 import {Observable} from 'rxjs/Observable'
 import {_do} from 'rxjs/operator/do'
 import {_finally} from 'rxjs/operator/finally'
@@ -174,6 +175,7 @@ export function resolve (cwd, parentTarget) {
     progress.add()
     progress.report(`resolving ${name}@${version}`)
     const _path = path.join(parentTarget, 'node_modules', name)
+
     return resolveFromNodeModules(parentTarget, _path)
       ::util.catchByCode({
         ENOENT: () => resolveFromRemote(parentTarget, _path, name, version, cwd)
@@ -358,6 +360,12 @@ function fetch (dep) {
   return dep.fetch()::concat(postFetch)::_finally(progress.complete)
 }
 
+function filterFetched (dep) {
+  return util.stat(path.join(dep.target, 'package.json'))
+    ::mergeMap((stat) => EmptyObservable.create())
+    ::util.catchByCode({ ENOENT: () => ScalarObservable.create(dep) })
+}
+
 /**
  * download the tarballs into their respective `target`.
  * @return {Observable} - empty observable sequence that will be completed
@@ -365,6 +373,8 @@ function fetch (dep) {
  */
 export function fetchAll () {
   return this::distinctKey('target')
+    // check if target/package.json already exists
+    ::mergeMap(filterFetched)
     ::mergeMap(fetch)
 }
 
