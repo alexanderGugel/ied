@@ -4,6 +4,7 @@ import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {Observable} from 'rxjs/Observable'
 import {_do} from 'rxjs/operator/do'
+import {_finally} from 'rxjs/operator/finally'
 import {concat} from 'rxjs/operator/concat'
 import {distinctKey} from 'rxjs/operator/distinctKey'
 import {every} from 'rxjs/operator/every'
@@ -21,6 +22,7 @@ import * as errors from './errors'
 import * as registry from './registry'
 import * as util from './util'
 import * as tarball from './tarball'
+import * as progress from './progress'
 
 /**
  * properties of project-level `package.json` files that will be checked for
@@ -169,10 +171,14 @@ export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
  */
 export function resolve (cwd, parentTarget) {
   return this::mergeMap(([name, version]) => {
+    progress.add()
+    progress.report(`resolving ${name}@${version}`)
     const _path = path.join(parentTarget, 'node_modules', name)
-    return resolveFromNodeModules(parentTarget, _path)::util.catchByCode({
-      ENOENT: () => resolveFromRemote(parentTarget, _path, name, version, cwd)
-    })
+    return resolveFromNodeModules(parentTarget, _path)
+      ::util.catchByCode({
+        ENOENT: () => resolveFromRemote(parentTarget, _path, name, version, cwd)
+      })
+      ::_finally(progress.complete)
   })
 }
 
@@ -345,6 +351,13 @@ function fixPermissions (target, bin) {
     ::mergeMap((path) => util.chmod(path, execMode))
 }
 
+function fetch (dep) {
+  const {target, pkgJSON: {name, bin}} = dep
+  const postFetch = fixPermissions(target, normalizeBin({ name, bin }))
+  progress.add()
+  return dep.fetch()::concat(postFetch)::_finally(progress.complete)
+}
+
 /**
  * download the tarballs into their respective `target`.
  * @return {Observable} - empty observable sequence that will be completed
@@ -352,11 +365,7 @@ function fixPermissions (target, bin) {
  */
 export function fetchAll () {
   return this::distinctKey('target')
-    ::mergeMap((dep) => {
-      const {target, pkgJSON: {name, bin}} = dep
-      const postFetch = fixPermissions(target, normalizeBin({ name, bin }))
-      return dep.fetch()::concat(postFetch)
-    })
+    ::mergeMap(fetch)
 }
 
 export function build ({target, script}) {
