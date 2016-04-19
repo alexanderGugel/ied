@@ -162,14 +162,14 @@ Installation
 The easiest way to install ied is using [npm](https://www.npmjs.org/):
 
 ```
-  npm i -g ied
+npm i -g ied
 ```
 
 Alternatively you can also "bootstrap" ied.
 After an initial installation via npm, ied will install its own dependencies:
 
 ```
-  git clone https://github.com/alexanderGugel/ied ied && cd $_ && make install
+git clone https://github.com/alexanderGugel/ied ied && cd $_ && make install
 ```
 
 Usage
