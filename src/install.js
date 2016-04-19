@@ -28,7 +28,7 @@ import * as tarball from './tarball'
  * @type {Array.<String>}
  * @readonly
  */
-export const ENTRY_DEPENDENCY_FIELDS = ['dependencies', 'devDependencies']
+export const ENTRY_DEPENDENCY_FIELDS = ['dependencies', 'devDependencies', 'optionalDependencies']
 
 /**
  * properties of `package.json` of sub-dependencies that will be checked for
@@ -36,7 +36,7 @@ export const ENTRY_DEPENDENCY_FIELDS = ['dependencies', 'devDependencies']
  * @type {Array.<String>}
  * @readonly
  */
-export const DEPENDENCY_FIELDS = ['dependencies']
+export const DEPENDENCY_FIELDS = ['dependencies', 'optionalDependencies']
 
 /**
  * names of lifecycle scripts that should be run as part of the installation
