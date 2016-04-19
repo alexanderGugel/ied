@@ -1,7 +1,5 @@
-import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {Observable} from 'rxjs/Observable'
 import {mergeMap} from 'rxjs/operator/mergeMap'
-import {_catch} from 'rxjs/operator/catch'
 import gunzip from 'gunzip-maybe'
 import tar from 'tar-fs'
 import fs from 'fs'

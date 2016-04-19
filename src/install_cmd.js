@@ -22,7 +22,7 @@ export function initFromFs (cwd) {
   const filename = path.join(cwd, 'package.json')
   return util.readFileJSON(filename)
     ::catchReadFileJSON()
-    ::map((pkgJSON) => ({pkgJSON, target: cwd}))
+    ::map((pkgJson) => ({pkgJson, target: cwd}))
 }
 
 /**
@@ -33,8 +33,8 @@ export function initFromFs (cwd) {
  * @return {Observabel} - an observable sequence of an `EntryDep`.
  */
 export function initFromArgv (cwd, argv) {
-  const pkgJSON = parseArgv(argv)
-  return ScalarObservable.create({ pkgJSON, target: cwd })
+  const pkgJson = parseArgv(argv)
+  return ScalarObservable.create({ pkgJson, target: cwd })
 }
 
 /**
@@ -48,8 +48,8 @@ export function catchReadFileJSON () {
     switch (err.code) {
       case 'ENOENT':
         // emit an empty `package.json` file
-        const pkgJSON = {}
-        return ScalarObservable.create(pkgJSON)
+        const pkgJson = {}
+        return ScalarObservable.create(pkgJson)
       default:
         throw err
     }

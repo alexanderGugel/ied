@@ -24,6 +24,7 @@ import * as registry from './registry'
 import * as util from './util'
 import * as tarball from './tarball'
 import * as progress from './progress'
+import {normalizeBin, parseDependencies} from './pkg_json'
 
 /**
  * properties of project-level `package.json` files that will be checked for
@@ -31,7 +32,11 @@ import * as progress from './progress'
  * @type {Array.<String>}
  * @readonly
  */
-export const ENTRY_DEPENDENCY_FIELDS = ['dependencies', 'devDependencies', 'optionalDependencies']
+export const ENTRY_DEPENDENCY_FIELDS = [
+  'dependencies',
+  'devDependencies',
+  'optionalDependencies'
+]
 
 /**
  * properties of `package.json` of sub-dependencies that will be checked for
@@ -39,7 +44,10 @@ export const ENTRY_DEPENDENCY_FIELDS = ['dependencies', 'devDependencies', 'opti
  * @type {Array.<String>}
  * @readonly
  */
-export const DEPENDENCY_FIELDS = ['dependencies', 'optionalDependencies']
+export const DEPENDENCY_FIELDS = [
+  'dependencies',
+  'optionalDependencies'
+]
 
 /**
  * names of lifecycle scripts that should be run as part of the installation
@@ -48,7 +56,11 @@ export const DEPENDENCY_FIELDS = ['dependencies', 'optionalDependencies']
  * @type {Array.<String>}
  * @readonly
  */
-export const LIFECYCLE_SCRIPTS = ['preinstall', 'install', 'postinstall']
+export const LIFECYCLE_SCRIPTS = [
+  'preinstall',
+  'install',
+  'postinstall'
+]
 
 /**
  * resolve a dependency's `package.json` file from the local file system.
@@ -60,8 +72,8 @@ export function resolveFromNodeModules (parentTarget, _path) {
   return util.readlink(_path)::mergeMap((relTarget) => {
     const target = path.resolve(path.dirname(_path), relTarget)
     const filename = path.join(target, 'package.json')
-    return util.readFileJSON(filename)::map((pkgJSON) => ({
-      parentTarget, pkgJSON, target, path: _path, local: true
+    return util.readFileJSON(filename)::map((pkgJson) => ({
+      parentTarget, pkgJson, target, path: _path, local: true
     }))
   })
 }
@@ -76,11 +88,11 @@ export function resolveDownloaded (parentTarget, target, _path, cwd) {
   const pkgPath = path.join(target, 'package.json')
 
   return util.readFileJSON(pkgPath)
-    ::map((pkgJSON) => ({ parentTarget, pkgJSON, target, path: _path, local: false, type: 'remote' }))
+    ::map((pkgJson) => ({ parentTarget, pkgJson, target, path: _path, local: false, type: 'remote' }))
 }
 
 export function fetchFromRegistry () {
-  const {target, pkgJSON: {dist: {shasum, tarball}}} = this
+  const {target, pkgJson: {dist: {shasum, tarball}}} = this
 
   const o = cache.extract(target, shasum)
   return o::util.catchByCode({
@@ -112,16 +124,16 @@ export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
     case 'range':
     case 'version':
     case 'tag':
-      return registry.match(name, version)::map((pkgJSON) => {
-        const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
+      return registry.match(name, version)::map((pkgJson) => {
+        const target = path.join(cwd, 'node_modules', pkgJson.dist.shasum)
         const fetch = fetchFromRegistry
         const local = false
-        return { parentTarget, pkgJSON, target, path: _path, local, fetch }
+        return { parentTarget, pkgJson, target, path: _path, local, fetch }
       })
     case 'remote':
-      const pkgJSON = tarball.resolve(name, version, parsedPkg.spec)
-      const shasum = pkgJSON.dist.shasum
-      const target = path.join(cwd, 'node_modules', pkgJSON.dist.shasum)
+      const pkgJson = tarball.resolve(name, version, parsedPkg.spec)
+      const shasum = pkgJson.dist.shasum
+      const target = path.join(cwd, 'node_modules', pkgJson.dist.shasum)
       let cached
 
       return Observable.create((observer) => {
@@ -131,7 +143,7 @@ export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
           const newPath = path.join(config.cacheDir, shasum)
           return util.rename(cached.path, newPath).subscribe(null, null, () => {
             cache.extract(target, shasum).subscribe(null, null, () => {
-              resolveDownloaded(parentTarget, path.join(cwd, 'node_modules', pkgJSON.dist.shasum), _path, cwd, { sha: shasum, tmpPath: cached.path })
+              resolveDownloaded(parentTarget, path.join(cwd, 'node_modules', pkgJson.dist.shasum), _path, cwd, { sha: shasum, tmpPath: cached.path })
                 .subscribe((x) => resolved = x, null, (v) => {
                   resolved.fetch = () => EmptyObservable.create()
                   observer.next(resolved)
@@ -192,7 +204,7 @@ export function resolve (cwd, parentTarget) {
 export function resolveAll (cwd) {
   const targets = Object.create(null)
 
-  return this::expand(({target, pkgJSON}) => {
+  return this::expand(({target, pkgJson}) => {
     // cancel when we get into a circular dependency
     if (target in targets) return EmptyObservable.create()
     else targets[target] = true
@@ -200,90 +212,18 @@ export function resolveAll (cwd) {
     // install devDependencies of entry dependency (project-level)
     const isEntry = target === cwd
     const fields = isEntry ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
-    const dependencies = parseDependencies(pkgJSON, fields)
+    const dependencies = parseDependencies(pkgJson, fields)
     return ArrayObservable.create(dependencies)::resolve(cwd, target)
   })
-}
-
-/**
- * merge dependency fields.
- * @param  {Object} pkgJSON - `package.json` object from which the dependencies
- * should be obtained.
- * @param  {Array.<String>} fields - property names of dependencies to be merged
- * together.
- * @return {Object} - merged dependencies.
- */
-function mergeDependencies (pkgJSON, fields) {
-  const allDependencies = {}
-  for (let i = 0; i < fields.length; i++) {
-    const field = fields[i]
-    const dependencies = pkgJSON[field] || {}
-    const names = Object.keys(dependencies)
-    for (let j = 0; j < names.length; j++) {
-      const name = names[j]
-      allDependencies[name] = dependencies[name]
-    }
-  }
-  return allDependencies
-}
-
-/**
- * extract an array of bundled dependency names from the passed in
- * `package.json`. uses the `bundleDependencies` and `bundledDependencies`
- * properties.
- * @param  {Object} pkgJSON - plain JavaScript object representing a
- * `package.json` file.
- * @return {Array.<String>} - array of bundled dependency names.
- */
-function parseBundleDependencies (pkgJSON) {
-  const bundleDependencies = (pkgJSON.bundleDependencies || [])
-    .concat(pkgJSON.bundledDependencies || [])
-  return bundleDependencies
-}
-
-/**
- * extract specified dependencies from a specific `package.json`.
- * @param  {Object} pkgJSON - plain JavaScript object representing a
- * `package.json` file.
- * @param  {Array.<String>} fields - array of dependency fields to be followed.
- * @return {Array} - array of dependency pairs.
- */
-export function parseDependencies (pkgJSON, fields) {
-  // bundleDependencies and bundledDependencies are optional. we need to
-  // exclude those form the final [name, version] pairs that we're generating.
-  const bundleDependencies = parseBundleDependencies(pkgJSON)
-  const allDependencies = mergeDependencies(pkgJSON, fields)
-  const names = Object.keys(allDependencies)
-  const results = []
-  for (let i = 0; i < names.length; i++) {
-    const name = names[i]
-    if (bundleDependencies.indexOf(name) === -1) {
-      results.push([name, allDependencies[name]])
-    }
-  }
-  return results
-}
-
-/**
- * normalize the `bin` property in `package.json`, which could either be a
- * string, object or undefined.
- * @param  {Object} pkgJSON - plain JavaScript object representing a
- * `package.json` file.
- * @return {Object} - normalized `bin` property.
- */
-function normalizeBin (pkgJSON) {
-  return typeof pkgJSON.bin === 'string'
-    ? ({ [pkgJSON.name]: pkgJSON.bin })
-    : (pkgJSON.bin || {})
 }
 
 function resolveSymlink (src, dst) {
   return [ path.relative(path.dirname(dst), src), dst ]
 }
 
-function getLinks (pkgJSON, parentTarget, absTarget, absPath) {
+function getLinks (pkgJson, parentTarget, absTarget, absPath) {
   const links = [ resolveSymlink(absTarget, absPath) ]
-  const bin = normalizeBin(pkgJSON)
+  const bin = normalizeBin(pkgJson)
   const names = Object.keys(bin)
   for (let i = 0; i < names.length; i++) {
     const name = names[i]
@@ -300,8 +240,8 @@ function getLinks (pkgJSON, parentTarget, absTarget, absPath) {
  * @return {Observable} - empty observable sequence that will be completed
  * once the symbolic link has been created.
  */
-export function link ({path: absPath, target: absTarget, parentTarget, pkgJSON}) {
-  const links = getLinks(pkgJSON, parentTarget, absTarget, absPath)
+export function link ({path: absPath, target: absTarget, parentTarget, pkgJson}) {
+  const links = getLinks(pkgJson, parentTarget, absTarget, absPath)
   return ArrayObservable.create(links)
     ::mergeMap(([src, dst]) => util.forceSymlink(src, dst))
 }
@@ -354,12 +294,18 @@ function fixPermissions (target, bin) {
 }
 
 function fetch (dep) {
-  const {target, pkgJSON: {name, bin}} = dep
+  const {target, pkgJson: {name, bin}} = dep
   const postFetch = fixPermissions(target, normalizeBin({ name, bin }))
   progress.add()
   return dep.fetch()::concat(postFetch)::_finally(progress.complete)
 }
 
+/**
+ * given an observable sequence of dependencies, filter out those that have
+ * already been fetched.
+ * @param  {Object} dep - possibly fetched dependency.
+ * @return {Observable} - observable sequence of unavailable dependencies.
+ */
 function filterFetched (dep) {
   return util.stat(path.join(dep.target, 'package.json'))
     ::mergeMap((stat) => EmptyObservable.create())
@@ -409,7 +355,7 @@ export function build ({target, script}) {
  * @return {Array.<Object>} - array of script targets to be executed.
  */
 export function parseLifecycleScripts (dep) {
-  const { target, pkgJSON: { scripts = {} } } = dep
+  const { target, pkgJson: { scripts = {} } } = dep
   const results = []
   for (let i = 0; i < LIFECYCLE_SCRIPTS.length; i++) {
     const name = LIFECYCLE_SCRIPTS[i]

@@ -7,20 +7,20 @@ import forceSymlink from 'force-symlink'
 /**
  * generate the symlinks to be created in order to link to passed in package.
  * @param {String} cwd - current working directory.
- * @param {Object} pkgJSON - `package.json` file to be linked.
+ * @param {Object} pkgJson - `package.json` file to be linked.
  * @return {Array.<String>} - an array of tuples representing symbolic links to be
  * created.
  */
-export function getSymlinks (cwd, pkgJSON) {
-  const libSymlink = [cwd, path.join(config.globalNodeModules, pkgJSON.name)]
-  let bin = pkgJSON.bin
+export function getSymlinks (cwd, pkgJson) {
+  const libSymlink = [cwd, path.join(config.globalNodeModules, pkgJson.name)]
+  let bin = pkgJson.bin
   if (typeof bin === 'string') {
     bin = {}
-    bin[pkgJSON.name] = pkgJSON.bin
+    bin[pkgJson.name] = pkgJson.bin
   }
   bin = bin || {}
   const binSymlinks = Object.keys(bin).map((name) => ([
-    path.join(config.globalNodeModules, pkgJSON.name, bin[name]),
+    path.join(config.globalNodeModules, pkgJson.name, bin[name]),
     path.join(config.globalBin, name)
   ]))
   return [libSymlink].concat(binSymlinks)

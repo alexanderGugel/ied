@@ -24,6 +24,18 @@ export function createObservableFactory (fn, thisArg) {
   }
 }
 
+export function httpGet () {
+  return Observable.create((observer) => {
+    needle.get(...arguments, (error, response) => {
+      if (error) observer.error(error)
+      else {
+        observer.next(response)
+        observer.complete()
+      }
+    })
+  })
+}
+
 /**
  * GETs JSON documents from an HTTP endpoint.
  * @param  {String} url - endpoint to which the GET request should be made

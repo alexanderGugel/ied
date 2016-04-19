@@ -4,22 +4,23 @@ import {map} from 'rxjs/operator/map'
 import {_do} from 'rxjs/operator/do'
 import {retry} from 'rxjs/operator/retry'
 import {publishReplay} from 'rxjs/operator/publishReplay'
-import {httpGetJSON} from './util'
+import {httpGet} from './util'
 import * as config from './config'
-import * as imCache from './im_cache'
-import {PackageRootError} from './errors'
 
-/**
- * Validate the given body.
- * @param  {String} url  - url from which the document has been retrieved.
- * @param  {Object} body - package root as JSON object.
- * @throws {PackageRootError}
- * @throws {Error}
- */
-export function validatePackageRoot (uri, body) {
-  if (!body || body.error) {
-    throw new PackageRootError(uri, body)
+const requests = Object.create(null)
+
+function validateStatusCode (uri, { statusCode, body: { error } }) {
+  if (statusCode !== 200) {
+    throw new Error(`unexpected status code ${statusCode} from ${uri}: ${error}`)
   }
+}
+
+function escapeName (name) {
+  const isScoped = name.charAt(0) === '@'
+  const escapedName = isScoped
+    ? '@' + encodeURIComponent(name.substr(1))
+    : encodeURIComponent(name)
+  return escapedName
 }
 
 /**
@@ -29,19 +30,15 @@ export function validatePackageRoot (uri, body) {
  * the package root.
  */
 export function httpGetPackageRoot (name) {
-  const isScoped = name.charAt(0) === '@'
-  const escapedName = isScoped
-    ? '@' + encodeURIComponent(name.substr(1))
-    : encodeURIComponent(name)
-
+  const escapedName = escapeName(name)
   const uri = url.resolve(config.registry, escapedName)
-  const cached = imCache.get(uri)
-  if (cached) return cached
-  const result = httpGetJSON(uri)
-    ::retry(5)
-    ::_do((body) => validatePackageRoot(uri, body))
+  const existingRequest = requests[uri]
+  if (existingRequest) return existingRequest
+  const newRequest = httpGet(uri, config.httpOptions)::retry(5)
+    ::_do((response) => validateStatusCode(uri, response))
     ::publishReplay().refCount()
-  return imCache.set(uri, result)
+  requests[uri] = newRequest
+  return newRequest
 }
 
 function matchSemVer (version, packageRoot) {
@@ -68,14 +65,12 @@ function matchTag (tag, packageRoot) {
  * @return {Object} - observable sequence of the `package.json` file.
  */
 export function match (name, versionOrTag) {
-  return httpGetPackageRoot(name)::map((packageRoot) => {
+  return httpGetPackageRoot(name)::map(({ body }) => {
     const result = semver.validRange(versionOrTag)
-      ? matchSemVer(versionOrTag, packageRoot)
-      : matchTag(versionOrTag, packageRoot)
+      ? matchSemVer(versionOrTag, body)
+      : matchTag(versionOrTag, body)
 
-    if (!result) {
-      throw new Error(`failed to match ${name}@${versionOrTag}`)
-    }
+    if (!result) throw new Error(`failed to match ${name}@${versionOrTag}`)
     return result
   })
 }
