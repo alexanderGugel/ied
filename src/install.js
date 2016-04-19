@@ -19,7 +19,6 @@ import * as cache from './fs_cache'
 import * as config from './config'
 import * as errors from './errors'
 import * as registry from './registry'
-import * as tarball from './tarball'
 import * as util from './util'
 
 /**
@@ -77,7 +76,7 @@ export function resolveDownloaded (parentTarget, target, _path, cwd) {
 }
 
 export function fetchFromRegistry () {
-  const {target, pkgJSON: {name, version, bin, dist: {shasum, tarball}}} = this
+  const {target, pkgJSON: {dist: {shasum, tarball}}} = this
 
   const o = cache.extract(target, shasum)
   return o::util.catchByCode({
@@ -90,7 +89,6 @@ export function fetchFromRegistry () {
       ::concat(o)
   })
 }
-
 
 /**
  * obtain a dependency's `package.json` file using the pre-configured registry.
@@ -355,8 +353,8 @@ export function fetchAll () {
   return this::distinctKey('target')
     ::mergeMap((dep) => {
       const {target, pkgJSON: {name, bin}} = dep
-      return dep.fetch()
-        ::concat(fixPermissions(target, normalizeBin({ name, bin })))
+      const postFetch = fixPermissions(target, normalizeBin({ name, bin }))
+      return dep.fetch()::concat(postFetch)
     })
 }
 

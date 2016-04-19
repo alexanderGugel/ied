@@ -7,7 +7,7 @@ import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGetJSON} from './util'
 import * as config from './config'
 import * as imCache from './im_cache'
-import {PackageRootError, VersionError} from './errors'
+import {PackageRootError} from './errors'
 
 /**
  * Validate the given body.
@@ -17,7 +17,7 @@ import {PackageRootError, VersionError} from './errors'
  * @throws {Error}
  */
 export function validatePackageRoot (uri, body) {
-  if (!body || body.error || typeof body.versions !== 'object') {
+  if (!body || body.error) {
     throw new PackageRootError(uri, body)
   }
 }
@@ -44,6 +44,22 @@ export function httpGetPackageRoot (name) {
   return imCache.set(uri, result)
 }
 
+function matchSemVer (version, packageRoot) {
+  if (typeof packageRoot.versions !== 'object') {
+    throw new SyntaxError('package root is missing plain object property "versions"')
+  }
+  const availableVersions = Object.keys(packageRoot.versions)
+  const targetVersion = semver.maxSatisfying(availableVersions, version)
+  return packageRoot.versions[targetVersion]
+}
+
+function matchTag (tag, packageRoot) {
+  if (typeof packageRoot['dist-tags'] !== 'object') {
+    throw new SyntaxError('package root is missing plain object property "dist-tags"')
+  }
+  return packageRoot.versions[packageRoot['dist-tags'][tag]]
+}
+
 /**
  * resolve a package defined via an ambiguous semantic version string to a
  * specific `package.json` file.
@@ -51,12 +67,15 @@ export function httpGetPackageRoot (name) {
  * @param {String} version - semantic version string to be used as a target.
  * @return {Object} - observable sequence of the `package.json` file.
  */
-export function match (name, version) {
+export function match (name, versionOrTag) {
   return httpGetPackageRoot(name)::map((packageRoot) => {
-    const available = Object.keys(packageRoot.versions)
-    const targetVersion = semver.maxSatisfying(available, version)
-    const target = packageRoot.versions[targetVersion]
-    if (!target) throw new VersionError(name, version, available)
-    return target
+    const result = semver.validRange(versionOrTag)
+      ? matchSemVer(versionOrTag, packageRoot)
+      : matchTag(versionOrTag, packageRoot)
+
+    if (!result) {
+      throw new Error(`failed to match ${name}@${versionOrTag}`)
+    }
+    return result
   })
 }
