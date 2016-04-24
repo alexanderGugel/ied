@@ -7,17 +7,17 @@
  * @return {Object} - merged dependencies.
  */
 function mergeDependencies (pkgJson, fields) {
-  const allDependencies = {}
-  for (let i = 0; i < fields.length; i++) {
-    const field = fields[i]
-    const dependencies = pkgJson[field] || {}
-    const names = Object.keys(dependencies)
-    for (let j = 0; j < names.length; j++) {
-      const name = names[j]
-      allDependencies[name] = dependencies[name]
-    }
-  }
-  return allDependencies
+	const allDependencies = {}
+	for (let i = 0; i < fields.length; i++) {
+		const field = fields[i]
+		const dependencies = pkgJson[field] || {}
+		const names = Object.keys(dependencies)
+		for (let j = 0; j < names.length; j++) {
+			const name = names[j]
+			allDependencies[name] = dependencies[name]
+		}
+	}
+	return allDependencies
 }
 
 /**
@@ -29,9 +29,9 @@ function mergeDependencies (pkgJson, fields) {
  * @return {Array.<String>} - array of bundled dependency names.
  */
 function parseBundleDependencies (pkgJson) {
-  const bundleDependencies = (pkgJson.bundleDependencies || [])
-    .concat(pkgJson.bundledDependencies || [])
-  return bundleDependencies
+	const bundleDependencies = (pkgJson.bundleDependencies || [])
+		.concat(pkgJson.bundledDependencies || [])
+	return bundleDependencies
 }
 
 /**
@@ -42,19 +42,19 @@ function parseBundleDependencies (pkgJson) {
  * @return {Array} - array of dependency pairs.
  */
 export function parseDependencies (pkgJson, fields) {
-  // bundleDependencies and bundledDependencies are optional. we need to
-  // exclude those form the final [name, version] pairs that we're generating.
-  const bundleDependencies = parseBundleDependencies(pkgJson)
-  const allDependencies = mergeDependencies(pkgJson, fields)
-  const names = Object.keys(allDependencies)
-  const results = []
-  for (let i = 0; i < names.length; i++) {
-    const name = names[i]
-    if (bundleDependencies.indexOf(name) === -1) {
-      results.push([name, allDependencies[name]])
-    }
-  }
-  return results
+	// bundleDependencies and bundledDependencies are optional. we need to
+	// exclude those form the final [name, version] pairs that we're generating.
+	const bundleDependencies = parseBundleDependencies(pkgJson)
+	const allDependencies = mergeDependencies(pkgJson, fields)
+	const names = Object.keys(allDependencies)
+	const results = []
+	for (let i = 0; i < names.length; i++) {
+		const name = names[i]
+		if (bundleDependencies.indexOf(name) === -1) {
+			results.push([name, allDependencies[name]])
+		}
+	}
+	return results
 }
 
 /**
@@ -65,7 +65,7 @@ export function parseDependencies (pkgJson, fields) {
  * @return {Object} - normalized `bin` property.
  */
 export function normalizeBin (pkgJson) {
-  return typeof pkgJson.bin === 'string'
-    ? ({ [pkgJson.name]: pkgJson.bin })
-    : (pkgJson.bin || {})
+	return typeof pkgJson.bin === 'string'
+		? ({ [pkgJson.name]: pkgJson.bin })
+		: (pkgJson.bin || {})
 }

@@ -14,7 +14,7 @@ import * as config from './config'
  * base directory of the cache has been created.
  */
 export function init () {
-  return util.mkdirp(path.join(config.cacheDir, '.tmp'))
+	return util.mkdirp(path.join(config.cacheDir, '.tmp'))
 }
 
 /**
@@ -22,8 +22,8 @@ export function init () {
  * @return {String} - temporary filename.
  */
 export function getTmp () {
-  const filename = path.join(config.cacheDir, '.tmp', uuid.v4())
-  return filename
+	const filename = path.join(config.cacheDir, '.tmp', uuid.v4())
+	return filename
 }
 
 /**
@@ -32,7 +32,7 @@ export function getTmp () {
  * @return {WriteStream} - Write Stream
  */
 export function write () {
-  return fs.WriteStream(getTmp())
+	return fs.WriteStream(getTmp())
 }
 
 /**
@@ -41,8 +41,8 @@ export function write () {
  * @return {ReadStream} - Read Stream
  */
 export function read (id) {
-  const filename = path.join(config.cacheDir, id)
-  return fs.ReadStream(filename)
+	const filename = path.join(config.cacheDir, id)
+	return fs.ReadStream(filename)
 }
 
 /**
@@ -54,20 +54,20 @@ export function read (id) {
  * the cached dependency has been fetched.
  */
 export function extract (dest, id) {
-  return Observable.create((observer) => {
-    const tmpDest = getTmp()
-    const untar = tar.extract(tmpDest, {strip: 1})
+	return Observable.create((observer) => {
+		const tmpDest = getTmp()
+		const untar = tar.extract(tmpDest, {strip: 1})
 
-    const completeHandler = () => {
-      observer.next(tmpDest)
-      observer.complete()
-    }
-    const errorHandler = (err) => observer.error(err)
+		const completeHandler = () => {
+			observer.next(tmpDest)
+			observer.complete()
+		}
+		const errorHandler = (err) => observer.error(err)
 
-    this.read(id).on('error', errorHandler)
-      .pipe(gunzip()).on('error', errorHandler)
-      .pipe(untar).on('error', errorHandler)
-      .on('finish', completeHandler)
-  })
-    ::mergeMap((tmpDest) => util.rename(tmpDest, dest))
+		this.read(id).on('error', errorHandler)
+			.pipe(gunzip()).on('error', errorHandler)
+			.pipe(untar).on('error', errorHandler)
+			.on('finish', completeHandler)
+	})
+		::mergeMap((tmpDest) => util.rename(tmpDest, dest))
 }

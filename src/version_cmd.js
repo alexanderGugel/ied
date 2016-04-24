@@ -7,6 +7,6 @@ import path from 'path'
  * number to the console.
  */
 export default function versionCmd () {
-  return readFileJSON(path.join(__dirname, '../package.json'))
-    .subscribe((pkgJson) => console.log(`ied version ${pkgJson.version}`))
+	return readFileJSON(path.join(__dirname, '../package.json'))
+		.subscribe((pkgJson) => console.log(`ied version ${pkgJson.version}`))
 }

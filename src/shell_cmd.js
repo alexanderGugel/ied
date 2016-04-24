@@ -1,7 +1,6 @@
 import path from 'path'
 import * as config from './config'
-import assign from 'object-assign'
-import child_process from 'child_process'
+import {spawn} from 'child_process'
 
 /**
  * enter a new session that has access to the CLIs exposed by the installed
@@ -9,14 +8,13 @@ import child_process from 'child_process'
  * @param {String} cwd - current working directory.
  */
 export default function shellCmd (cwd) {
-  const env = assign({}, process.env, {
-    PATH: [
-      path.join(cwd, 'node_modules/.bin'), process.env.PATH
-    ].join(path.delimiter)
-  })
+	const env = Object.create(process.env)
+	env.PATH = [
+		path.join(cwd, 'node_modules/.bin'), process.env.PATH
+	].join(path.delimiter)
 
-  child_process.spawn(config.sh, [], {
-    stdio: 'inherit',
-    env: env
-  })
+	spawn(config.sh, [], {
+		stdio: 'inherit',
+		env: env
+	})
 }

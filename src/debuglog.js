@@ -26,22 +26,22 @@ var debugEnviron
 var util = require('util')
 
 function debuglog (set) {
-  if (debugEnviron === undefined) {
-    debugEnviron = process.env.NODE_DEBUG || ''
-  }
-  set = set.toUpperCase()
-  if (!debugs[set]) {
-    if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
-      var pid = process.pid
-      debugs[set] = function () {
-        var msg = util.format.apply(util, arguments)
-        console.error('%s %d: %s', set, pid, msg)
-      }
-    } else {
-      debugs[set] = function () {}
-    }
-  }
-  return debugs[set]
+	if (debugEnviron === undefined) {
+		debugEnviron = process.env.NODE_DEBUG || ''
+	}
+	set = set.toUpperCase()
+	if (!debugs[set]) {
+		if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
+			var pid = process.pid
+			debugs[set] = function () {
+				var msg = util.format.apply(util, arguments)
+				console.error('%s %d: %s', set, pid, msg)
+			}
+		} else {
+			debugs[set] = function () {}
+		}
+	}
+	return debugs[set]
 }
 
 module.exports = debuglog

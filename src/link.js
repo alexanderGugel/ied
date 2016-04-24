@@ -12,18 +12,18 @@ import forceSymlink from 'force-symlink'
  * created.
  */
 export function getSymlinks (cwd, pkgJson) {
-  const libSymlink = [cwd, path.join(config.globalNodeModules, pkgJson.name)]
-  let bin = pkgJson.bin
-  if (typeof bin === 'string') {
-    bin = {}
-    bin[pkgJson.name] = pkgJson.bin
-  }
-  bin = bin || {}
-  const binSymlinks = Object.keys(bin).map((name) => ([
-    path.join(config.globalNodeModules, pkgJson.name, bin[name]),
-    path.join(config.globalBin, name)
-  ]))
-  return [libSymlink].concat(binSymlinks)
+	const libSymlink = [cwd, path.join(config.globalNodeModules, pkgJson.name)]
+	let bin = pkgJson.bin
+	if (typeof bin === 'string') {
+		bin = {}
+		bin[pkgJson.name] = pkgJson.bin
+	}
+	bin = bin || {}
+	const binSymlinks = Object.keys(bin).map((name) => ([
+		path.join(config.globalNodeModules, pkgJson.name, bin[name]),
+		path.join(config.globalBin, name)
+	]))
+	return [libSymlink].concat(binSymlinks)
 }
 
 /*
@@ -32,12 +32,12 @@ export function getSymlinks (cwd, pkgJson) {
  * @param {Function} cb - callback function.
  */
 export function linkToGlobal (cwd, cb) {
-  const pkg = require(path.join(cwd, 'package.json'))
-  const symlinks = getSymlinks(cwd, pkg)
-  async.each(symlinks, ([srcPath, dstPath], cb) => {
-    console.log(dstPath, '->', srcPath)
-    forceSymlink(srcPath, dstPath, cb)
-  }, cb)
+	const pkg = require(path.join(cwd, 'package.json'))
+	const symlinks = getSymlinks(cwd, pkg)
+	async.each(symlinks, ([srcPath, dstPath], cb) => {
+		console.log(dstPath, '->', srcPath)
+		forceSymlink(srcPath, dstPath, cb)
+	}, cb)
 }
 
 /**
@@ -50,10 +50,10 @@ export function linkToGlobal (cwd, cb) {
  * @param {Function} cb - callback function.
  */
 export function linkFromGlobal (cwd, name, cb) {
-  const dstPath = path.join(cwd, 'node_modules', name)
-  const srcPath = path.join(config.globalNodeModules, name)
-  console.log(dstPath, '->', srcPath)
-  forceSymlink(srcPath, dstPath, cb)
+	const dstPath = path.join(cwd, 'node_modules', name)
+	const srcPath = path.join(config.globalNodeModules, name)
+	console.log(dstPath, '->', srcPath)
+	forceSymlink(srcPath, dstPath, cb)
 }
 
 /**
@@ -64,13 +64,13 @@ export function linkFromGlobal (cwd, name, cb) {
  * @param {Function} cb - callback function.
  */
 export function unlinkToGlobal (cwd, name, cb) {
-  const pkg = require(path.join(cwd, 'package.json'))
-  const symlinks = getSymlinks(cwd, pkg)
-  async.each(symlinks, function (symlink, cb) {
-    const dstPath = symlink[1]
-    console.log('rm', dstPath)
-    fs.unlink(dstPath, cb)
-  }, cb)
+	const pkg = require(path.join(cwd, 'package.json'))
+	const symlinks = getSymlinks(cwd, pkg)
+	async.each(symlinks, function (symlink, cb) {
+		const dstPath = symlink[1]
+		console.log('rm', dstPath)
+		fs.unlink(dstPath, cb)
+	}, cb)
 }
 
 /**
@@ -83,7 +83,7 @@ export function unlinkToGlobal (cwd, name, cb) {
  * @param {Function} cb - callback fucntion.
  */
 export function unlinkFromGlobal (cwd, name, cb) {
-  const dstPath = path.join(cwd, 'node_modules', name)
-  console.log('rm', dstPath)
-  fs.unlink(dstPath, cb)
+	const dstPath = path.join(cwd, 'node_modules', name)
+	console.log('rm', dstPath)
+	fs.unlink(dstPath, cb)
 }

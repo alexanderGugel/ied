@@ -8,32 +8,32 @@ import {_catch} from 'rxjs/operator/catch'
 import * as config from './config'
 
 export function createObservableFactory (fn, thisArg) {
-  return function () {
-    return Observable.create((observer) => {
-      fn.apply(thisArg, [...arguments, (error, ...results) => {
-        if (error) {
-          observer.error(error)
-        } else {
-          for (let result of results) {
-            observer.next(result)
-          }
-          observer.complete()
-        }
-      }])
-    })
-  }
+	return function () {
+		return Observable.create((observer) => {
+			fn.apply(thisArg, [...arguments, (error, ...results) => {
+				if (error) {
+					observer.error(error)
+				} else {
+					for (let result of results) {
+						observer.next(result)
+					}
+					observer.complete()
+				}
+			}])
+		})
+	}
 }
 
 export function httpGet () {
-  return Observable.create((observer) => {
-    needle.get(...arguments, (error, response) => {
-      if (error) observer.error(error)
-      else {
-        observer.next(response)
-        observer.complete()
-      }
-    })
-  })
+	return Observable.create((observer) => {
+		needle.get(...arguments, (error, response) => {
+			if (error) observer.error(error)
+			else {
+				observer.next(response)
+				observer.complete()
+			}
+		})
+	})
 }
 
 /**
@@ -42,15 +42,15 @@ export function httpGet () {
  * @return {Object} An observable sequence of the fetched JSON document.
  */
 export function httpGetJSON (url) {
-  return Observable.create((observer) => {
-    needle.get(url, config.httpOptions, (error, response) => {
-      if (error) observer.error(error)
-      else {
-        observer.next(response.body)
-        observer.complete()
-      }
-    })
-  })
+	return Observable.create((observer) => {
+		needle.get(url, config.httpOptions, (error, response) => {
+			if (error) observer.error(error)
+			else {
+				observer.next(response.body)
+				observer.complete()
+			}
+		})
+	})
 }
 
 export const readFile = createObservableFactory(fs.readFile, fs)
@@ -64,11 +64,11 @@ export const forceSymlink = createObservableFactory(_forceSymlink)
 export const mkdirp = createObservableFactory(_mkdirp)
 
 export function catchByCode (handlers) {
-  return this::_catch((err, caught) => {
-    const handler = handlers[err.code]
-    if (!handler) throw err
-    return handler(err, caught)
-  })
+	return this::_catch((err, caught) => {
+		const handler = handlers[err.code]
+		if (!handler) throw err
+		return handler(err, caught)
+	})
 }
 
 /**
@@ -78,7 +78,7 @@ export function catchByCode (handlers) {
  * the read JSON file.
  */
 export function readFileJSON (file) {
-  return readFile(file, 'utf8')::map(JSON.parse)
+	return readFile(file, 'utf8')::map(JSON.parse)
 }
 
 /**
@@ -86,7 +86,7 @@ export function readFileJSON (file) {
  * @param {String} title - title to be set.
  */
 export function setTitle (title) {
-  process.stdout.write(
-    String.fromCharCode(27) + ']0;' + title + String.fromCharCode(7)
-  )
+	process.stdout.write(
+		String.fromCharCode(27) + ']0;' + title + String.fromCharCode(7)
+	)
 }

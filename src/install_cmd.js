@@ -1,8 +1,7 @@
 import path from 'path'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
-import {_catch} from 'rxjs/operator/catch'
-import {concat} from 'rxjs/operator/concat'
+import {concatStatic} from 'rxjs/operator/concat'
 import {filter} from 'rxjs/operator/filter'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import {skip} from 'rxjs/operator/skip'
@@ -10,7 +9,7 @@ import {map} from 'rxjs/operator/map'
 import fromPairs from 'lodash.frompairs'
 
 import * as install from './install'
-import * as fsCache from './fs_cache'
+import * as fsCache from './cache'
 import * as util from './util'
 
 /**
@@ -19,10 +18,8 @@ import * as util from './util'
  * @return {Observabel} - an observable sequence of an `EntryDep`.
  */
 export function initFromFs (cwd) {
-  const filename = path.join(cwd, 'package.json')
-  return util.readFileJSON(filename)
-    ::catchReadFileJSON()
-    ::map((pkgJson) => ({pkgJson, target: cwd}))
+	const filename = path.join(cwd, 'package.json')
+	return util.readFileJSON(filename)
 }
 
 /**
@@ -33,27 +30,8 @@ export function initFromFs (cwd) {
  * @return {Observabel} - an observable sequence of an `EntryDep`.
  */
 export function initFromArgv (cwd, argv) {
-  const pkgJson = parseArgv(argv)
-  return ScalarObservable.create({ pkgJson, target: cwd })
-}
-
-/**
- * gracefully handle `ENOENT` errors when running the install command in
- * projects that don't include a `package.json` file.
- * @return {Observable} - an observable sequence of object representing
- * `package.json` files.
- */
-export function catchReadFileJSON () {
-  return this::_catch((err) => {
-    switch (err.code) {
-      case 'ENOENT':
-        // emit an empty `package.json` file
-        const pkgJson = {}
-        return ScalarObservable.create(pkgJson)
-      default:
-        throw err
-    }
-  })
+	const pkgJson = parseArgv(argv)
+	return ScalarObservable.create(pkgJson)
 }
 
 /**
@@ -63,15 +41,15 @@ export function catchReadFileJSON () {
  * supplied via command line arguments.
  */
 export function parseArgv (argv) {
-  const names = argv._.slice(1)
+	const names = argv._.slice(1)
 
-  const nameVersionPairs = fromPairs(names.map((target) => {
-    const nameVersion = /^(@?.+?)(?:@(.+)?)?$/.exec(target)
-    return [nameVersion[1], nameVersion[2] || '*']
-  }))
+	const nameVersionPairs = fromPairs(names.map((target) => {
+		const nameVersion = /^(@?.+?)(?:@(.+)?)?$/.exec(target)
+		return [nameVersion[1], nameVersion[2] || '*']
+	}))
 
-  const key = argv.saveDev ? 'devDependencies' : 'dependencies'
-  return { [key]: nameVersionPairs }
+	const key = argv.saveDev ? 'devDependencies' : 'dependencies'
+	return { [key]: nameVersionPairs }
 }
 
 /**
@@ -82,26 +60,23 @@ export function parseArgv (argv) {
  * the installation is complete.
  */
 export default function installCmd (cwd, argv) {
-  const isExplicit = argv._.length - 1
-  const updatedPkgJSONs = isExplicit
-    ? initFromArgv(cwd, argv)
-    : initFromFs(cwd)
+	const isExplicit = argv._.length - 1
+	const updatedPkgJSONs = isExplicit ? initFromArgv(cwd, argv) : initFromFs(cwd)
 
-  const resolved = updatedPkgJSONs
-    ::install.resolveAll(cwd)::skip(1)
-    ::filter(({ local }) => !local)
-    ::publishReplay().refCount()
+	const resolved = updatedPkgJSONs
+		::map((pkgJson) => ({ isEntry: true, pkgJson, target: cwd }))
+		::install.resolveAll(cwd)::skip(1)
+		::filter(({ local }) => !local)
+		::publishReplay().refCount()
 
-  const linked = resolved::install.linkAll()
-  const fetched = resolved::install.fetchAll()
+	const linked = resolved::install.linkAll()
+	const fetched = resolved::install.fetchAll()
 
-  // only build if we're asked to.
-  const built = argv.build
-    ? resolved::install.buildAll()
-    : EmptyObservable.create()
+	// only build if we're asked to.
+	const built = argv.build
+		? resolved::install.buildAll()
+		: EmptyObservable.create()
 
-  const initialized = util.mkdirp(path.join(cwd, 'node_modules'))
-
-  return fsCache.init()::concat(initialized)
-    ::concat(fetched)::concat(linked)::concat(built).subscribe()
+	const initialized = concatStatic(fsCache.init(), install.init(cwd))
+	return concatStatic(initialized, fetched, linked, built).subscribe()
 }

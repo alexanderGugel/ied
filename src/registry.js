@@ -10,17 +10,17 @@ import * as config from './config'
 const requests = Object.create(null)
 
 function validateStatusCode (uri, { statusCode, body: { error } }) {
-  if (statusCode !== 200) {
-    throw new Error(`unexpected status code ${statusCode} from ${uri}: ${error}`)
-  }
+	if (statusCode !== 200) {
+		throw new Error(`unexpected status code ${statusCode} from ${uri}: ${error}`)
+	}
 }
 
 function escapeName (name) {
-  const isScoped = name.charAt(0) === '@'
-  const escapedName = isScoped
-    ? '@' + encodeURIComponent(name.substr(1))
-    : encodeURIComponent(name)
-  return escapedName
+	const isScoped = name.charAt(0) === '@'
+	const escapedName = isScoped
+		? '@' + encodeURIComponent(name.substr(1))
+		: encodeURIComponent(name)
+	return escapedName
 }
 
 /**
@@ -30,31 +30,31 @@ function escapeName (name) {
  * the package root.
  */
 export function httpGetPackageRoot (name) {
-  const escapedName = escapeName(name)
-  const uri = url.resolve(config.registry, escapedName)
-  const existingRequest = requests[uri]
-  if (existingRequest) return existingRequest
-  const newRequest = httpGet(uri, config.httpOptions)::retry(5)
-    ::_do((response) => validateStatusCode(uri, response))
-    ::publishReplay().refCount()
-  requests[uri] = newRequest
-  return newRequest
+	const escapedName = escapeName(name)
+	const uri = url.resolve(config.registry, escapedName)
+	const existingRequest = requests[uri]
+	if (existingRequest) return existingRequest
+	const newRequest = httpGet(uri, config.httpOptions)::retry(5)
+		::_do((response) => validateStatusCode(uri, response))
+		::publishReplay().refCount()
+	requests[uri] = newRequest
+	return newRequest
 }
 
 function matchSemVer (version, packageRoot) {
-  if (typeof packageRoot.versions !== 'object') {
-    throw new SyntaxError('package root is missing plain object property "versions"')
-  }
-  const availableVersions = Object.keys(packageRoot.versions)
-  const targetVersion = semver.maxSatisfying(availableVersions, version)
-  return packageRoot.versions[targetVersion]
+	if (typeof packageRoot.versions !== 'object') {
+		throw new SyntaxError('package root is missing plain object property "versions"')
+	}
+	const availableVersions = Object.keys(packageRoot.versions)
+	const targetVersion = semver.maxSatisfying(availableVersions, version)
+	return packageRoot.versions[targetVersion]
 }
 
 function matchTag (tag, packageRoot) {
-  if (typeof packageRoot['dist-tags'] !== 'object') {
-    throw new SyntaxError('package root is missing plain object property "dist-tags"')
-  }
-  return packageRoot.versions[packageRoot['dist-tags'][tag]]
+	if (typeof packageRoot['dist-tags'] !== 'object') {
+		throw new SyntaxError('package root is missing plain object property "dist-tags"')
+	}
+	return packageRoot.versions[packageRoot['dist-tags'][tag]]
 }
 
 /**
@@ -65,12 +65,12 @@ function matchTag (tag, packageRoot) {
  * @return {Object} - observable sequence of the `package.json` file.
  */
 export function match (name, versionOrTag) {
-  return httpGetPackageRoot(name)::map(({ body }) => {
-    const result = semver.validRange(versionOrTag)
-      ? matchSemVer(versionOrTag, body)
-      : matchTag(versionOrTag, body)
+	return httpGetPackageRoot(name)::map(({ body }) => {
+		const result = semver.validRange(versionOrTag)
+			? matchSemVer(versionOrTag, body)
+			: matchTag(versionOrTag, body)
 
-    if (!result) throw new Error(`failed to match ${name}@${versionOrTag}`)
-    return result
-  })
+		if (!result) throw new Error(`failed to match ${name}@${versionOrTag}`)
+		return result
+	})
 }

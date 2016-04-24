@@ -17,7 +17,7 @@ import {spawn} from 'child_process'
 import needle from 'needle'
 import npa from 'npm-package-arg'
 
-import * as cache from './fs_cache'
+import * as cache from './cache'
 import * as config from './config'
 import * as errors from './errors'
 import * as registry from './registry'
@@ -33,9 +33,9 @@ import {normalizeBin, parseDependencies} from './pkg_json'
  * @readonly
  */
 export const ENTRY_DEPENDENCY_FIELDS = [
-  'dependencies',
-  'devDependencies',
-  'optionalDependencies'
+	'dependencies',
+	'devDependencies',
+	'optionalDependencies'
 ]
 
 /**
@@ -45,8 +45,8 @@ export const ENTRY_DEPENDENCY_FIELDS = [
  * @readonly
  */
 export const DEPENDENCY_FIELDS = [
-  'dependencies',
-  'optionalDependencies'
+	'dependencies',
+	'optionalDependencies'
 ]
 
 /**
@@ -57,10 +57,19 @@ export const DEPENDENCY_FIELDS = [
  * @readonly
  */
 export const LIFECYCLE_SCRIPTS = [
-  'preinstall',
-  'install',
-  'postinstall'
+	'preinstall',
+	'install',
+	'postinstall'
 ]
+
+/**
+ * initialize the `node_modules directory` in the current working directory.
+ * @param  {String} cwd - current working directory.
+ * @return {Observable} - observable sequence to be completed on success.
+ */
+export function init (cwd) {
+	return util.mkdirp(path.join(cwd, 'node_modules'))
+}
 
 /**
  * resolve a dependency's `package.json` file from the local file system.
@@ -69,13 +78,13 @@ export const LIFECYCLE_SCRIPTS = [
  * @return {Observable} - observable sequence of `package.json` objects.
  */
 export function resolveFromNodeModules (parentTarget, _path) {
-  return util.readlink(_path)::mergeMap((relTarget) => {
-    const target = path.resolve(path.dirname(_path), relTarget)
-    const filename = path.join(target, 'package.json')
-    return util.readFileJSON(filename)::map((pkgJson) => ({
-      parentTarget, pkgJson, target, path: _path, local: true
-    }))
-  })
+	return util.readlink(_path)::mergeMap((relTarget) => {
+		const target = path.resolve(path.dirname(_path), relTarget)
+		const filename = path.join(target, 'package.json')
+		return util.readFileJSON(filename)::map((pkgJson) => ({
+			parentTarget, pkgJson, target, path: _path, local: true
+		}))
+	})
 }
 
 /**
@@ -85,25 +94,25 @@ export function resolveFromNodeModules (parentTarget, _path) {
  * @return {Observable} - observable sequence of `package.json` objects.
  */
 export function resolveDownloaded (parentTarget, target, _path, cwd) {
-  const pkgPath = path.join(target, 'package.json')
+	const pkgPath = path.join(target, 'package.json')
 
-  return util.readFileJSON(pkgPath)
-    ::map((pkgJson) => ({ parentTarget, pkgJson, target, path: _path, local: false, type: 'remote' }))
+	return util.readFileJSON(pkgPath)
+		::map((pkgJson) => ({ parentTarget, pkgJson, target, path: _path, local: false, type: 'remote' }))
 }
 
 export function fetchFromRegistry () {
-  const {target, pkgJson: {dist: {shasum, tarball}}} = this
+	const {target, pkgJson: {dist: {shasum, tarball}}} = this
 
-  const o = cache.extract(target, shasum)
-  return o::util.catchByCode({
-    ENOENT: () => download(tarball)
-      ::_do(({ shasum: actual }) => {
-        if (actual !== shasum) {
-          throw new errors.CorruptedPackageError(tarball, shasum, actual)
-        }
-      })
-      ::concat(o)
-  })
+	const o = cache.extract(target, shasum)
+	return o::util.catchByCode({
+		ENOENT: () => download(tarball)
+			::_do(({ shasum: actual }) => {
+				if (actual !== shasum) {
+					throw new errors.CorruptedPackageError(tarball, shasum, actual)
+				}
+			})
+			::concat(o)
+	})
 }
 
 /**
@@ -117,60 +126,63 @@ export function fetchFromRegistry () {
  * @return {Observable} - observable sequence of `package.json` objects.
  */
 export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
-  const pkgName = `${name}@${version}`
-  const parsedPkg = npa(pkgName)
+	const pkgName = `${name}@${version}`
+	const parsedPkg = npa(pkgName)
 
-  switch (parsedPkg.type) {
-    case 'range':
-    case 'version':
-    case 'tag':
-      return registry.match(name, version)::map((pkgJson) => {
-        const target = path.join(cwd, 'node_modules', pkgJson.dist.shasum)
-        const fetch = fetchFromRegistry
-        const local = false
-        return { parentTarget, pkgJson, target, path: _path, local, fetch }
-      })
-    case 'remote':
-      const pkgJson = tarball.resolve(name, version, parsedPkg.spec)
-      const shasum = pkgJson.dist.shasum
-      const target = path.join(cwd, 'node_modules', pkgJson.dist.shasum)
-      let cached
+	switch (parsedPkg.type) {
+		case 'range':
+		case 'version':
+		case 'tag':
+			return registry.match(name, version)::map((pkgJson) => {
+				const target = path.join(cwd, 'node_modules', pkgJson.dist.shasum)
+				const fetch = fetchFromRegistry
+				const local = false
+				return { parentTarget, pkgJson, target, path: _path, local, fetch }
+			})
+		case 'remote':
+			const pkgJson = tarball.resolve(name, version, parsedPkg.spec)
+			const shasum = pkgJson.dist.shasum
+			const target = path.join(cwd, 'node_modules', pkgJson.dist.shasum)
+			let cached
 
-      return Observable.create((observer) => {
-        let resolved
-        const errorHandler = (error) => observer.error(error)
-        const finishHandler = () => {
-          const newPath = path.join(config.cacheDir, shasum)
-          return util.rename(cached.path, newPath).subscribe(null, null, () => {
-            cache.extract(target, shasum).subscribe(null, null, () => {
-              resolveDownloaded(parentTarget, path.join(cwd, 'node_modules', pkgJson.dist.shasum), _path, cwd, { sha: shasum, tmpPath: cached.path })
-                .subscribe((x) => resolved = x, null, (v) => {
-                  resolved.fetch = () => EmptyObservable.create()
-                  observer.next(resolved)
-                  observer.complete()
-                })
-            })
-          })
-        }
+			return Observable.create((observer) => {
+				let resolved
+				const errorHandler = (error) => observer.error(error)
+				const finishHandler = () => {
+					const newPath = path.join(config.cacheDir, shasum)
+					return util.rename(cached.path, newPath).subscribe(null, null, () => {
+						cache.extract(target, shasum).subscribe(null, null, () => {
+							resolveDownloaded(parentTarget, path.join(cwd, 'node_modules', pkgJson.dist.shasum), _path, cwd, { sha: shasum, tmpPath: cached.path })
+								.subscribe((x) => {
+									resolved = x
+									return resolved
+								}, null, (v) => {
+									resolved.fetch = () => EmptyObservable.create()
+									observer.next(resolved)
+									observer.complete()
+								})
+						})
+					})
+				}
 
-        const response = needle.get(version, {
-          follow_max: 5
-        })
+				const response = needle.get(version, {
+					follow_max: 5
+				})
 
-        cached = response
-          .pipe(cache.write())
+				cached = response
+					.pipe(cache.write())
 
-        cached.on('error', errorHandler)
-        cached.on('finish', finishHandler)
+				cached.on('error', errorHandler)
+				cached.on('finish', finishHandler)
 
-        response.on('error', errorHandler)
-      })
+				response.on('error', errorHandler)
+			})
 
-    case 'hosted':
-      throw new Error('GitHub dependencies are not yet supported')
-    default:
-      throw new Error(`Unknown package spec: ${parsedPkg.type} on ${pkgName}`)
-  }
+		case 'hosted':
+			throw new Error('GitHub dependencies are not yet supported')
+		default:
+			throw new Error(`Unknown package spec: ${parsedPkg.type} on ${pkgName}`)
+	}
 }
 
 /**
@@ -183,17 +195,15 @@ export function resolveFromRemote (parentTarget, _path, name, version, cwd) {
  * wrapped into dependency objects representing the resolved sub-dependency.
  */
 export function resolve (cwd, parentTarget) {
-  return this::mergeMap(([name, version]) => {
-    progress.add()
-    progress.report(`resolving ${name}@${version}`)
-    const _path = path.join(parentTarget, 'node_modules', name)
+	return this::mergeMap(([name, version]) => {
+		progress.add()
+		progress.report(`resolving ${name}@${version}`)
+		const _path = path.join(parentTarget, 'node_modules', name)
 
-    return resolveFromNodeModules(parentTarget, _path)
-      ::util.catchByCode({
-        ENOENT: () => resolveFromRemote(parentTarget, _path, name, version, cwd)
-      })
-      ::_finally(progress.complete)
-  })
+		return resolveFromNodeModules(parentTarget, _path)
+			::util.catchByCode({ ENOENT: () => resolveFromRemote(parentTarget, _path, name, version, cwd) })
+			::_finally(progress.complete)
+	})
 }
 
 /**
@@ -201,37 +211,36 @@ export function resolve (cwd, parentTarget) {
  * @param  {String} cwd - current working directory.
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
-export function resolveAll (cwd) {
-  const targets = Object.create(null)
+export function resolveAll (cwd, targets = Object.create(null)) {
+	return this::expand(({isEntry, target, pkgJson}) => {
+		// cancel when we get into a circular dependency
+		if (isEntry) {
+			if (target in targets) return EmptyObservable.create()
+			else targets[target] = true
+		}
 
-  return this::expand(({target, pkgJson}) => {
-    // cancel when we get into a circular dependency
-    if (target in targets) return EmptyObservable.create()
-    else targets[target] = true
-
-    // install devDependencies of entry dependency (project-level)
-    const isEntry = target === cwd
-    const fields = isEntry ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
-    const dependencies = parseDependencies(pkgJson, fields)
-    return ArrayObservable.create(dependencies)::resolve(cwd, target)
-  })
+		// install devDependencies of entry dependency (project-level)
+		const fields = isEntry ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
+		const dependencies = parseDependencies(pkgJson, fields)
+		return ArrayObservable.create(dependencies)::resolve(cwd, target)
+	})
 }
 
 function resolveSymlink (src, dst) {
-  return [ path.relative(path.dirname(dst), src), dst ]
+	return [ path.relative(path.dirname(dst), src), dst ]
 }
 
 function getLinks (pkgJson, parentTarget, absTarget, absPath) {
-  const links = [ resolveSymlink(absTarget, absPath) ]
-  const bin = normalizeBin(pkgJson)
-  const names = Object.keys(bin)
-  for (let i = 0; i < names.length; i++) {
-    const name = names[i]
-    const dst = path.join(parentTarget, 'node_modules', '.bin', name)
-    const src = path.join(absTarget, bin[name])
-    links.push(resolveSymlink(src, dst))
-  }
-  return links
+	const links = [ resolveSymlink(absTarget, absPath) ]
+	const bin = normalizeBin(pkgJson)
+	const names = Object.keys(bin)
+	for (let i = 0; i < names.length; i++) {
+		const name = names[i]
+		const dst = path.join(parentTarget, 'node_modules', '.bin', name)
+		const src = path.join(absTarget, bin[name])
+		links.push(resolveSymlink(src, dst))
+	}
+	return links
 }
 
 /**
@@ -241,9 +250,9 @@ function getLinks (pkgJson, parentTarget, absTarget, absPath) {
  * once the symbolic link has been created.
  */
 export function link ({path: absPath, target: absTarget, parentTarget, pkgJson}) {
-  const links = getLinks(pkgJson, parentTarget, absTarget, absPath)
-  return ArrayObservable.create(links)
-    ::mergeMap(([src, dst]) => util.forceSymlink(src, dst))
+	const links = getLinks(pkgJson, parentTarget, absTarget, absPath)
+	return ArrayObservable.create(links)
+		::mergeMap(([src, dst]) => util.forceSymlink(src, dst))
 }
 
 /**
@@ -252,52 +261,52 @@ export function link ({path: absPath, target: absTarget, parentTarget, pkgJson})
  * once all dependencies have been symlinked.
  */
 export function linkAll () {
-  return this::distinctKey('path')::mergeMap(link)
+	return this::distinctKey('path')::mergeMap(link)
 }
 
 function download (tarball) {
-  return Observable.create((observer) => {
-    const errorHandler = (error) => observer.error(error)
-    const dataHandler = (chunk) => {
-      shasum.update(chunk)
-    }
-    const finishHandler = () => {
-      const hex = shasum.digest('hex')
-      observer.next({ tmpPath: cached.path, shasum: hex })
-      observer.complete()
-    }
+	return Observable.create((observer) => {
+		const errorHandler = (error) => observer.error(error)
+		const dataHandler = (chunk) => {
+			shasum.update(chunk)
+		}
+		const finishHandler = () => {
+			const hex = shasum.digest('hex')
+			observer.next({ tmpPath: cached.path, shasum: hex })
+			observer.complete()
+		}
 
-    const shasum = crypto.createHash('sha1')
-    const response = needle.get(tarball, config.httpOptions)
-    const cached = response.pipe(cache.write())
+		const shasum = crypto.createHash('sha1')
+		const response = needle.get(tarball, config.httpOptions)
+		const cached = response.pipe(cache.write())
 
-    response.on('data', dataHandler)
-    response.on('error', errorHandler)
+		response.on('data', dataHandler)
+		response.on('error', errorHandler)
 
-    cached.on('error', errorHandler)
-    cached.on('finish', finishHandler)
-  })
-  ::mergeMap(({ tmpPath, shasum }) => {
-    const newPath = path.join(config.cacheDir, shasum)
-    return util.rename(tmpPath, newPath)
-  })
+		cached.on('error', errorHandler)
+		cached.on('finish', finishHandler)
+	})
+	::mergeMap(({ tmpPath, shasum }) => {
+		const newPath = path.join(config.cacheDir, shasum)
+		return util.rename(tmpPath, newPath)
+	})
 }
 
 function fixPermissions (target, bin) {
-  const execMode = parseInt('0777', 8) & (~process.umask())
-  const paths = []
-  for (let name in bin) {
-    paths.push(path.resolve(target, bin[name]))
-  }
-  return ArrayObservable.create(paths)
-    ::mergeMap((path) => util.chmod(path, execMode))
+	const execMode = parseInt('0777', 8) & (~process.umask())
+	const paths = []
+	for (let name in bin) {
+		paths.push(path.resolve(target, bin[name]))
+	}
+	return ArrayObservable.create(paths)
+		::mergeMap((path) => util.chmod(path, execMode))
 }
 
 function fetch (dep) {
-  const {target, pkgJson: {name, bin}} = dep
-  const postFetch = fixPermissions(target, normalizeBin({ name, bin }))
-  progress.add()
-  return dep.fetch()::concat(postFetch)::_finally(progress.complete)
+	const {target, pkgJson: {name, bin}} = dep
+	const postFetch = fixPermissions(target, normalizeBin({ name, bin }))
+	progress.add()
+	return dep.fetch()::concat(postFetch)::_finally(progress.complete)
 }
 
 /**
@@ -307,9 +316,9 @@ function fetch (dep) {
  * @return {Observable} - observable sequence of unavailable dependencies.
  */
 function filterFetched (dep) {
-  return util.stat(path.join(dep.target, 'package.json'))
-    ::mergeMap((stat) => EmptyObservable.create())
-    ::util.catchByCode({ ENOENT: () => ScalarObservable.create(dep) })
+	return util.stat(path.join(dep.target, 'package.json'))
+		::mergeMap((stat) => EmptyObservable.create())
+		::util.catchByCode({ ENOENT: () => ScalarObservable.create(dep) })
 }
 
 /**
@@ -318,35 +327,35 @@ function filterFetched (dep) {
  * once all dependencies have been downloaded.
  */
 export function fetchAll () {
-  return this::distinctKey('target')
-    // check if target/package.json already exists
-    ::mergeMap(filterFetched)
-    ::mergeMap(fetch)
+	return this::distinctKey('target')
+		// check if target/package.json already exists
+		::mergeMap(filterFetched)
+		::mergeMap(fetch)
 }
 
 export function build ({target, script}) {
-  return Observable.create((observer) => {
-    const env = Object.create(process.env)
-    env.PATH = [
-      path.join(target, 'node_modules', '.bin'),
-      path.resolve(__dirname, '..', 'node_modules', '.bin'),
-      process.env.PATH
-    ].join(path.delimiter)
+	return Observable.create((observer) => {
+		const env = Object.create(process.env)
+		env.PATH = [
+			path.join(target, 'node_modules', '.bin'),
+			path.resolve(__dirname, '..', 'node_modules', '.bin'),
+			process.env.PATH
+		].join(path.delimiter)
 
-    const childProcess = spawn(config.sh, [config.shFlag, script], {
-      cwd: target,
-      env: env,
-      stdio: 'inherit',
-      shell: true
-    })
-    childProcess.on('error', (error) => {
-      observer.error(error)
-    })
-    childProcess.on('close', (code) => {
-      observer.next(code)
-      observer.complete()
-    })
-  })
+		const childProcess = spawn(config.sh, [config.shFlag, script], {
+			cwd: target,
+			env: env,
+			stdio: 'inherit',
+			shell: true
+		})
+		childProcess.on('error', (error) => {
+			observer.error(error)
+		})
+		childProcess.on('close', (code) => {
+			observer.next(code)
+			observer.complete()
+		})
+	})
 }
 
 /**
@@ -355,14 +364,14 @@ export function build ({target, script}) {
  * @return {Array.<Object>} - array of script targets to be executed.
  */
 export function parseLifecycleScripts (dep) {
-  const { target, pkgJson: { scripts = {} } } = dep
-  const results = []
-  for (let i = 0; i < LIFECYCLE_SCRIPTS.length; i++) {
-    const name = LIFECYCLE_SCRIPTS[i]
-    const script = scripts[name]
-    if (script) results.push({ target, script })
-  }
-  return results
+	const { target, pkgJson: { scripts = {} } } = dep
+	const results = []
+	for (let i = 0; i < LIFECYCLE_SCRIPTS.length; i++) {
+		const name = LIFECYCLE_SCRIPTS[i]
+		const script = scripts[name]
+		if (script) results.push({ target, script })
+	}
+	return results
 }
 
 /**
@@ -373,11 +382,11 @@ export function parseLifecycleScripts (dep) {
  * all lifecycle scripts have been executed.
  */
 export function buildAll () {
-  return this
-    ::map(parseLifecycleScripts)
-    ::mergeMap((scripts) => ArrayObservable.create(scripts))
-    ::mergeMap(build)
-    ::every((code) => code === 0)
-    ::filter((ok) => !ok)
-    ::_do((ok) => { throw new errors.FailedBuildError() })
+	return this
+		::map(parseLifecycleScripts)
+		::mergeMap((scripts) => ArrayObservable.create(scripts))
+		::mergeMap(build)
+		::every((code) => code === 0)
+		::filter((ok) => !ok)
+		::_do((ok) => { throw new errors.FailedBuildError() })
 }
