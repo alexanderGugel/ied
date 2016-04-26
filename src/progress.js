@@ -1,6 +1,8 @@
 import ora from 'ora'
 
-const spinner = ora()
+const spinner = ora({
+	spinner: 'clock'
+})
 
 let completed = 0
 let added = 0

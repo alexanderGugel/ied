@@ -1,3 +1,9 @@
+import path from 'path'
+import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
+import fromPairs from 'lodash.frompairs'
+
+import * as util from './util'
+
 /**
  * merge dependency fields.
  * @param  {Object} pkgJson - `package.json` object from which the dependencies
@@ -43,7 +49,8 @@ function parseBundleDependencies (pkgJson) {
  */
 export function parseDependencies (pkgJson, fields) {
 	// bundleDependencies and bundledDependencies are optional. we need to
-	// exclude those form the final [name, version] pairs that we're generating.
+	// exclude those form the final [name, version] pairs that we're
+	// generating.
 	const bundleDependencies = parseBundleDependencies(pkgJson)
 	const allDependencies = mergeDependencies(pkgJson, fields)
 	const names = Object.keys(allDependencies)
@@ -68,4 +75,45 @@ export function normalizeBin (pkgJson) {
 	return typeof pkgJson.bin === 'string'
 		? ({ [pkgJson.name]: pkgJson.bin })
 		: (pkgJson.bin || {})
+}
+
+/**
+ * create an instance by reading a `package.json` from disk.
+ * @param  {String} baseDir - base directory of the project.
+ * @return {Observabel} - an observable sequence of an `EntryDep`.
+ */
+export function fromFs (baseDir) {
+	const filename = path.join(baseDir, 'package.json')
+	return util.readFileJSON(filename)
+}
+
+/**
+ * create an instance by parsing the explicit dependencies supplied via
+ * command line arguments.
+ * @param  {String} baseDir - base directory of the project.
+ * @param  {Array} argv - command line arguments.
+ * @return {Observabel} - an observable sequence of an `EntryDep`.
+ */
+export function fromArgv (baseDir, argv) {
+	const pkgJson = parseArgv(argv)
+	return ScalarObservable.create(pkgJson)
+}
+
+/**
+ * parse the command line arguments and create the dependency field of a
+ * `package.json` file from it.
+ * @param  {Array} argv - command line arguments.
+ * @return {NullPkgJSON} - package.json created from explicit dependencies
+ * supplied via command line arguments.
+ */
+export function parseArgv (argv) {
+	const names = argv._.slice(1)
+
+	const nameVersionPairs = fromPairs(names.map((target) => {
+		const nameVersion = /^(@?.+?)(?:@(.+)?)?$/.exec(target)
+		return [nameVersion[1], nameVersion[2] || '*']
+	}))
+
+	const key = argv.saveDev ? 'devDependencies' : 'dependencies'
+	return { [key]: nameVersionPairs }
 }
