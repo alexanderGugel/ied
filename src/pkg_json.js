@@ -1,6 +1,9 @@
 import path from 'path'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
 import fromPairs from 'lodash.frompairs'
+import {map} from 'rxjs/operator/map'
+import {mergeMap} from 'rxjs/operator/mergeMap'
+import {_catch} from 'rxjs/operator/catch'
 
 import * as util from './util'
 
@@ -87,6 +90,31 @@ export function fromFs (baseDir) {
 	return util.readFileJSON(filename)
 }
 
+export function updatePkgJson (pkgJson, diff) {
+	const updatedPkgJson = {...pkgJson}
+	const fields = Object.keys(diff)
+	for (let field of fields) {
+		updatedPkgJson[field] = {
+			...updatedPkgJson[field],
+			...diff[field]
+		}
+	}
+	return updatedPkgJson 
+}
+
+export function save (baseDir) {
+	const filename = path.join(baseDir, 'package.json')
+
+	return this
+		::mergeMap((diff) => fromFs(baseDir)
+			::_catch(ScalarObservable.create({}))
+			::map((pkgJson) => {
+			})
+		)
+		::map((pkgJson) => JSON.stringify(pkgJson, null, '\t'))
+		::mergeMap((pkgJson) => util.writeFile(filename, pkgJson, 'utf8'))
+}
+
 /**
  * create an instance by parsing the explicit dependencies supplied via
  * command line arguments.
@@ -114,6 +142,10 @@ export function parseArgv (argv) {
 		return [nameVersion[1], nameVersion[2] || '*']
 	}))
 
-	const key = argv.saveDev ? 'devDependencies' : 'dependencies'
-	return { [key]: nameVersionPairs }
+	const field = argv['save-dev'] ? 'devDependencies'
+		: argv['save-optional'] ? 'optionalDependencies'
+		: 'dependencies'
+
+	return { [field]: nameVersionPairs }
 }
+

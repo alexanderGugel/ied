@@ -1,7 +1,7 @@
 import ora from 'ora'
 
 const spinner = ora({
-	spinner: 'clock'
+	spinner: 'pong'
 })
 
 let completed = 0

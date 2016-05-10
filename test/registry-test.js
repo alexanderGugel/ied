@@ -6,17 +6,14 @@ import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import semver from 'semver'
 import url from 'url'
-import * as errors from '../src/errors'
 import * as registry from '../src/registry'
 import * as util from '../src/util'
 import * as config from '../src/config'
-import * as imCache from '../src/im_cache'
 
 const sandbox = sinon.sandbox.create()
 
 afterEach(() => {
 	sandbox.restore()
-	imCache.reset()
 })
 
 describe('registry.httpGetPackageRoot', () => {

@@ -1,5 +1,6 @@
 import {Observable} from 'rxjs/Observable'
 import {mergeMap} from 'rxjs/operator/mergeMap'
+import {retryWhen} from 'rxjs/operator/retryWhen'
 import gunzip from 'gunzip-maybe'
 import tar from 'tar-fs'
 import fs from 'fs'
@@ -69,5 +70,12 @@ export function extract (dest, id) {
 			.pipe(untar).on('error', errorHandler)
 			.on('finish', completeHandler)
 	})
-		::mergeMap((tmpDest) => util.rename(tmpDest, dest))
+		::mergeMap((tmpDest) => util.rename(tmpDest, dest)
+			::retryWhen((errors) => errors::mergeMap((error) => {
+				if (error.code !== 'ENOENT') {
+					throw error
+				}
+				return util.mkdirp(path.dirname(dest))
+			}))
+		)
 }

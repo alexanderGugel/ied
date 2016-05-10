@@ -2,14 +2,19 @@ import crypto from 'crypto'
 import path from 'path'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
-import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
 import {Observable} from 'rxjs/Observable'
 import {_finally} from 'rxjs/operator/finally'
-import {concat, concatStatic} from 'rxjs/operator/concat'
+import {_do} from 'rxjs/operator/do'
+import {concatStatic} from 'rxjs/operator/concat'
 import {distinctKey} from 'rxjs/operator/distinctKey'
 import {expand} from 'rxjs/operator/expand'
+import {filter} from 'rxjs/operator/filter'
 import {map} from 'rxjs/operator/map'
+import {_catch} from 'rxjs/operator/catch'
 import {mergeMap} from 'rxjs/operator/mergeMap'
+import {skip} from 'rxjs/operator/skip'
+import {retryWhen} from 'rxjs/operator/retryWhen'
+import {reduce} from 'rxjs/operator/reduce'
 import needle from 'needle'
 
 import * as cache from './cache'
@@ -43,13 +48,16 @@ export const DEPENDENCY_FIELDS = [
 ]
 
 /**
- * initialize the `node_modules directory` in the current working directory.
- * @param  {String} cwd - current working directory.
- * @return {Observable} - observable sequence to be completed on success.
+ * Local dependency (already installed for project).
+ * @type {Symbol}
  */
-export function initNodeModules (cwd) {
-	return util.mkdirp(path.join(cwd, 'node_modules'))
-}
+const LOCAL = Symbol('LOCAL')
+
+/**
+ * Registry dependency (available from registry).
+ * @type {Symbol}
+ */
+const REGISTRY = Symbol('REGISTRY')
 
 /**
  * resolve a dependency's `package.json` file from the local file system.
@@ -64,24 +72,17 @@ export function resolveFromNodeModules (nodeModules, parentTarget, name) {
 	return util.readlink(linkname)::mergeMap((rel) => {
 		const target = path.basename(rel)
 		const filename = path.join(linkname, 'package.json')
-		return util.readFileJSON(filename)::map((pkgJson) => ({
-			parentTarget, pkgJson, target, name
-		}))
-	})
-}
 
-export function fetchFromRegistry () {
-	const {target, pkgJson: {dist: {shasum, tarball}}} = this
-	const o = cache.extract(target, shasum)
-	return o::util.catchByCode({
-		ENOENT: () => download(tarball, shasum)::concat(o)
+		return util.readFileJSON(filename)::map((pkgJson) => ({
+			parentTarget, pkgJson, target, name, type: LOCAL
+		}))
 	})
 }
 
 export function resolveFromRegistry (nodeModules, parentTarget, name, version) {
 	return registry.match(name, version)::map((pkgJson) => {
 		const target = pkgJson.dist.shasum
-		return { parentTarget, pkgJson, target, name }
+		return { parentTarget, pkgJson, target, name, type: REGISTRY }
 	})
 }
 
@@ -100,8 +101,11 @@ export function resolve (nodeModules, parentTarget) {
 		progress.report(`resolving ${name}@${version}`)
 
 		return resolveFromNodeModules(nodeModules, parentTarget, name)
-			::util.catchByCode({
-				ENOENT: () => resolveFromRegistry(nodeModules, parentTarget, name, version)
+			::_catch((error) => {
+				if (error.code !== 'ENOENT') {
+					throw error
+				}
+				return resolveFromRegistry(nodeModules, parentTarget, name, version)
 			})
 			::_finally(progress.complete)
 	})
@@ -123,9 +127,7 @@ export function resolveAll (nodeModules, targets = Object.create(null)) {
 		targets[target] = true
 
 		// install devDependencies of entry dependency (project-level)
-		const fields = target === '..'
-			? ENTRY_DEPENDENCY_FIELDS
-			: DEPENDENCY_FIELDS
+		const fields = target === '..' ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
 
 		const dependencies = parseDependencies(pkgJson, fields)
 
@@ -135,26 +137,29 @@ export function resolveAll (nodeModules, targets = Object.create(null)) {
 }
 
 function resolveSymlink (src, dst) {
-	return [ path.relative(path.dirname(dst), src), dst ]
+	const relSrc = path.relative(path.dirname(dst), src)
+	return [relSrc, dst]
 }
 
-function getBinLinks (nodeModules, pkgJson, parentTarget, target, name) {
+function getBinLinks (dep) {
+	const {pkgJson, parentTarget, target} = dep
 	const binLinks = []
 	const bin = normalizeBin(pkgJson)
 	const names = Object.keys(bin)
 	for (let i = 0; i < names.length; i++) {
 		const name = names[i]
-		const dst = path.join(nodeModules, parentTarget, 'node_modules', '.bin', name)
-		const src = path.join(nodeModules, target, bin[name])
-		binLinks.push(resolveSymlink(src, dst))
+		const src = path.join('node_modules', target, 'package', bin[name])
+		const dst = path.join('node_modules', parentTarget, 'node_modules', '.bin', name)
+		binLinks.push([src, dst])
 	}
 	return binLinks
 }
 
-function getDirectLink (nodeModules, parentTarget, target, name) {
-	const dst = path.join(nodeModules, target)
-	const src = path.join(nodeModules, parentTarget, 'node_modules', name)
-	return resolveSymlink(dst, src)
+function getDirectLink (dep) {
+	const {parentTarget, target, name} = dep
+	const src = path.join('node_modules', target, 'package')
+	const dst = path.join('node_modules', parentTarget, 'node_modules', name)
+	return [src, dst]
 }
 
 /**
@@ -164,15 +169,10 @@ function getDirectLink (nodeModules, parentTarget, target, name) {
  * once all dependencies have been symlinked.
  */
 export function linkAll (nodeModules) {
-	return this::mergeMap(({ pkgJson, parentTarget, target, name }) => {
-		const binLinks = getBinLinks(nodeModules, pkgJson, parentTarget, target, name)
-		const directLink = getDirectLink(nodeModules, parentTarget, target, name)
-
-		progress.add()
-		return concatStatic(binLinks, [directLink])
-			::mergeMap(([src, dst]) => util.forceSymlink(src, dst))
-			::_finally(progress.complete)
-	})
+	return this
+		::mergeMap((dep) => [getDirectLink(dep), ...getBinLinks(dep)])
+		::map(([src, dst]) => resolveSymlink(src, dst))
+		::mergeMap(([src, dst]) => util.forceSymlink(src, dst))
 }
 
 export class CorruptedPackageError extends Error {
@@ -223,7 +223,7 @@ function download (tarball, expectedShasum) {
 }
 
 function fixPermissions (target, bin) {
-	const execMode = parseInt('0777', 8) & (~process.umask())
+	const execMode = 0o777 & (~process.umask())
 	const paths = []
 	const names = Object.keys(bin)
 	for (let i = 0; i < names.length; i++) {
@@ -234,28 +234,32 @@ function fixPermissions (target, bin) {
 		::mergeMap((path) => util.chmod(path, execMode))
 }
 
-function fetch (nodeModules, {target, pkgJson: {name, bin, dist: {tarball, shasum} }}) {
-	const where = path.join(nodeModules, target)
-	const o = cache.extract(where, shasum)
+function fetch (nodeModules, dep) {
+	const {target, pkgJson: {name, bin, dist: {tarball, shasum} }} = dep
+	const where = path.join(nodeModules, target, 'package')
 
-	progress.add()
-	return util.stat(where)
-		::util.catchByCode({ ENOENT: () => o })
-		::util.catchByCode({ ENOENT: () => download(tarball, shasum)
-			::concat(o)
-			::concat(fixPermissions(where, normalizeBin({ name, bin })))
+	return util.stat(where)::skip(1)::_catch((error) => {
+		if (error.code !== 'ENOENT') {
+			throw error
+		}
+		const extracted = cache.extract(where, shasum)::_catch((error) => {
+			if (error.code !== 'ENOENT') {
+				throw error
+			}
+			return concatStatic(
+				download(tarball, shasum),
+				cache.extract(where, shasum)
+			)
 		})
-		::map((stat) => EmptyObservable.create())
-		::_finally(progress.complete)
+		const fixedPermissions = fixPermissions(where, normalizeBin({ name, bin }))
+		return concatStatic(extracted, fixedPermissions)
+	})
 }
 
-/**
- * download the tarballs into their respective `target`.
- * @return {Observable} - empty observable sequence that will be completed
- * once all dependencies have been downloaded.
- */
 export function fetchAll (nodeModules) {
 	return this
 		::distinctKey('target')
-		::mergeMap(fetch.bind(null, nodeModules))
+		::filter(({type}) => type !== LOCAL)
+		::mergeMap((dep) => fetch(nodeModules, dep))
 }
+

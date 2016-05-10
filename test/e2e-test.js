@@ -17,38 +17,42 @@ const targets = [
 	'gulp',
 	'forever',
 	'grunt',
-	'less'
+	'less',
+	'tape'
 ]
 
-targets.forEach((target) => {
-	describe(`ied install ${target}`, function () {
-		let cwd
+describe.only('e2e', function () {
+	targets.forEach((target) => {
+		describe(`ied install ${target}`, function () {
+			let cwd
 
-		before(function (done) {
-			cwd = path.join(__dirname, 'test', target, uuid())
-			mkdirp(cwd, done)
-		})
-
-		before(function (done) {
-			this.timeout(60 * 1000)
-			spawn('node', [path.join(__dirname, '../lib/cmd'), 'install', target], {
-				cwd,
-				stdio: 'inherit'
+			before(function (done) {
+				cwd = path.join(__dirname, 'test', target, uuid())
+				mkdirp(cwd, done)
 			})
-				.on('error', done)
-				.on('close', (code) => {
-					assert.equal(code, 0)
+
+			before(function (done) {
+				this.timeout(60 * 1000)
+				spawn('node', [path.join(__dirname, '../lib/cmd'), 'install', target], {
+					cwd,
+					stdio: 'inherit'
+				})
+					.on('error', done)
+					.on('close', (code) => {
+						assert.equal(code, 0)
+						done()
+					})
+			})
+
+			it('should make tap require\'able', function (done) {
+				resolve(target, { basedir: cwd }, (err, res) => {
+					assert.ifError(err)
+					assert.notEqual(res.indexOf(cwd), -1)
+					require(res)
 					done()
 				})
-		})
-
-		it('should make tap require\'able', function (done) {
-			resolve(target, { basedir: cwd }, (err, res) => {
-				assert.ifError(err)
-				assert.notEqual(res.indexOf(cwd), -1)
-				require(res)
-				done()
 			})
 		})
 	})
 })
+

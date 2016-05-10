@@ -1,4 +1,4 @@
 {
 	"presets": ["es2015"],
-  "plugins": ["transform-function-bind"]
+	"plugins": ["transform-function-bind", "transform-object-rest-spread"]
 }
