@@ -21,7 +21,7 @@ const targets = [
 	'tape'
 ]
 
-describe.only('e2e', function () {
+describe.skip('e2e', function () {
 	targets.forEach((target) => {
 		describe(`ied install ${target}`, function () {
 			let cwd

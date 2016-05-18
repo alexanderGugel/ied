@@ -52,7 +52,7 @@ test: lib
 	$(DEPS_BIN_DIR)/mocha test/*-test.js --compilers js:babel-register --reporter min
 
 dev: lib
-	$(DEPS_BIN_DIR)/mocha test/*-test.js --compilers js:babel-register --reporter min --watch
+	$(DEPS_BIN_DIR)/mocha test/*-test.js --compilers js:babel-register --reporter list --watch
 
 watch:
 	$(DEPS_BIN_DIR)/babel -w src --out-dir lib

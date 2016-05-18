@@ -15,7 +15,7 @@ import * as util from './util'
  * together.
  * @return {Object} - merged dependencies.
  */
-function mergeDependencies (pkgJson, fields) {
+export function mergeDependencies (pkgJson, fields) {
 	const allDependencies = {}
 	for (let i = 0; i < fields.length; i++) {
 		const field = fields[i]
@@ -37,8 +37,9 @@ function mergeDependencies (pkgJson, fields) {
  * `package.json` file.
  * @return {Array.<String>} - array of bundled dependency names.
  */
-function parseBundleDependencies (pkgJson) {
-	const bundleDependencies = (pkgJson.bundleDependencies || [])
+export function parseBundleDependencies (pkgJson) {
+	const bundleDependencies = []
+		.concat(pkgJson.bundleDependencies || [])
 		.concat(pkgJson.bundledDependencies || [])
 	return bundleDependencies
 }
@@ -75,9 +76,11 @@ export function parseDependencies (pkgJson, fields) {
  * @return {Object} - normalized `bin` property.
  */
 export function normalizeBin (pkgJson) {
-	return typeof pkgJson.bin === 'string'
-		? ({ [pkgJson.name]: pkgJson.bin })
-		: (pkgJson.bin || {})
+	switch (typeof pkgJson.bin) {
+		case 'string': return ({ [pkgJson.name]: pkgJson.bin })
+		case 'object': return pkgJson.bin
+		default: return {}
+	}
 }
 
 /**
@@ -107,9 +110,8 @@ export function save (baseDir) {
 
 	return this
 		::mergeMap((diff) => fromFs(baseDir)
-			::_catch(ScalarObservable.create({}))
-			::map((pkgJson) => {
-			})
+			::_catch(() => ScalarObservable.create({}))
+			::map((pkgJson) => updatePkgJson(pkgJson, diff))
 		)
 		::map((pkgJson) => JSON.stringify(pkgJson, null, '\t'))
 		::mergeMap((pkgJson) => util.writeFile(filename, pkgJson, 'utf8'))

@@ -7,15 +7,45 @@ import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGet} from './util'
 import * as config from './config'
 
-const requests = Object.create(null)
+/**
+ * register of pending and completed HTTP requests mapped to their respective
+ * observable sequences.
+ * @type {Object}
+ */
+export const requests = Object.create(null)
 
-function validateStatusCode (uri, { statusCode, body: { error } }) {
+/**
+ * clear the internal cache used for pending and completed HTTP requests.
+ */
+export function reset () {
+	const uris = Object.keys(requests)
+	for (let uri of uris) {
+		delete requests[uri]
+	}
+}
+
+/**
+ * ensures that the registry responded with an accepted HTTP status code
+ * (`200`).
+ * @param  {String} uri - URI used for retrieving the supplied response.
+ * @param  {Number} options.statusCode - HTTP status code.
+ * @param  {Object} options.body - JSON response body.
+ * @param  {*} options.body.error - custom registry error.
+ * @throws {Error} if the status code does not indicate success.
+ */
+export function validateStatusCode (uri, { statusCode, body: { error } }) {
 	if (statusCode !== 200) {
 		throw new Error(`unexpected status code ${statusCode} from ${uri}: ${error}`)
 	}
 }
 
-function escapeName (name) {
+/**
+ * escape the given package name, which can then be used as part of the package
+ * root URL.
+ * @param  {String} name - package name.
+ * @return {String} - escaped package name.
+ */
+export function escapeName (name) {
 	const isScoped = name.charAt(0) === '@'
 	const escapedName = isScoped
 		? '@' + encodeURIComponent(name.substr(1))
@@ -33,7 +63,9 @@ export function httpGetPackageRoot (name) {
 	const escapedName = escapeName(name)
 	const uri = url.resolve(config.registry, escapedName)
 	const existingRequest = requests[uri]
-	if (existingRequest) return existingRequest
+	if (existingRequest) {
+		return existingRequest
+	}
 	const newRequest = httpGet(uri, config.httpOptions)::retry(5)
 		::_do((response) => validateStatusCode(uri, response))
 		::publishReplay().refCount()
@@ -41,7 +73,16 @@ export function httpGetPackageRoot (name) {
 	return newRequest
 }
 
-function matchSemVer (version, packageRoot) {
+/**
+ * find a package.json from the given set of available versions using the
+ * supplied semver-compatible version string.
+ * @param  {String} version - semver-compatible version.
+ * @param  {Object} packageRoot - package root document as retrieved from the
+ * registry.
+ * @return {Object} - matching version.
+ * @throws {SyntaxError} if `.versions` is missing.
+ */
+export function matchSemVer (version, packageRoot) {
 	if (typeof packageRoot.versions !== 'object') {
 		throw new SyntaxError('package root is missing plain object property "versions"')
 	}
@@ -50,11 +91,24 @@ function matchSemVer (version, packageRoot) {
 	return packageRoot.versions[targetVersion]
 }
 
-function matchTag (tag, packageRoot) {
+/**
+ * find a package.json given a tag pointing to an arbitrary semver-compatible
+ * version string.
+ * @param  {String} tag - tag name of the requested dependency.
+ * @param  {Object} packageRoot - package root document as retrieved from the
+ * registry.
+ * @return {Object} - matching version.
+ * @throws {SyntaxError} if `dist-tags` (or `versions`) is missing.
+ */
+export function matchTag (tag, packageRoot) {
 	if (typeof packageRoot['dist-tags'] !== 'object') {
 		throw new SyntaxError('package root is missing plain object property "dist-tags"')
 	}
-	return packageRoot.versions[packageRoot['dist-tags'][tag]]
+	const version = packageRoot['dist-tags'][tag]
+	if (!version) {
+		return null
+	}
+	return matchSemVer(version, packageRoot)
 }
 
 /**
@@ -70,7 +124,9 @@ export function match (name, versionOrTag) {
 			? matchSemVer(versionOrTag, body)
 			: matchTag(versionOrTag, body)
 
-		if (!result) throw new Error(`failed to match ${name}@${versionOrTag}`)
+		if (!result) {
+			throw new Error(`failed to match ${name}@${versionOrTag}`)
+		}
 		return result
 	})
 }
