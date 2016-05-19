@@ -1,7 +1,6 @@
 import path from 'path'
 import async from 'async'
 import {spawn} from 'child_process'
-import xtend from 'xtend'
 import {sh, shFlag} from './config'
 
 /**

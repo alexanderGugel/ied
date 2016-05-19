@@ -34,7 +34,7 @@ export default function installCmd (cwd, argv) {
 	const linkedAll = resolvedAll::linkAll(nodeModules)
 	const fetchedAll = resolvedAll::fetchAll(nodeModules)
 	const installedAll = mergeStatic(linkedAll, fetchedAll)
-	
+
 	const builtAll = argv.build
 		? resolvedAll::buildAll(nodeModules)
 		: EmptyObservable.create()

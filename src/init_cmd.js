@@ -4,7 +4,6 @@ import * as config from './config'
 
 /**
  * initialize a new `package.json` file.
- * 
  * @param  {String} cwd - current working directory.
  * @see https://www.npmjs.com/package/init-package-json
  */

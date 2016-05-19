@@ -133,6 +133,10 @@
 		"valid-typeof": 2,
 		"wrap-iife": [2, "any"],
 		"yield-star-spacing": [2, "both"],
-		"yoda": [2, "never"]
+		"yoda": [2, "never"],
+
+		"valid-jsdoc": [2, {
+			"requireReturn": false
+		}]
 	}
 }

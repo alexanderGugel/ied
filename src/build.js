@@ -40,7 +40,7 @@ export class FailedBuildError extends Error {
 /**
  * build a dependency by executing the given lifecycle script.
  * @param  {String} nodeModules - absolute path of the `node_modules` directory.
- * @param  {Object} dep
+ * @param  {Object} dep - dependency to be built.
  * @param  {String} dep.target - relative location of the target directory.
  * @param  {String} dep.script - script to be executed (usually using `sh`).
  * @return {Observable} - observable sequence of the returned exit code.
@@ -98,6 +98,7 @@ export function buildAll (nodeModules) {
 	return this
 		::map(parseLifecycleScripts)
 		::mergeMap((scripts) => ArrayObservable.create(scripts))
+		// TODO
 		::mergeMap((script) => build(nodeModules, x))
 		::every((code) => code === 0)
 		::filter((ok) => !ok)

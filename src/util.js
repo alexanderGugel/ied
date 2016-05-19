@@ -4,7 +4,6 @@ import _mkdirp from 'mkdirp'
 import _forceSymlink from 'force-symlink'
 import needle from 'needle'
 import {map} from 'rxjs/operator/map'
-import {_catch} from 'rxjs/operator/catch'
 import * as config from './config'
 
 /**
@@ -66,7 +65,6 @@ export function httpGetJSON (url) {
 		})
 	})
 }
-
 
 /** @type {Function} Observable wrapper function around `fs.readFile`. */
 export const readFile = createObservableFactory(fs.readFile, fs)

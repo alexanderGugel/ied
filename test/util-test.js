@@ -2,6 +2,7 @@
 
 import sinon from 'sinon'
 import assert from 'assert'
+import fs from 'fs'
 import * as util from '../src/util'
 
 describe('util', () => {
@@ -104,5 +105,13 @@ describe('util', () => {
 			sinon.assert.calledOnce(process.stdout.write)
 			sinon.assert.calledWithExactly(process.stdout.write, exepctedTitle)
 		})
+	})
+
+	describe('readFileJSON', () => {
+		beforeEach(() => {
+			sandbox.stub(fs, 'readFile')
+		})
+
+		it('should parse file contents as JSON')
 	})
 })

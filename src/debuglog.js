@@ -34,7 +34,7 @@ let debugEnviron
  * be similar to `console.error()`. If not, then the returned function is a
  * no-op.
  *
- * @param  {String} section - the section of the program to be debugged.
+ * @param  {String} set - the section of the program to be debugged.
  * @return {Function} - the logging function.
  * @see https://nodejs.org/api/util.html#util_util_debuglog_section
  */

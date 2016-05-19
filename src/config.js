@@ -34,8 +34,8 @@ export const cacheDir = env.IED_CACHE_DIR || path.join(home, '.ied_cache')
  * the user's home directory.
  * @type {String}
  */
-export const globalNodeModules = env.IED_GLOBAL_NODE_MODULES
-  || path.join(home, '.node_modules')
+export const globalNodeModules = env.IED_GLOBAL_NODE_MODULES ||
+  path.join(home, '.node_modules')
 
 /**
  * similar to {@link globalNodeModules}. directory used for symlinks of
@@ -92,8 +92,8 @@ export const bearerToken = env.IED_BEARER_TOKEN || null
  * @type {Object}
  */
 export const httpOptions = {
-  proxy,
-  headers: bearerToken
-    ? { authorization: `Bearer ${bearerToken}` }
-    : {}
+	proxy,
+	headers: bearerToken
+		? { authorization: `Bearer ${bearerToken}` }
+		: {}
 }

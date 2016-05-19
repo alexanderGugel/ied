@@ -102,7 +102,7 @@ export function updatePkgJson (pkgJson, diff) {
 			...diff[field]
 		}
 	}
-	return updatedPkgJson 
+	return updatedPkgJson
 }
 
 export function save (baseDir) {

@@ -10,8 +10,8 @@ function handleError (err) {
 
 /**
  * can be used in two ways:
- * 1. in order to globally **expose** the current package (`ied link`).
- * 2. in order to use a previously globally **exposed** package (`ied link tap`).
+ * 1. in order to globally _expose_ the current package (`ied link`).
+ * 2. in order to use a previously globally _exposed_ package (`ied link tap`).
  *
  * useful for local development when you want to use a dependency in a
  * different project without publishing to the npm registry / installing from
@@ -21,7 +21,7 @@ function handleError (err) {
  * or in the project's `node_modules` directory (e.g. `ied link tap` would
  * create a symlink in `current-project/node_modules/tap` pointing to a
  * globally installed tap version).
- * 
+ *
  * @param  {String} cwd - current working directory.
  * @param  {Object} argv - parsed command line arguments.
  */
