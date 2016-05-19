@@ -33,3 +33,8 @@ node_modules
 # Used for debugging
 example
 fixtures
+
+# Produced by babel
+lib
+
+esdoc
