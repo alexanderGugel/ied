@@ -11,7 +11,7 @@ DEPS_BIN_DIR = ./node_modules/.bin
 SRC = $(wildcard src/*.js)
 LIB = $(SRC:src/%.js=lib/%.js)
 
-.PHONY: install test dev watch clean
+.PHONY: install test dev watch clean esdoc
 
 # http://blog.jgc.org/2015/04/the-one-line-you-should-add-to-every.html
 print-%: ; @echo $*=$($*)
@@ -48,11 +48,14 @@ clean:
 	rm -rf $(BOOTSTRAP_DIR)
 	rm -rf lib test/test
 
+esdoc:
+	$(DEPS_BIN_DIR)/esdoc -c esdoc.json
+
 test: lib
 	$(DEPS_BIN_DIR)/mocha test/*-test.js --compilers js:babel-register --reporter min
 
 dev: lib
-	$(DEPS_BIN_DIR)/mocha test/*-test.js --compilers js:babel-register --reporter list --watch
+	$(DEPS_BIN_DIR)/mocha test/*-test.js --compilers js:babel-register --reporter min --watch
 
 watch:
 	$(DEPS_BIN_DIR)/babel -w src --out-dir lib

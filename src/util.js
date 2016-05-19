@@ -7,6 +7,15 @@ import {map} from 'rxjs/operator/map'
 import {_catch} from 'rxjs/operator/catch'
 import * as config from './config'
 
+/**
+ * given an arbitrary asynchronous function that accepts a callback function,
+ * wrap the outer asynchronous function into an observable sequence factory.
+ * invoking the returned generated function is going to return a new **cold**
+ * observable sequence.
+ * @param  {Function} fn - function to be wrapped.
+ * @param  {thisArg} [thisArg] - optional context.
+ * @return {Function} - cold observable sequence factory.
+ */
 export function createObservableFactory (fn, thisArg) {
 	return function () {
 		return Observable.create((observer) => {
@@ -24,6 +33,11 @@ export function createObservableFactory (fn, thisArg) {
 	}
 }
 
+/**
+ * send a GET request to the given HTTP endpoint by passing the supplied
+ * arguments to [`needle`](https://www.npmjs.com/package/needle).
+ * @return {Observable} - observable sequence of a single response object.
+ */
 export function httpGet () {
 	return Observable.create((observer) => {
 		needle.get(...arguments, (error, response) => {
@@ -53,23 +67,32 @@ export function httpGetJSON (url) {
 	})
 }
 
+
+/** @type {Function} Observable wrapper function around `fs.readFile`. */
 export const readFile = createObservableFactory(fs.readFile, fs)
+
+/** @type {Function} Observable wrapper function around `fs.writeFile`. */
 export const writeFile = createObservableFactory(fs.writeFile, fs)
+
+/** @type {Function} Observable wrapper function around `fs.stat`. */
 export const stat = createObservableFactory(fs.stat, fs)
+
+/** @type {Function} Observable wrapper function around `fs.rename`. */
 export const rename = createObservableFactory(fs.rename, fs)
+
+/** @type {Function} Observable wrapper function around `fs.readlink`. */
 export const readlink = createObservableFactory(fs.readlink, fs)
+
+/** @type {Function} Observable wrapper function around `fs.chmod`. */
 export const chmod = createObservableFactory(fs.chmod, fs)
 
+/** @type {Function} Observable wrapper function around
+[`force-symlink`](https://www.npmjs.org/package/force-symlink). */
 export const forceSymlink = createObservableFactory(_forceSymlink)
-export const mkdirp = createObservableFactory(_mkdirp)
 
-export function catchByCode (handlers) {
-	return this::_catch((err, caught) => {
-		const handler = handlers[err.code]
-		if (!handler) throw err
-		return handler(err, caught)
-	})
-}
+/** @type {Function} Observable wrapper function around
+[`mkdirp`](https://www.npmjs.com/package/mkdirp). */
+export const mkdirp = createObservableFactory(_mkdirp)
 
 /**
  * read a UTF8 encoded JSON file from disk.

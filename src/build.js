@@ -37,7 +37,16 @@ export class FailedBuildError extends Error {
 	}
 }
 
-export function build (nodeModules, {target, script}) {
+/**
+ * build a dependency by executing the given lifecycle script.
+ * @param  {String} nodeModules - absolute path of the `node_modules` directory.
+ * @param  {Object} dep
+ * @param  {String} dep.target - relative location of the target directory.
+ * @param  {String} dep.script - script to be executed (usually using `sh`).
+ * @return {Observable} - observable sequence of the returned exit code.
+ */
+export function build (nodeModules, dep) {
+	const {target, script} = dep
 	return Observable.create((observer) => {
 		const env = Object.create(process.env)
 		env.PATH = [

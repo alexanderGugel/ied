@@ -3,8 +3,8 @@ import path from 'path'
 
 /**
  * display the version number.
- * @return {Subscription} - an RxJS subscription that logs the version
- * number to the console.
+ * @return {Subscription} - a subscription that logs the versio number to the
+ * console.
  */
 export default function versionCmd () {
 	return readFileJSON(path.join(__dirname, '../package.json'))

@@ -19,12 +19,25 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-'use strict'
+import util from 'util'
 
-var debugs = {}
-var debugEnviron
-var util = require('util')
+const debugs = {}
+let debugEnviron
 
+/**
+ * Node's `debuglog` function. Not available on older Node versions, therefore
+ * copied in for convenience:
+ *
+ * This is used to create a function which conditionally writes to stderr based
+ * on the existence of a `NODE_DEBUG` environment variable. If the `section`
+ * name appears in that environment variable, then the returned function will
+ * be similar to `console.error()`. If not, then the returned function is a
+ * no-op.
+ *
+ * @param  {String} section - the section of the program to be debugged.
+ * @return {Function} - the logging function.
+ * @see https://nodejs.org/api/util.html#util_util_debuglog_section
+ */
 function debuglog (set) {
 	if (debugEnviron === undefined) {
 		debugEnviron = process.env.NODE_DEBUG || ''

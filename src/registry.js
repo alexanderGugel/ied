@@ -25,15 +25,14 @@ export function reset () {
 }
 
 /**
- * ensures that the registry responded with an accepted HTTP status code
+ * ensure that the registry responded with an accepted HTTP status code
  * (`200`).
  * @param  {String} uri - URI used for retrieving the supplied response.
- * @param  {Number} options.statusCode - HTTP status code.
- * @param  {Object} options.body - JSON response body.
- * @param  {*} options.body.error - custom registry error.
+ * @param  {Number} resp - HTTP response object.
  * @throws {Error} if the status code does not indicate success.
  */
-export function validateStatusCode (uri, { statusCode, body: { error } }) {
+export function validateStatusCode (uri, resp) {
+	const { statusCode, body: { error } } = resp
 	if (statusCode !== 200) {
 		throw new Error(`unexpected status code ${statusCode} from ${uri}: ${error}`)
 	}
@@ -115,8 +114,9 @@ export function matchTag (tag, packageRoot) {
  * resolve a package defined via an ambiguous semantic version string to a
  * specific `package.json` file.
  * @param {String} name - package name.
- * @param {String} version - semantic version string to be used as a target.
- * @return {Object} - observable sequence of the `package.json` file.
+ * @param {String} versionOrTag - semantic version string to be used as a
+ * target.
+ * @return {Observable} - observable sequence of the `package.json` file.
  */
 export function match (name, versionOrTag) {
 	return httpGetPackageRoot(name)::map(({ body }) => {
