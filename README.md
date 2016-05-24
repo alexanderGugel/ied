@@ -192,7 +192,7 @@ once the API is stabilized.
 
 A high-level [USAGE](bin/USAGE.txt) help is also supplied. The main goal is to
 keep the API predictable for regular npm-users. This means certain flags, such
-as for example `--save`, `--save-dev`, `--only`, are supported.
+as for example `--save`, `--save-dev`, `--save-optional`, are supported.
 
 ```
   ied is a package manager for Node.
@@ -208,19 +208,25 @@ as for example `--save`, `--save-dev`, `--only`, are supported.
     test        run the test-suite of the current package
     shell       enter a sub-shell with augmented PATH
     ping        check if the registry is up
-    ls          print the dependency graph
     config      print the used config
     init        initialize a new package
     link        link the current package or into it
     unlink      unlink the current package or from it
+    start       runs `ied run start`
+    stop        runs `ied run stop`
+    build       runs `ied run build`
+    test        runs `ied run test`
 
   Flags:
-    -h, --help      show usage information
-    -v, --version   print the current version
-    -S, --save      update package.json dependencies
-    -D, --save-dev  update package.json devDependencies
-    -o, --only      install a subset of the dependencies
-    -r, --registry  use a custom registry (default: http://registry.npmjs.org/)
+    -h, --help          show usage information
+    -v, --version       print the current version
+    -S, --save          update package.json dependencies
+    -D, --save-dev      update package.json devDependencies
+    -O, --save-optional update package.json optionalDependencies
+    -r, --registry      use a custom registry
+                        (default: http://registry.npmjs.org/)
+    -b, --build         execute lifecycle scripts upon completion
+                        (e.g. postinstall)
 
   Example:
     ied install

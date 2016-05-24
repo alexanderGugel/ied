@@ -3,38 +3,27 @@
 import minimist from 'minimist'
 import * as config from './config'
 
+const alias = {
+	h: 'help',
+	v: 'version',
+	S: 'save',
+	D: 'save-dev',
+	O: 'save-optional',
+	E: 'save-exact',
+	r: 'registry',
+	b: 'build'
+}
+
 const cwd = process.cwd()
-const argv = minimist(process.argv.slice(2), {
-	alias: {
-		h: 'help',
-		v: 'version',
-		S: 'save',
-		D: 'save-dev',
-		O: 'save-optional',
-		E: 'save-exact',
-		o: 'only',
-		r: 'registry',
-		b: 'build',
-		d: 'debug'
-	}
-})
+const argv = minimist(process.argv.slice(2), { alias })
 
 if (argv.registry) {
 	config.registry = argv.registry
 }
 
-if (argv.verbose) {
-	config.logLevel = 'verbose'
-}
-
-if (argv.debug) {
-	config.logLevel = 'debug'
-}
-
 let installCmd
 let shellCmd
 let runCmd
-let lsCmd
 let pingCmd
 let configCmd
 let initCmd
@@ -85,10 +74,6 @@ let cacheCmd
 			const _argv = Object.create(argv)
 			_argv._ = ['run'].concat(argv._)
 			runCmd(cwd, _argv)
-			break
-		case 'ls':
-			lsCmd = require('./ls_cmd').default
-			lsCmd(cwd)
 			break
 		case 'ping':
 			pingCmd = require('./ping_cmd').default

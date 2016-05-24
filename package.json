@@ -1,12 +1,10 @@
 {
   "name": "ied",
   "version": "1.0.6",
-  "main": "lib/index.js",
   "bin": {
     "ied": "lib/cmd.js"
   },
   "dependencies": {
-    "archy": "^1.0.0",
     "async": "^1.4.2",
     "babel-plugin-transform-object-rest-spread": "^6.8.0",
     "easy-table": "^1.0.0",
