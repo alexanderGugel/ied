@@ -7,7 +7,6 @@ import {_finally} from 'rxjs/operator/finally'
 import {concatStatic} from 'rxjs/operator/concat'
 import {distinctKey} from 'rxjs/operator/distinctKey'
 import {expand} from 'rxjs/operator/expand'
-import {filter} from 'rxjs/operator/filter'
 import {map} from 'rxjs/operator/map'
 import {_catch} from 'rxjs/operator/catch'
 import {mergeMap} from 'rxjs/operator/mergeMap'
@@ -49,26 +48,15 @@ export const DEPENDENCY_FIELDS = [
 ]
 
 /**
- * Local dependency (already installed for project).
- * @type {Symbol}
- */
-const LOCAL = Symbol('LOCAL')
-
-/**
- * Registry dependency (available from registry).
- * @type {Symbol}
- */
-const REGISTRY = Symbol('REGISTRY')
-
-/**
  * resolve a dependency's `package.json` file from the local file system.
  * @param  {String} nodeModules - `node_modules` base directory.
  * @param  {String} parentTarget - relative parent's node_modules path.
  * @param  {String} name - name of the dependency.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveFromNodeModules (nodeModules, parentTarget, name) {
+export function resolveLocal (nodeModules, parentTarget, name) {
 	const linkname = path.join(nodeModules, parentTarget, 'node_modules', name)
+	const fetch = () => EmptyObservable.create()
 	log(`resolving ${linkname} from node_modules`)
 
 	return util.readlink(linkname)::mergeMap((rel) => {
@@ -77,19 +65,19 @@ export function resolveFromNodeModules (nodeModules, parentTarget, name) {
 		log(`reading package.json from ${filename}`)
 
 		return util.readFileJSON(filename)::map((pkgJson) => ({
-			parentTarget, pkgJson, target, name, type: LOCAL
+			parentTarget, pkgJson, target, name, fetch
 		}))
 	})
 }
 
-export function resolveFromRegistry (nodeModules, parentTarget, name, version) {
+export function resolveRemote (nodeModules, parentTarget, name, version) {
 	log(`resolving ${name}@${version} from ${nodeModules} via ${nodeModules}`)
 
 	return registry.match(name, version)::map((pkgJson) => {
 		const target = pkgJson.dist.shasum
 		log(`resolved ${name}@${version} to ${target}`)
 
-		return { parentTarget, pkgJson, target, name, type: REGISTRY }
+		return { parentTarget, pkgJson, target, name, fetch }
 	})
 }
 
@@ -108,13 +96,13 @@ export function resolve (nodeModules, parentTarget) {
 		progress.report(`resolving ${name}@${version}`)
 		log(`resolving ${name}@${version}`)
 
-		return resolveFromNodeModules(nodeModules, parentTarget, name)
+		return resolveLocal(nodeModules, parentTarget, name)
 			::_catch((error) => {
 				if (error.code !== 'ENOENT') {
 					throw error
 				}
 				log(`failed to resolve ${name}@${version} from local ${parentTarget} via ${nodeModules}`)
-				return resolveFromRegistry(nodeModules, parentTarget, name, version)
+				return resolveRemote(nodeModules, parentTarget, name, version)
 			})
 			::_finally(progress.complete)
 	})
@@ -252,8 +240,8 @@ function fixPermissions (target, bin) {
 		::mergeMap((path) => util.chmod(path, execMode))
 }
 
-function fetch (nodeModules, dep) {
-	const {target, pkgJson: {name, bin, dist: {tarball, shasum} }} = dep
+function fetch (nodeModules) {
+	const {target, pkgJson: {name, bin, dist: {tarball, shasum} }} = this
 	const where = path.join(nodeModules, target, 'package')
 
 	log(`fetching ${tarball} into ${where}`)
@@ -277,9 +265,7 @@ function fetch (nodeModules, dep) {
 }
 
 export function fetchAll (nodeModules) {
-	return this
-		::distinctKey('target')
-		::filter(({type}) => type !== LOCAL)
-		::mergeMap((dep) => fetch(nodeModules, dep))
+	const fetch = (dep) => dep.fetch(nodeModules)
+	return this::distinctKey('target')::mergeMap(fetch)
 }
 
