@@ -57,4 +57,4 @@ function debuglog (set) {
 	return debugs[set]
 }
 
-module.exports = debuglog
+export default debuglog
