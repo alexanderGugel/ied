@@ -179,7 +179,7 @@ on a daily basis. Feature parity with npm **other than** with its installation
 process itself is not an immediate goal. Raw performance is the primary concern
 during the development process.
 
-A global [configuration](lib/config.js) can be supplied via environment
+A global [configuration](src/config.js) can be supplied via environment
 variables. `NODE_DEBUG` can be used in order to debug specific sub-systems. The
 progress bar will be disabled in that case.
 
