@@ -198,7 +198,7 @@ as for example `--save`, `--save-dev`, `--save-optional`, are supported.
 
   Usage:
 
-    ied command [arguments]
+    ied [command] [arguments]
 
   The commands are:
 
