@@ -14,8 +14,22 @@ const alias = {
 	b: 'build'
 }
 
+const string = [
+	'registry'
+]
+
+const boolean = [
+	'help',
+	'version',
+	'save',
+	'save-dev',
+	'save-optional',
+	'save-exact',
+	'build'
+]
+
 const cwd = process.cwd()
-const argv = minimist(process.argv.slice(2), { alias })
+const argv = minimist(process.argv.slice(2), { alias, string, boolean })
 
 if (argv.registry) {
 	config.registry = argv.registry

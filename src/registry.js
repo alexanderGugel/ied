@@ -1,4 +1,3 @@
-import semver from 'semver'
 import url from 'url'
 import {map} from 'rxjs/operator/map'
 import {_do} from 'rxjs/operator/do'
