@@ -47,7 +47,8 @@
   "scripts": {
     "test": "make test",
     "dev": "make dev",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "prepublish": "make lib"
   },
   "repository": {
     "type": "git",
