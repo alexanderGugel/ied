@@ -52,15 +52,13 @@ export function escapeName (name) {
 	return escapedName
 }
 
-/**
- * fetch the CommonJS package root JSON document for a specific npm package.
- * @param {String} name - package name.
- * @return {Object} - observable sequence of the JSON document that represents
- * the package root.
- */
-export function httpGetPackageRoot (name) {
+export function httpGetPackageVersion (name, version) {
 	const escapedName = escapeName(name)
-	const uri = url.resolve(config.registry, escapedName)
+	const uri = url.resolve(config.registry, escapedName + '/' + version)
+	return createRequest(uri)
+}
+
+export function createRequest (uri) {
 	const existingRequest = requests[uri]
 	if (existingRequest) {
 		return existingRequest
@@ -73,44 +71,6 @@ export function httpGetPackageRoot (name) {
 }
 
 /**
- * find a package.json from the given set of available versions using the
- * supplied semver-compatible version string.
- * @param  {String} version - semver-compatible version.
- * @param  {Object} packageRoot - package root document as retrieved from the
- * registry.
- * @return {Object} - matching version.
- * @throws {SyntaxError} if `.versions` is missing.
- */
-export function matchSemVer (version, packageRoot) {
-	if (typeof packageRoot.versions !== 'object') {
-		throw new SyntaxError('package root is missing plain object property "versions"')
-	}
-	const availableVersions = Object.keys(packageRoot.versions)
-	const targetVersion = semver.maxSatisfying(availableVersions, version)
-	return packageRoot.versions[targetVersion]
-}
-
-/**
- * find a package.json given a tag pointing to an arbitrary semver-compatible
- * version string.
- * @param  {String} tag - tag name of the requested dependency.
- * @param  {Object} packageRoot - package root document as retrieved from the
- * registry.
- * @return {Object} - matching version.
- * @throws {SyntaxError} if `dist-tags` (or `versions`) is missing.
- */
-export function matchTag (tag, packageRoot) {
-	if (typeof packageRoot['dist-tags'] !== 'object') {
-		throw new SyntaxError('package root is missing plain object property "dist-tags"')
-	}
-	const version = packageRoot['dist-tags'][tag]
-	if (!version) {
-		return null
-	}
-	return matchSemVer(version, packageRoot)
-}
-
-/**
  * resolve a package defined via an ambiguous semantic version string to a
  * specific `package.json` file.
  * @param {String} name - package name.
@@ -119,14 +79,6 @@ export function matchTag (tag, packageRoot) {
  * @return {Observable} - observable sequence of the `package.json` file.
  */
 export function match (name, versionOrTag) {
-	return httpGetPackageRoot(name)::map(({ body }) => {
-		const result = semver.validRange(versionOrTag)
-			? matchSemVer(versionOrTag, body)
-			: matchTag(versionOrTag, body)
-
-		if (!result) {
-			throw new Error(`failed to match ${name}@${versionOrTag}`)
-		}
-		return result
-	})
+	return httpGetPackageVersion(name, versionOrTag)
+		::map(({ body }) => body)
 }

@@ -40,61 +40,6 @@ describe('registry', () => {
 		})
 	})
 
-	describe('matchSemVer', () => {
-		context('when .versions is not an object', () => {
-			it('should throw an error', () => {
-				const packageRoot = { versions: void 0 }
-				assert.throws(() => {
-					registry.matchSemVer('1.0.0', packageRoot)
-				}, /missing/)
-			})
-		})
-		context('when no matching version is available', () => {
-			it('should return null', () => {
-				const packageRoot = { versions: { '0.0.1': {} } }
-				assert.equal(registry.matchSemVer('1.0.0', packageRoot), null)
-			})
-		})
-		context('when a matching version is available', () => {
-			it('should return matching package.json', () => {
-				const pkgJson = {}
-				const packageRoot = { versions: { '1.2.3': pkgJson } }
-				assert.equal(registry.matchSemVer('1.2.x', packageRoot), pkgJson)
-			})
-		})
-	})
-
-	describe('matchTag', () => {
-		context('when [\'dist-tags\'] is not an object', () => {
-			it('should throw an error', () => {
-				const packageRoot = { 'dist-tags': void 0 }
-				assert.throws(() => {
-					registry.matchTag('some-tag', packageRoot)
-				}, /missing/)
-			})
-		})
-		context('when no matching [\'dist-tags\'] is available', () => {
-			it('should return null', () => {
-				const pkgJson = {}
-				const packageRoot = {
-					'dist-tags': { 'some-tag': void 0 },
-					versions: { '1.0.0': pkgJson }
-				}
-				assert.equal(registry.matchTag('some-tag', packageRoot), null)
-			})
-		})
-		context('when matching [\'dist-tags\'] is available', () => {
-			it('should return matching package.json', () => {
-				const pkgJson = {}
-				const packageRoot = {
-					'dist-tags': { 'some-tag': '1.0.0' },
-					versions: { '1.0.0': pkgJson }
-				}
-				assert.equal(registry.matchTag('some-tag', packageRoot), pkgJson)
-			})
-		})
-	})
-
 	describe('requests', () => {
 		it('should be a clean object', () => {
 			assert.deepEqual(registry.requests, Object.create(null))
@@ -114,16 +59,17 @@ describe('registry', () => {
 		})
 	})
 
-	describe('httpGetPackageRoot', () => {
+	describe('httpGetPackageVersion', () => {
 		afterEach(() => registry.reset())
 
 		context('when request has already been made', () => {
 			it('should return pending request', () => {
 				const name = '@alexander/gugel'
-				const url = 'https://registry.npmjs.org/@alexander%2Fgugel'
+				const version = "1.0.0"
+				const url = `https://registry.npmjs.org/@alexander%2Fgugel/${version}`
 				const pendingRequest = EmptyObservable.create()
 				registry.requests[url] = pendingRequest
-				const request = registry.httpGetPackageRoot(name)
+				const request = registry.httpGetPackageVersion(name, version)
 				assert.equal(request, pendingRequest)
 			})
 		})
