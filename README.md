@@ -3,7 +3,6 @@ ied
 
 [![Travis](https://img.shields.io/travis/alexanderGugel/ied.svg)](https://travis-ci.org/alexanderGugel/ied)
 [![npm](https://img.shields.io/npm/v/ied.svg)](https://www.npmjs.com/package/ied)
-[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
 [![Join the chat at https://gitter.im/migme/beachball](https://img.shields.io/badge/gitter-join%20chat-brightgreen.svg)](https://gitter.im/alexanderGugel/ied)
 
 An alternative package manager for Node.
