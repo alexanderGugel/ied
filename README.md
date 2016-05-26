@@ -258,14 +258,6 @@ Credits
 Some ideas and (upcoming) features of `ied` are heavily inspired by
 [**Nix**](http://nixos.org/nix/), a purely functional package manager.
 
-FAQ
----
-
-* What does ied stand for?
-
-  Nothing in particular. It's just easy to type and `mpm` (the original name)
-  was already taken.
-
 License
 -------
 
