@@ -16,7 +16,7 @@ LIB = $(SRC:src/%.js=lib/%.js)
 # http://blog.jgc.org/2015/04/the-one-line-you-should-add-to-every.html
 print-%: ; @echo $*=$($*)
 
-lib: $(LIB)
+lib: node_modules $(LIB)
 lib/%.js: src/%.js
 	@mkdir -p $(@D)
 	@$(DEPS_BIN_DIR)/babel $< -o $@
@@ -29,7 +29,7 @@ prepdirs:
 	mkdir -p $(INSTALL_DIR)
 	mkdir -p $(BIN_DIR)
 
-preinstall: lib uninstall prepdirs node_modules
+preinstall: lib uninstall prepdirs
 	chmod +x lib/cmd.js
 
 link: preinstall
