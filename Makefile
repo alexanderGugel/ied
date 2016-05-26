@@ -11,7 +11,7 @@ DEPS_BIN_DIR = ./node_modules/.bin
 SRC = $(wildcard src/*.js)
 LIB = $(SRC:src/%.js=lib/%.js)
 
-.PHONY: install test dev watch clean esdoc
+.PHONY: install
 
 # http://blog.jgc.org/2015/04/the-one-line-you-should-add-to-every.html
 print-%: ; @echo $*=$($*)
