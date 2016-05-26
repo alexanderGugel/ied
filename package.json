@@ -1,60 +1,60 @@
 {
-	"name": "ied",
-	"version": "1.0.6",
-	"bin": {
-		"ied": "lib/cmd.js"
-	},
-	"dependencies": {
-		"async": "^1.4.2",
-		"easy-table": "^1.0.0",
-		"force-symlink": "0.0.1",
-		"gunzip-maybe": "^1.2.1",
-		"init-package-json": "^1.9.1",
-		"lodash.frompairs": "^4.0.1",
-		"minimist": "^1.2.0",
-		"mkdirp": "^0.5.1",
-		"needle": "^1.0.0",
-		"node-gyp": "^3.3.1",
-		"node-pre-gyp": "^0.6.26",
-		"node-uuid": "^1.4.3",
-		"ora": "^0.2.1",
-		"rimraf": "^2.5.2",
-		"rxjs": "^5.0.0-beta.2",
-		"tar-fs": "^1.8.1",
-		"xtend": "^4.0.1"
-	},
-	"devDependencies": {
-		"babel-cli": "^6.6.5",
-		"babel-eslint": "^6.0.2",
-		"babel-plugin-transform-function-bind": "^6.5.2",
-		"babel-plugin-transform-object-rest-spread": "^6.8.0",
-		"babel-preset-es2015": "^6.6.0",
-		"esdoc": "^0.4.7",
-		"esdoc-es7-plugin": "0.0.3",
-		"eslint": "^2.8.0",
-		"mocha": "^2.3.3",
-		"resolve": "^1.1.7",
-		"sinon": "^1.17.3"
-	},
-	"scripts": {
-		"test": "make test",
-		"dev": "make dev",
-		"lint": "eslint src",
-		"prepublish": "make lib"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/alexanderGugel/ied.git"
-	},
-	"author": "Alexander Gugel <alexander.gugel@gmail.com>",
-	"license": "MIT",
-	"bugs": {
-		"url": "https://github.com/alexanderGugel/ied/issues"
-	},
-	"homepage": "https://github.com/alexanderGugel/ied#readme",
-	"description": "An alternative package manager for Node.",
-	"files": [
-		"lib",
-		"USAGE.txt"
-	]
+  "name": "ied",
+  "version": "2.0.0",
+  "bin": {
+    "ied": "lib/cmd.js"
+  },
+  "dependencies": {
+    "async": "^1.4.2",
+    "easy-table": "^1.0.0",
+    "force-symlink": "0.0.1",
+    "gunzip-maybe": "^1.2.1",
+    "init-package-json": "^1.9.1",
+    "lodash.frompairs": "^4.0.1",
+    "minimist": "^1.2.0",
+    "mkdirp": "^0.5.1",
+    "needle": "^1.0.0",
+    "node-gyp": "^3.3.1",
+    "node-pre-gyp": "^0.6.26",
+    "node-uuid": "^1.4.3",
+    "ora": "^0.2.1",
+    "rimraf": "^2.5.2",
+    "rxjs": "^5.0.0-beta.2",
+    "tar-fs": "^1.8.1",
+    "xtend": "^4.0.1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.6.5",
+    "babel-eslint": "^6.0.2",
+    "babel-plugin-transform-function-bind": "^6.5.2",
+    "babel-plugin-transform-object-rest-spread": "^6.8.0",
+    "babel-preset-es2015": "^6.6.0",
+    "esdoc": "^0.4.7",
+    "esdoc-es7-plugin": "0.0.3",
+    "eslint": "^2.8.0",
+    "mocha": "^2.3.3",
+    "resolve": "^1.1.7",
+    "sinon": "^1.17.3"
+  },
+  "scripts": {
+    "test": "make test",
+    "dev": "make dev",
+    "lint": "eslint src",
+    "prepublish": "make lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexanderGugel/ied.git"
+  },
+  "author": "Alexander Gugel <alexander.gugel@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/alexanderGugel/ied/issues"
+  },
+  "homepage": "https://github.com/alexanderGugel/ied#readme",
+  "description": "An alternative package manager for Node.",
+  "files": [
+    "lib",
+    "USAGE.txt"
+  ]
 }
