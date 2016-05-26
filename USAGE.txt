@@ -8,7 +8,6 @@
 
     install     fetch packages and dependencies
     run         run a package.json script
-    test        run the test-suite of the current package
     shell       enter a sub-shell with augmented PATH
     ping        check if the registry is up
     config      print the used config
