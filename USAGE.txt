@@ -1,0 +1,45 @@
+  ied is a package manager for Node.
+
+  Usage:
+
+    ied [command] [arguments]
+
+  The commands are:
+
+    install     fetch packages and dependencies
+    run         run a package.json script
+    test        run the test-suite of the current package
+    shell       enter a sub-shell with augmented PATH
+    ping        check if the registry is up
+    config      print the used config
+    init        initialize a new package
+    link        link the current package or into it
+    unlink      unlink the current package or from it
+    start       runs `ied run start`
+    stop        runs `ied run stop`
+    build       runs `ied run build`
+    test        runs `ied run test`
+
+  Flags:
+    -h, --help          show usage information
+    -v, --version       print the current version
+    -S, --save          update package.json dependencies
+    -D, --save-dev      update package.json devDependencies
+    -O, --save-optional update package.json optionalDependencies
+    -r, --registry      use a custom registry
+                        (default: http://registry.npmjs.org/)
+    -b, --build         execute lifecycle scripts upon completion
+                        (e.g. postinstall)
+
+  Example:
+    ied install
+    ied install <pkg>
+    ied install <pkg>@<version>
+    ied install <pkg>@<version range>
+
+    Can specify one or more: ied install semver@^5.0.1 tape
+    If no argument is supplied, installs dependencies from package.json.
+    Sub-commands can also be called via their shorthand aliases.
+
+  README:  https://github.com/alexanderGugel/ied
+  ISSUES:  https://github.com/alexanderGugel/ied/issues

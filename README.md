@@ -1,9 +1,8 @@
 ied
 ===
 
-[![Travis](https://img.shields.io/travis/alexanderGugel/ied/master.svg)](https://travis-ci.org/alexanderGugel/ied)
+[![Travis](https://img.shields.io/travis/alexanderGugel/ied.svg)](https://travis-ci.org/alexanderGugel/ied)
 [![npm](https://img.shields.io/npm/v/ied.svg)](https://www.npmjs.com/package/ied)
-[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
 [![Join the chat at https://gitter.im/migme/beachball](https://img.shields.io/badge/gitter-join%20chat-brightgreen.svg)](https://gitter.im/alexanderGugel/ied)
 
 An alternative package manager for Node.
@@ -180,7 +179,7 @@ on a daily basis. Feature parity with npm **other than** with its installation
 process itself is not an immediate goal. Raw performance is the primary concern
 during the development process.
 
-A global [configuration](lib/config.js) can be supplied via environment
+A global [configuration](src/config.js) can be supplied via environment
 variables. `NODE_DEBUG` can be used in order to debug specific sub-systems. The
 progress bar will be disabled in that case.
 
@@ -192,14 +191,14 @@ once the API is stabilized.
 
 A high-level [USAGE](bin/USAGE.txt) help is also supplied. The main goal is to
 keep the API predictable for regular npm-users. This means certain flags, such
-as for example `--save`, `--save-dev`, `--only`, are supported.
+as for example `--save`, `--save-dev`, `--save-optional`, are supported.
 
 ```
   ied is a package manager for Node.
 
   Usage:
 
-    ied command [arguments]
+    ied [command] [arguments]
 
   The commands are:
 
@@ -208,19 +207,25 @@ as for example `--save`, `--save-dev`, `--only`, are supported.
     test        run the test-suite of the current package
     shell       enter a sub-shell with augmented PATH
     ping        check if the registry is up
-    ls          print the dependency graph
     config      print the used config
     init        initialize a new package
     link        link the current package or into it
     unlink      unlink the current package or from it
+    start       runs `ied run start`
+    stop        runs `ied run stop`
+    build       runs `ied run build`
+    test        runs `ied run test`
 
   Flags:
-    -h, --help      show usage information
-    -v, --version   print the current version
-    -S, --save      update package.json dependencies
-    -D, --save-dev  update package.json devDependencies
-    -o, --only      install a subset of the dependencies
-    -r, --registry  use a custom registry (default: http://registry.npmjs.org/)
+    -h, --help          show usage information
+    -v, --version       print the current version
+    -S, --save          update package.json dependencies
+    -D, --save-dev      update package.json devDependencies
+    -O, --save-optional update package.json optionalDependencies
+    -r, --registry      use a custom registry
+                        (default: http://registry.npmjs.org/)
+    -b, --build         execute lifecycle scripts upon completion
+                        (e.g. postinstall)
 
   Example:
     ied install
@@ -252,14 +257,6 @@ Credits
 
 Some ideas and (upcoming) features of `ied` are heavily inspired by
 [**Nix**](http://nixos.org/nix/), a purely functional package manager.
-
-FAQ
----
-
-* What does ied stand for?
-
-  Nothing in particular. It's just easy to type and `mpm` (the original name)
-  was already taken.
 
 License
 -------
