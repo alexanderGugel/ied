@@ -5,6 +5,18 @@ ied
 [![npm](https://img.shields.io/npm/v/ied.svg)](https://www.npmjs.com/package/ied)
 [![Join the chat at https://gitter.im/migme/beachball](https://img.shields.io/badge/gitter-join%20chat-brightgreen.svg)](https://gitter.im/alexanderGugel/ied)
 
+```
+__/\\\\\\\\\\\__/\\\\\\\\\\\\\\\__/\\\\\\\\\\\\____
+ _\/////\\\///__\/\\\///////////__\/\\\////////\\\__
+  _____\/\\\_____\/\\\_____________\/\\\______\//\\\_
+   _____\/\\\_____\/\\\\\\\\\\\_____\/\\\_______\/\\\_
+    _____\/\\\_____\/\\\///////______\/\\\_______\/\\\_
+     _____\/\\\_____\/\\\_____________\/\\\_______\/\\\_
+      _____\/\\\_____\/\\\_____________\/\\\_______/\\\__
+       __/\\\\\\\\\\\_\/\\\\\\\\\\\\\\\_\/\\\\\\\\\\\\/___
+        _\///////////__\///////////////__\////////////_____
+```
+
 An alternative package manager for Node.
 
 * **Concurrent Installations** - `ied` installs sub-dependencies in parallel.
