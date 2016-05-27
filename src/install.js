@@ -13,6 +13,7 @@ import {mergeMap} from 'rxjs/operator/mergeMap'
 import {retry} from 'rxjs/operator/retry'
 import {skip} from 'rxjs/operator/skip'
 import needle from 'needle'
+import assert from 'assert'
 
 import * as cache from './cache'
 import * as config from './config'
@@ -179,25 +180,13 @@ export function linkAll (nodeModules) {
 		})
 }
 
-export class CorruptedPackageError extends Error {
-	/**
-	 * create instance.
-	 * @param  {String} tarball  - tarball url from which the corresponding
-	 * tarball has been downloaded.
-	 * @param  {String} expected - expected shasum.
-	 * @param  {String} actual   - actual shasum.
-	 */
-	constructor (tarball, expected, actual) {
-		super(`shasum mismatch while downloading ${tarball}: ${actual} <-> ${expected}`)
-		this.name = 'CorruptedPackageError'
-		this.tarball = tarball
-		this.expected = expected
-		this.actual = actual
-	}
+function checkShasum (shasum, expected, tarball) {
+	assert.equal(shasum, expected,
+		`shasum mismatch for ${tarball}: ${shasum} <-> ${expected}`)
 }
 
-function download (tarball, expectedShasum) {
-	log(`downloading ${tarball}, expecting ${expectedShasum}`)
+function download (tarball, expected) {
+	log(`downloading ${tarball}, expecting ${expected}`)
 	return Observable.create((observer) => {
 		const errorHandler = (error) => observer.error(error)
 		const dataHandler = (chunk) => shasum.update(chunk)
@@ -219,8 +208,8 @@ function download (tarball, expectedShasum) {
 		cached.on('finish', finishHandler)
 	})
 	::mergeMap(({ tmpPath, shasum }) => {
-		if (expectedShasum && expectedShasum !== shasum) {
-			throw new CorruptedPackageError(tarball, expectedShasum, shasum)
+		if (expected) {
+			checkShasum(shasum, expected, tarball)
 		}
 
 		const newPath = path.join(config.cacheDir, shasum)

@@ -4,6 +4,7 @@ import {_do} from 'rxjs/operator/do'
 import {retry} from 'rxjs/operator/retry'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGet} from './util'
+import assert from 'assert'
 import * as config from './config'
 
 /**
@@ -28,13 +29,11 @@ export function reset () {
  * (`200`).
  * @param  {String} uri - URI used for retrieving the supplied response.
  * @param  {Number} resp - HTTP response object.
- * @throws {Error} if the status code does not indicate success.
+ * @throws {assert.AssertionError} if the status code is not 200.
  */
-export function validateStatusCode (uri, resp) {
+export function checkStatus (uri, resp) {
 	const { statusCode, body: { error } } = resp
-	if (statusCode !== 200) {
-		throw new Error(`unexpected status code ${statusCode} from ${uri}: ${error}`)
-	}
+	assert.equal(statusCode, 200, `error status code ${uri}: ${error}`)
 }
 
 /**
@@ -63,7 +62,7 @@ export function createRequest (uri) {
 		return existingRequest
 	}
 	const newRequest = httpGet(uri, config.httpOptions)
-		::_do((response) => validateStatusCode(uri, response))
+		::_do((response) => checkStatus(uri, response))
 		::retry(config.requestRetries)
 		::publishReplay().refCount()
 	requests[uri] = newRequest
