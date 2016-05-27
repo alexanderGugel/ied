@@ -48,7 +48,10 @@ clean:
 	rm -rf $(BOOTSTRAP_DIR)
 	rm -rf lib test/test
 
-esdoc:
+lint:
+	$(DEPS_BIN_DIR)/eslint src
+
+docs:
 	$(DEPS_BIN_DIR)/esdoc -c esdoc.json
 
 test: lib
@@ -59,3 +62,4 @@ dev: lib
 
 watch:
 	$(DEPS_BIN_DIR)/babel -w src --out-dir lib
+

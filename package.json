@@ -40,7 +40,7 @@
   "scripts": {
     "test": "make test",
     "dev": "make dev",
-    "lint": "eslint src",
+    "lint": "make lint",
     "prepublish": "make lib"
   },
   "repository": {
