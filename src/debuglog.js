@@ -45,13 +45,13 @@ function debuglog (set) {
 	set = set.toUpperCase()
 	if (!debugs[set]) {
 		if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
-			var pid = process.pid
-			debugs[set] = function () {
-				var msg = util.format.apply(util, arguments)
+			const pid = process.pid
+			debugs[set] = () => {
+				const msg = util.format.apply(util, arguments)
 				console.error('%s %d: %s', set, pid, msg)
 			}
 		} else {
-			debugs[set] = function () {}
+			debugs[set] = Function.prototype
 		}
 	}
 	return debugs[set]
