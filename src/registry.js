@@ -62,8 +62,9 @@ export function createRequest (uri) {
 	if (existingRequest) {
 		return existingRequest
 	}
-	const newRequest = httpGet(uri, config.httpOptions)::retry(5)
+	const newRequest = httpGet(uri, config.httpOptions)
 		::_do((response) => validateStatusCode(uri, response))
+		::retry(config.requestRetries)
 		::publishReplay().refCount()
 	requests[uri] = newRequest
 	return newRequest
