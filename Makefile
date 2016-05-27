@@ -6,60 +6,54 @@ CURRENT_DIR = $(shell pwd)
 INSTALL_DIR = $(HOME)/.node_modules
 BIN_DIR = /usr/local/bin
 BIN = ied
-BOOTSTRAP_DIR = .bootstrap
 DEPS_BIN_DIR = ./node_modules/.bin
+MOCHA_FLAGS = --compilers js:babel-register --reporter min
 SRC = $(wildcard src/*.js)
 LIB = $(SRC:src/%.js=lib/%.js)
 
-.PHONY: install
+.PHONY: link install uninstall clean lint dev watch
 
 # http://blog.jgc.org/2015/04/the-one-line-you-should-add-to-every.html
 print-%: ; @echo $*=$($*)
 
-lib: node_modules $(LIB)
+lib: $(LIB) node_modules
 lib/%.js: src/%.js
-	@mkdir -p $(@D)
-	@$(DEPS_BIN_DIR)/babel $< -o $@
+	mkdir -p $(@D)
+	$(DEPS_BIN_DIR)/babel $< -o $@
 
 node_modules: package.json
-	rm -rf node_modules $(BOOTSTRAP_DIR)
 	npm install
 
-prepdirs:
+install_dirs:
 	mkdir -p $(INSTALL_DIR)
 	mkdir -p $(BIN_DIR)
 
-preinstall: lib uninstall prepdirs
-	chmod +x lib/cmd.js
-
-link: preinstall
+link: install_dirs
 	ln -s $(CURRENT_DIR) $(INSTALL_DIR)/$(BIN)
 	ln -s $(INSTALL_DIR)/ied/lib/cmd.js $(BIN_DIR)/ied
 
-install: preinstall
+install: node_modules install_dirs
 	cp -R $(CURRENT_DIR) $(INSTALL_DIR)/$(BIN)
+	chmod +x $(INSTALL_DIR)/$(BIN)
 	ln -s $(INSTALL_DIR)/ied/lib/cmd.js $(BIN_DIR)/ied
 
 uninstall:
-	rm -rf $(INSTALL_DIR)/$(BIN)
-	rm -f $(BIN_DIR)/$(BIN)
+	rm -rf $(INSTALL_DIR)/$(BIN) $(BIN_DIR)/$(BIN)
 
 clean:
-	rm -rf $(BOOTSTRAP_DIR)
 	rm -rf lib test/test
 
 lint:
 	$(DEPS_BIN_DIR)/eslint src
 
-docs:
+docs: src
 	$(DEPS_BIN_DIR)/esdoc -c esdoc.json
 
-test: lib
-	$(DEPS_BIN_DIR)/mocha test/*-test.js --compilers js:babel-register --reporter min
+test: src
+	$(DEPS_BIN_DIR)/mocha test/*-test.js $(MOCHA_FLAGS)
 
-dev: lib
-	$(DEPS_BIN_DIR)/mocha test/*-test.js --compilers js:babel-register --reporter min --watch
+dev:
+	$(DEPS_BIN_DIR)/mocha test/*-test.js $(MOCHA_FLAGS) --watch
 
 watch:
 	$(DEPS_BIN_DIR)/babel -w src --out-dir lib
-
