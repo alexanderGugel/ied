@@ -10,6 +10,7 @@ import {expand} from 'rxjs/operator/expand'
 import {map} from 'rxjs/operator/map'
 import {_catch} from 'rxjs/operator/catch'
 import {mergeMap} from 'rxjs/operator/mergeMap'
+import {retry} from 'rxjs/operator/retry'
 import {skip} from 'rxjs/operator/skip'
 import needle from 'needle'
 
@@ -266,6 +267,7 @@ function fetch (nodeModules) {
 
 export function fetchAll (nodeModules) {
 	const fetch = (dep) => dep.fetch(nodeModules)
+		::retry(config.requestRetries)
 	return this::distinctKey('target')::mergeMap(fetch)
 }
 
