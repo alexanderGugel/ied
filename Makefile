@@ -11,7 +11,7 @@ MOCHA_FLAGS = --compilers js:babel-register --reporter min
 SRC = $(wildcard src/*.js)
 LIB = $(SRC:src/%.js=lib/%.js)
 
-.PHONY: link install uninstall clean lint dev watch
+.PHONY: link install uninstall clean lint dev watch test
 
 # http://blog.jgc.org/2015/04/the-one-line-you-should-add-to-every.html
 print-%: ; @echo $*=$($*)
@@ -49,7 +49,7 @@ lint:
 docs: src
 	$(DEPS_BIN_DIR)/esdoc -c esdoc.json
 
-test: src
+test:
 	$(DEPS_BIN_DIR)/mocha test/*-test.js $(MOCHA_FLAGS)
 
 dev:
