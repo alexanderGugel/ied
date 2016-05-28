@@ -44,5 +44,4 @@ export default function installCmd (cwd, argv) {
 		: EmptyObservable.create()
 
 	return concatStatic(initialized, installedAll, saved, builtAll)
-		.subscribe()
 }

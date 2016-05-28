@@ -1,12 +1,10 @@
-import async from 'async'
-import * as link from './link'
 import * as config from './config'
-import mkdirp from 'mkdirp'
+import {mkdirp} from './util'
+import {linkFromGlobal, linkToGlobal} from './link'
+import {concatStatic} from 'rxjs/operator/concat'
+import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
+import {mergeMap} from 'rxjs/operator/mergeMap'
 import path from 'path'
-
-function handleError (err) {
-	if (err) throw err
-}
 
 /**
  * can be used in two ways:
@@ -24,20 +22,20 @@ function handleError (err) {
  *
  * @param  {String} cwd - current working directory.
  * @param  {Object} argv - parsed command line arguments.
+ * @return {Observable} - observable sequence.
  */
 export default function linkCmd (cwd, argv) {
-	const deps = argv._.slice(1)
+	const names = argv._.slice(1)
 
-	if (!deps.length) {
-		async.series([
-			mkdirp.bind(null, config.globalNodeModules),
-			mkdirp.bind(null, config.globalBin),
-			link.linkToGlobal.bind(null, cwd)
-		], handleError)
-	} else {
-		async.series([
-			mkdirp.bind(null, path.join(cwd, 'node_modules')),
-			async.each.bind(null, deps, link.linkFromGlobal.bind(null, cwd))
-		], handleError)
+	if (names.length) {
+		const localNodeModules = path.join(cwd, 'node_modules')
+		const init = mkdirp(localNodeModules)
+		return concatStatic(init, ArrayObservable.create(names)
+			::mergeMap((name) => linkFromGlobal(cwd, name)))
 	}
+
+	const init = concatStatic(
+		mkdirp(config.globalNodeModules),
+		mkdirp(config.globalBin))
+	return concatStatic(init, linkToGlobal(cwd))
 }

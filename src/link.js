@@ -2,7 +2,8 @@ import fs from 'fs'
 import path from 'path'
 import async from 'async'
 import * as config from './config'
-import forceSymlink from 'force-symlink'
+import {readFileJSON, forceSymlink} from './util'
+import {mergeMap} from 'rxjs/operator/mergeMap'
 
 /**
  * generate the symlinks to be created in order to link to passed in package.
@@ -29,15 +30,12 @@ export function getSymlinks (cwd, pkgJson) {
 /*
  * globally expose the package we're currently in (used for `ied link`).
  * @param {String} cwd - current working directory.
- * @param {Function} cb - callback function.
+ * @return {Observable} - observable sequence.
  */
-export function linkToGlobal (cwd, cb) {
-	const pkg = require(path.join(cwd, 'package.json'))
-	const symlinks = getSymlinks(cwd, pkg)
-	async.each(symlinks, ([srcPath, dstPath], cb) => {
-		console.log(dstPath, '->', srcPath)
-		forceSymlink(srcPath, dstPath, cb)
-	}, cb)
+export function linkToGlobal (cwd) {
+	return readFileJSON(path.join(cwd, 'package.json'))
+		::mergeMap((pkgJson) => getSymlinks(cwd, pkgJson))
+		::mergeMap(([ src, dst ]) => forceSymlink(src, dst))
 }
 
 /**
@@ -47,13 +45,12 @@ export function linkToGlobal (cwd, cb) {
  * `node_modules/.bin` stays untouched.
  * @param {String} cwd - current working directory.
  * @param {String} name - name of the dependency to be linked.
- * @param {Function} cb - callback function.
+ * @return {Observable} - observable sequence.
  */
-export function linkFromGlobal (cwd, name, cb) {
-	const dstPath = path.join(cwd, 'node_modules', name)
-	const srcPath = path.join(config.globalNodeModules, name)
-	console.log(dstPath, '->', srcPath)
-	forceSymlink(srcPath, dstPath, cb)
+export function linkFromGlobal (cwd, name) {
+	const dst = path.join(cwd, 'node_modules', name)
+	const src = path.join(config.globalNodeModules, name)
+	return forceSymlink(src, dst)
 }
 
 /**

@@ -66,7 +66,7 @@ let cacheCmd
 		case 'i':
 		case 'install':
 			installCmd = require('./install_cmd').default
-			installCmd(cwd, argv)
+			installCmd(cwd, argv).subscribe()
 			break
 		case 'sh':
 		case 'shell':
@@ -104,7 +104,7 @@ let cacheCmd
 			break
 		case 'link':
 			linkCmd = require('./link_cmd').default
-			linkCmd(cwd, argv)
+			linkCmd(cwd, argv).subscribe()
 			break
 		case 'unlink':
 			unlinkCmd = require('./unlink_cmd').default
