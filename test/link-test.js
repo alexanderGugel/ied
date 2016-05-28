@@ -2,7 +2,6 @@ import assert from 'assert'
 import sinon from 'sinon'
 import * as config from '../src/config'
 import * as link from '../src/link'
-import fs from 'fs'
 
 describe('link', () => {
 	const sandbox = sinon.sandbox.create()
@@ -56,19 +55,6 @@ describe('link', () => {
 					]
 				])
 			})
-		})
-	})
-
-	describe('unlinkFromGlobal', () => {
-		it('should remove local symlink that exposes the specified dependency', () => {
-			sandbox.stub(fs, 'unlink').yields(null)
-			sandbox.stub(console, 'log')
-			const cb = sinon.spy()
-			link.unlinkFromGlobal('/cwd', 'tap', cb)
-			sinon.assert.calledOnce(fs.unlink)
-			sinon.assert.calledWithExactly(fs.unlink, '/cwd/node_modules/tap', cb)
-			sinon.assert.calledWithExactly(cb, null)
-			sinon.assert.calledWithExactly(console.log, 'rm', '/cwd/node_modules/tap')
 		})
 	})
 })

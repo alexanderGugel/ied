@@ -84,6 +84,9 @@ export const readlink = createObservableFactory(fs.readlink, fs)
 /** @type {Function} Observable wrapper function around `fs.chmod`. */
 export const chmod = createObservableFactory(fs.chmod, fs)
 
+/** @type {Function} Observable wrapper function around `fs.unlink`. */
+export const unlink = createObservableFactory(fs.unlink, fs)
+
 /** @type {Function} Observable wrapper function around
 [`force-symlink`](https://www.npmjs.org/package/force-symlink). */
 export const forceSymlink = createObservableFactory(_forceSymlink)

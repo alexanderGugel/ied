@@ -108,7 +108,7 @@ let cacheCmd
 			break
 		case 'unlink':
 			unlinkCmd = require('./unlink_cmd').default
-			unlinkCmd(cwd, argv)
+			unlinkCmd(cwd, argv).subscribe()
 			break
 		case 'cache':
 			cacheCmd = require('./cache_cmd').default

@@ -1,8 +1,7 @@
-import fs from 'fs'
 import path from 'path'
-import async from 'async'
 import * as config from './config'
-import {readFileJSON, forceSymlink} from './util'
+import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
+import {readFileJSON, forceSymlink, unlink} from './util'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 
 /**
@@ -58,16 +57,13 @@ export function linkFromGlobal (cwd, name) {
  * symbolic links (used for `ied unlink`).
  * @param {String} cwd - current working directory.
  * @param {String} name - name of the dependency to be unlinked.
- * @param {Function} cb - callback function.
+ * @return {Observable} - observable sequence.
  */
-export function unlinkToGlobal (cwd, name, cb) {
+export function unlinkToGlobal (cwd, name) {
 	const pkg = require(path.join(cwd, 'package.json'))
 	const symlinks = getSymlinks(cwd, pkg)
-	async.each(symlinks, function (symlink, cb) {
-		const dstPath = symlink[1]
-		console.log('rm', dstPath)
-		fs.unlink(dstPath, cb)
-	}, cb)
+	return ArrayObservable.create(symlinks)
+		::mergeMap(([src, dst]) => unlink(dst))
 }
 
 /**
@@ -77,10 +73,9 @@ export function unlinkToGlobal (cwd, name, cb) {
  * @param {String} cwd - current working directory.
  * @param {String} name - name of the dependency to be unlinked from the
  * project's `node_modules`.
- * @param {Function} cb - callback fucntion.
+ * @return {Observable} - observable sequence.
  */
-export function unlinkFromGlobal (cwd, name, cb) {
-	const dstPath = path.join(cwd, 'node_modules', name)
-	console.log('rm', dstPath)
-	fs.unlink(dstPath, cb)
+export function unlinkFromGlobal (cwd, name) {
+	const dst = path.join(cwd, 'node_modules', name)
+	return unlink(dst)
 }
