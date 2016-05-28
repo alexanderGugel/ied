@@ -50,13 +50,13 @@ let cacheCmd
 (() => {
 	if (argv.help) {
 		helpCmd = require('./help_cmd').default
-		helpCmd()
+		helpCmd().subscribe()
 		return
 	}
 
 	if (argv.version) {
 		versionCmd = require('./version_cmd').default
-		versionCmd()
+		versionCmd().subscribe()
 		return
 	}
 
@@ -116,11 +116,11 @@ let cacheCmd
 			break
 		case 'version':
 			versionCmd = require('./version_cmd').default
-			versionCmd()
+			versionCmd().subscribe()
 			break
 		default:
 			helpCmd = require('./help_cmd').default
-			helpCmd()
+			helpCmd().subscribe()
 	}
 })()
 
