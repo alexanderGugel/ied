@@ -77,7 +77,7 @@ let cacheCmd
 		case 'run':
 		case 'run-script':
 			runCmd = require('./run_cmd').default
-			runCmd(cwd, argv)
+			runCmd(cwd, argv).subscribe()
 			break
 		case 't':
 		case 'test':
@@ -87,7 +87,7 @@ let cacheCmd
 			runCmd = require('./run_cmd').default
 			const _argv = Object.create(argv)
 			_argv._ = ['run'].concat(argv._)
-			runCmd(cwd, _argv)
+			runCmd(cwd, _argv).subscribe()
 			break
 		case 'ping':
 			pingCmd = require('./ping_cmd').default

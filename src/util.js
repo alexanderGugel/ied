@@ -4,6 +4,7 @@ import _mkdirp from 'mkdirp'
 import _forceSymlink from 'force-symlink'
 import needle from 'needle'
 import {map} from 'rxjs/operator/map'
+import {mergeMap} from 'rxjs/operator/mergeMap'
 import * as config from './config'
 
 /**
@@ -94,6 +95,21 @@ export const forceSymlink = createObservableFactory(_forceSymlink)
 /** @type {Function} Observable wrapper function around
 [`mkdirp`](https://www.npmjs.com/package/mkdirp). */
 export const mkdirp = createObservableFactory(_mkdirp)
+
+/**
+ * equivalent to `Map#entries` for observables, but operates on objects.
+ * @return {Observable} - observable sequence of pairs.
+ */
+export function entries () {
+	return this::mergeMap((object) => {
+		const keys = Object.keys(object)
+		const entries = []
+		for (let key of keys) {
+			entries.push([key, object[key]])
+		}
+		return entries
+	})
+}
 
 /**
  * read a UTF8 encoded JSON file from disk.

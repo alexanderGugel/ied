@@ -58,9 +58,9 @@ describe('config', () => {
 		})
 	})
 
-	describe('requestRetries', () => {
+	describe('retries', () => {
 		it('should be number', () => {
-			assert.equal(typeof config.requestRetries, 'number')
+			assert.equal(typeof config.retries, 'number')
 		})
 	})
 
