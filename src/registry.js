@@ -5,7 +5,19 @@ import {retry} from 'rxjs/operator/retry'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGet} from './util'
 import assert from 'assert'
-import * as config from './config'
+
+/**
+ * default registry URL to be used. can be overridden via options on relevant
+ * functions.
+ * @type {String}
+ */
+export const DEFAULT_REGISTRY = 'https://registry.npmjs.org/'
+
+/**
+ * default number of retries to attempt before failing to resolve to a package
+ * @type {Number}
+ */
+export const DEFAULT_RETRIES = 5
 
 /**
  * register of pending and completed HTTP requests mapped to their respective
@@ -50,21 +62,23 @@ export function escapeName (name) {
 	return escapedName
 }
 
-export function httpGetPackageVersion (name, version) {
-	const escapedName = escapeName(name)
-	const uri = url.resolve(config.registry, escapedName + '/' + version)
-	return createRequest(uri)
-}
-
-export function createRequest (uri) {
+/**
+ * HTTP GET the resource at the supplied URI. if a request to the same URI has
+ * already been made, return the cached (pending) request.
+ * @param  {String} uri - endpoint to fetch data from.
+ * @param  {Object} [options = {}] - optional HTTP and `retries` options.
+ * @return {Observable} - observable sequence of pending / completed request.
+ */
+export function fetch (uri, options = {}) {
+	const {retries = DEFAULT_RETRIES, ...needleOptions} = options
 	const existingRequest = requests[uri]
+
 	if (existingRequest) {
 		return existingRequest
 	}
-	const newRequest = httpGet(uri, config.httpOptions)
-		::_do((response) => checkStatus(uri, response))
-		::retry(config.requestRetries)
-		::publishReplay().refCount()
+	const newRequest = httpGet(uri, needleOptions)
+		::_do((resp) => checkStatus(uri, resp))
+		::retry(retries)::publishReplay().refCount()
 	requests[uri] = newRequest
 	return newRequest
 }
@@ -73,11 +87,13 @@ export function createRequest (uri) {
  * resolve a package defined via an ambiguous semantic version string to a
  * specific `package.json` file.
  * @param {String} name - package name.
- * @param {String} versionOrTag - semantic version string to be used as a
- * target.
+ * @param {String} version - semantic version string or tag name.
+ * @param {Object} options - HTTP request options.
  * @return {Observable} - observable sequence of the `package.json` file.
  */
-export function match (name, versionOrTag) {
-	return httpGetPackageVersion(name, versionOrTag)
-		::map(({ body }) => body)
+export function match (name, version, options = {}) {
+	const escapedName = escapeName(name)
+	const {registry = DEFAULT_REGISTRY, ...fetchOptions} = options
+	const uri = url.resolve(registry, escapedName + '/' + version)
+	return fetch(uri, fetchOptions)::map(({ body }) => body)
 }

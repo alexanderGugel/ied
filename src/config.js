@@ -58,7 +58,7 @@ export const proxy = env.IED_PROXY || env.http_proxy || null
  * defaults to `5` requests. can be set via `IED_REQUEST_RETRIES`.
  * @type {Number}
  */
-export const requestRetries = parseInt(env.IED_REQUEST_RETRIES, 10) || 5
+export const retries = parseInt(env.IED_REQUEST_RETRIES, 10) || 5
 
 /**
  * shell command used for executing lifecycle scripts (such as `postinstall`).

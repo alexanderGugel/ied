@@ -75,10 +75,10 @@ export function resolveLocal (nodeModules, parentTarget, name) {
 export function resolveRemote (nodeModules, parentTarget, name, version) {
 	log(`resolving ${name}@${version} from ${nodeModules} via ${nodeModules}`)
 
-	return registry.match(name, version)::map((pkgJson) => {
+	const options = {...config.httpOptions, retries: config.retries}
+	return registry.match(name, version, options)::map((pkgJson) => {
 		const target = pkgJson.dist.shasum
 		log(`resolved ${name}@${version} to ${target}`)
-
 		return { parentTarget, pkgJson, target, name, fetch }
 	})
 }
@@ -255,8 +255,7 @@ function fetch (nodeModules) {
 }
 
 export function fetchAll (nodeModules) {
-	const fetch = (dep) => dep.fetch(nodeModules)
-		::retry(config.requestRetries)
+	const fetch = (dep) => dep.fetch(nodeModules)::retry(config.retries)
 	return this::distinctKey('target')::mergeMap(fetch)
 }
 

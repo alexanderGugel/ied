@@ -1,4 +1,5 @@
 import sinon from 'sinon'
+import url from 'url'
 import assert from 'assert'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import * as registry from '../src/registry'
@@ -7,6 +8,21 @@ describe('registry', () => {
 	const sandbox = sinon.sandbox.create()
 
 	afterEach(() => sandbox.restore())
+	afterEach(() => registry.reset())
+
+	describe('DEFAULT_REGISTRY', () => {
+		it('should be HTTPS URL', () => {
+			assert.equal(typeof registry.DEFAULT_REGISTRY, 'string')
+			assert.equal(url.parse(registry.DEFAULT_REGISTRY).protocol, 'https:')
+		})
+	})
+
+	describe('DEFAULT_RETRIES', () => {
+		it('should be a number', () => {
+			assert.equal(typeof registry.DEFAULT_RETRIES, 'number')
+			assert(registry.DEFAULT_RETRIES >= 0)
+		})
+	})
 
 	describe('escapeName', () => {
 		context('when name is scoped', () => {
@@ -59,17 +75,13 @@ describe('registry', () => {
 		})
 	})
 
-	describe('httpGetPackageVersion', () => {
-		afterEach(() => registry.reset())
-
+	describe('fetch', () => {
 		context('when request has already been made', () => {
 			it('should return pending request', () => {
-				const name = '@alexander/gugel'
-				const version = "1.0.0"
-				const url = `https://registry.npmjs.org/@alexander%2Fgugel/${version}`
+				const uri = 'https://example.com/example'
 				const pendingRequest = EmptyObservable.create()
-				registry.requests[url] = pendingRequest
-				const request = registry.httpGetPackageVersion(name, version)
+				registry.requests[uri] = pendingRequest
+				const request = registry.fetch(uri)
 				assert.equal(request, pendingRequest)
 			})
 		})
