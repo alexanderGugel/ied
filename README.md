@@ -201,7 +201,7 @@ At this point in time, the majority of the command API is
 [self-documenting](bin/cmd.js). More extensive documentation will be available
 once the API is stabilized.
 
-A high-level [USAGE](bin/USAGE.txt) help is also supplied. The main goal is to
+A high-level [USAGE](USAGE.txt) help is also supplied. The main goal is to
 keep the API predictable for regular npm-users. This means certain flags, such
 as for example `--save`, `--save-dev`, `--save-optional`, are supported.
 
