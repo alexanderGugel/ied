@@ -46,8 +46,8 @@ function debuglog (set) {
 	if (!debugs[set]) {
 		if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
 			const pid = process.pid
-			debugs[set] = () => {
-				const msg = util.format.apply(util, arguments)
+			debugs[set] = (...args) => {
+				const msg = util.format(...args)
 				console.error('%s %d: %s', set, pid, msg)
 			}
 		} else {
