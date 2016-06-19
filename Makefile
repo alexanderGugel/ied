@@ -56,4 +56,4 @@ dev:
 	$(DEPS_BIN_DIR)/mocha test/*-test.js $(MOCHA_FLAGS) --watch
 
 watch:
-	$(DEPS_BIN_DIR)/babel -w src --out-dir lib
+	NODE_ENV=development $(DEPS_BIN_DIR)/babel -w src --out-dir lib -s inline

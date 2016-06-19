@@ -2,6 +2,9 @@
 
 import minimist from 'minimist'
 import * as config from './config'
+if (process.env.NODE_ENV === 'development') {
+	require('source-map-support').install()
+}
 
 const alias = {
 	h: 'help',
@@ -123,4 +126,3 @@ let cacheCmd
 			helpCmd().subscribe()
 	}
 })()
-
