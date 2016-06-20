@@ -14,6 +14,7 @@ import {_catch} from 'rxjs/operator/catch'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {retry} from 'rxjs/operator/retry'
 import {skip} from 'rxjs/operator/skip'
+import {satisfies} from 'semver'
 import needle from 'needle'
 import assert from 'assert'
 import npa from 'npm-package-arg'
@@ -55,14 +56,32 @@ export const DEPENDENCY_FIELDS = [
 ]
 
 /**
+ * error class used for representing an error that occurs due to a lifecycle
+ * script that exits with a non-zero status code.
+ */
+export class LocalConflictError extends Error {
+	/**
+	 * create instance.
+ 	 * @param	{String} name - name of the dependency.
+ 	 * @param	{String} version - local version.
+ 	 * @param	{String} expected - expected version.
+	 */
+	constructor (name, version, expected) {
+		super(`Local version ${name}@${version} does not match required version @${expected}`)
+		this.name = 'LocalConflictError'
+	}
+}
+
+/**
  * resolve a dependency's `package.json` file from the local file system.
  * @param	{String} nodeModules - `node_modules` base directory.
  * @param	{String} parentTarget - relative parent's node_modules path.
  * @param	{String} name - name of the dependency.
  * @param	{String} version - version of the dependency.
+ * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveLocal (nodeModules, parentTarget, name, version) {
+export function resolveLocal (nodeModules, parentTarget, name, version, isExplicit) {
 	const linkname = path.join(nodeModules, parentTarget, 'node_modules', name)
 	const fetch = () => EmptyObservable.create()
 	log(`resolving ${linkname} from node_modules`)
@@ -81,9 +100,12 @@ export function resolveLocal (nodeModules, parentTarget, name, version) {
 		const filename = path.join(linkname, 'package.json')
 		log(`reading package.json from ${filename}`)
 
-		return util.readFileJSON(filename)::map((pkgJson) => ({
-			parentTarget, pkgJson, target, name, fetch
-		}))
+		return util.readFileJSON(filename)::map((pkgJson) => {
+			if (isExplicit && !satisfies(pkgJson.version, version)) {
+				throw new LocalConflictError(name, pkgJson.version, version)
+			}
+			return {parentTarget, pkgJson, target, name, fetch}
+		})
 	})
 }
 
@@ -93,9 +115,10 @@ export function resolveLocal (nodeModules, parentTarget, name, version) {
  * @param	{String} parentTarget - relative parent's node_modules path.
  * @param	{String} name - name of the dependency.
  * @param	{String} version - version of the dependency.
+ * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveRemote (nodeModules, parentTarget, name, version) {
+export function resolveRemote (nodeModules, parentTarget, name, version, isExplicit) {
 	const source = `${name}@${version}`
 	log(`resolving ${source} from remote registry`)
 
@@ -194,22 +217,23 @@ export function resolveFromGitHub (nodeModules, parentTarget, parsedSpec) {
  * @param	{String} nodeModules - `node_modules` base directory.
  * @param	{String} parentTarget - target path used for determining the sub-
  * dependency's path.
+ * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
  * @return {Obserable} - observable sequence of `package.json` root documents
  * wrapped into dependency objects representing the resolved sub-dependency.
  */
-export function resolve (nodeModules, parentTarget) {
+export function resolve (nodeModules, parentTarget, isExplicit) {
 	return this::mergeMap(([name, version]) => {
 		progress.add()
 		progress.report(`resolving ${name}@${version}`)
 		log(`resolving ${name}@${version}`)
 
-		return resolveLocal(nodeModules, parentTarget, name, version)
+		return resolveLocal(nodeModules, parentTarget, name, version, isExplicit)
 			::_catch((error) => {
-				if (error.code !== 'ENOENT') {
+				if (error.name !== 'LocalConflictError' && error.code !== 'ENOENT') {
 					throw error
 				}
 				log(`failed to resolve ${name}@${version} from local ${parentTarget} via ${nodeModules}`)
-				return resolveRemote(nodeModules, parentTarget, name, version)
+				return resolveRemote(nodeModules, parentTarget, name, version, isExplicit)
 			})
 			::_finally(progress.complete)
 	})
@@ -219,9 +243,10 @@ export function resolve (nodeModules, parentTarget) {
  * resolve all dependencies starting at the current working directory.
  * @param	{String} nodeModules - `node_modules` base directory.
  * @param	{Object} [targets=Object.create(null)] - resolved / active targets.
+ * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
-export function resolveAll (nodeModules, targets = Object.create(null)) {
+export function resolveAll (nodeModules, targets = Object.create(null), isExplicit) {
 	return this::expand(({target, pkgJson}) => {
 		// cancel when we get into a circular dependency
 		if (target in targets) {
@@ -239,7 +264,7 @@ export function resolveAll (nodeModules, targets = Object.create(null)) {
 		const dependencies = parseDependencies(pkgJson, fields)
 
 		return ArrayObservable.create(dependencies)
-			::resolve(nodeModules, target)
+			::resolve(nodeModules, target, isExplicit)
 	})
 }
 
