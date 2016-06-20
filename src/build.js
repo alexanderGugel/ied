@@ -3,6 +3,7 @@ import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {Observable} from 'rxjs/Observable'
 import {_do} from 'rxjs/operator/do'
 import {map} from 'rxjs/operator/map'
+import {concatMap} from 'rxjs/operator/concatMap'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {filter} from 'rxjs/operator/filter'
 import {every} from 'rxjs/operator/every'
@@ -106,7 +107,7 @@ export function buildAll (nodeModules) {
 	return this
 		::map(parseLifecycleScripts)
 		::mergeMap((scripts) => ArrayObservable.create(scripts))
-		::mergeMap((script) => build(nodeModules, script))
+		::concatMap((script) => build(nodeModules, script))
 		::every((code) => code === 0)
 		::filter((ok) => !ok)
 		::_do((ok) => { throw new FailedBuildError() })
