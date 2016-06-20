@@ -19,6 +19,10 @@ const targets = [
 	'tape'
 ]
 
+const buildTargets = [
+	'dtrace-provider'
+]
+
 describe('e2e', () => {
 	targets.forEach((target) => {
 		describe(`ied install ${target}`, function () {
@@ -55,5 +59,39 @@ describe('e2e', () => {
 			})
 		})
 	})
-})
+	buildTargets.forEach((target) => {
+		describe(`ied install ${buildTargets} --build`, function () {
+			let cwd = path.join(__dirname, 'test', target)
+			this.timeout(60 * 1000)
 
+			before((done) => {
+				rimraf(cwd, done)
+			})
+
+			before((done) => {
+				mkdirp(cwd, done)
+			})
+
+			before((done) => {
+				spawn('node', [path.join(__dirname, '../lib/cmd'), 'install', '--build', target], {
+					cwd,
+					stdio: 'inherit'
+				})
+					.on('error', done)
+					.on('close', (code) => {
+						assert.equal(code, 0)
+						done()
+					})
+			})
+
+			it(`should make ${target} require\'able`, (done) => {
+				resolve(target, { basedir: cwd }, (err, res) => {
+					assert.ifError(err)
+					assert.notEqual(res.indexOf(cwd), -1)
+					require(res)
+					done()
+				})
+			})
+		})
+	})
+})
