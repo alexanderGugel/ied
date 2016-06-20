@@ -22,7 +22,7 @@
 import util from 'util'
 
 const debugs = {}
-let debugEnviron
+let debugEnv
 
 /**
  * Node's `debuglog` function. Not available on older Node versions, therefore
@@ -39,12 +39,12 @@ let debugEnviron
  * @see https://nodejs.org/api/util.html#util_util_debuglog_section
  */
 function debuglog (set) {
-	if (debugEnviron === undefined) {
-		debugEnviron = process.env.NODE_DEBUG || ''
+	if (debugEnv === undefined) {
+		debugEnv = process.env.NODE_DEBUG || ''
 	}
 	set = set.toUpperCase()
 	if (!debugs[set]) {
-		if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
+		if (debugEnv === '*' || new RegExp('\\b' + set + '\\b', 'i').test(debugEnv)) {
 			const pid = process.pid
 			debugs[set] = (...args) => {
 				const msg = util.format(...args)
