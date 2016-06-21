@@ -3,12 +3,16 @@ import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {Observable} from 'rxjs/Observable'
 import {_do} from 'rxjs/operator/do'
 import {map} from 'rxjs/operator/map'
+import {concatMap} from 'rxjs/operator/concatMap'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {filter} from 'rxjs/operator/filter'
 import {every} from 'rxjs/operator/every'
 import {spawn} from 'child_process'
 
 import * as config from './config'
+
+import debuglog from './debuglog'
+const log = debuglog('build')
 
 /**
  * names of lifecycle scripts that should be run as part of the installation
@@ -47,9 +51,12 @@ export class FailedBuildError extends Error {
  */
 export function build (nodeModules, dep) {
 	const {target, script} = dep
+	log(`executing "${script}" from ${target}`)
 
 	return Observable.create((observer) => {
-		const env = Object.create(process.env)
+		// some packages do expect a defined `npm_execpath` env
+		// eg. https://github.com/chrisa/node-dtrace-provider/blob/v0.6.0/scripts/install.js#L19
+		const env = {npm_execpath: '', ...process.env}
 
 		env.PATH = [
 			path.join(nodeModules, target, 'node_modules', '.bin'),
@@ -60,8 +67,8 @@ export function build (nodeModules, dep) {
 		const childProcess = spawn(config.sh, [config.shFlag, script], {
 			cwd: path.join(nodeModules, target, 'package'),
 			env: env,
-			stdio: 'inherit',
-			shell: true
+			stdio: 'inherit'
+			// shell: true // does break `dtrace-provider@0.6.0` build
 		})
 		childProcess.on('error', (error) => {
 			observer.error(error)
@@ -100,7 +107,7 @@ export function buildAll (nodeModules) {
 	return this
 		::map(parseLifecycleScripts)
 		::mergeMap((scripts) => ArrayObservable.create(scripts))
-		::mergeMap((script) => build(nodeModules, script))
+		::concatMap((script) => build(nodeModules, script))
 		::every((code) => code === 0)
 		::filter((ok) => !ok)
 		::_do((ok) => { throw new FailedBuildError() })
