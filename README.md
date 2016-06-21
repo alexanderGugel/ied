@@ -3,7 +3,7 @@ ied
 
 [![Travis](https://img.shields.io/travis/alexanderGugel/ied.svg)](https://travis-ci.org/alexanderGugel/ied)
 [![npm](https://img.shields.io/npm/v/ied.svg)](https://www.npmjs.com/package/ied)
-[![Join the chat at https://gitter.im/migme/beachball](https://img.shields.io/badge/gitter-join%20chat-brightgreen.svg)](https://gitter.im/alexanderGugel/ied)
+[![Inline docs](http://inch-ci.org/github/alexanderGugel/ied.svg?branch=master&style=shields)](http://inch-ci.org/github/alexanderGugel/ied)
 
 ```
 __/\\\\\\\\\\\__/\\\\\\\\\\\\\\\__/\\\\\\\\\\\\____
