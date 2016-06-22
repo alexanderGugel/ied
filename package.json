@@ -38,13 +38,18 @@
     "eslint-config-airbnb-base": "^3.0.1",
     "eslint-plugin-import": "^1.9.2",
     "mocha": "^2.5.3",
+    "mocha": "^2.3.3",
+    "nyc": "^6.6.1",
     "resolve": "^1.1.7",
     "sinon": "^1.17.4"
   },
   "scripts": {
-    "test": "make test",
+    "test": "npm run test:specs && npm run test:e2e",
+    "test:e2e": "mocha test/e2e",
+    "test:specs": "mocha test/specs",
+    "test:coverage": "nyc --reporter=lcov npm run test:specs -- --reporter dot && nyc report",
+    "lint": "eslint src/ test/",
     "dev": "make dev",
-    "lint": "make lint",
     "prepublish": "make lib"
   },
   "repository": {

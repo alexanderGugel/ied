@@ -43,13 +43,13 @@ clean:
 	rm -rf lib test/test
 
 lint:
-	$(DEPS_BIN_DIR)/eslint src/ test/
+	npm run lint
 
 docs: src
 	$(DEPS_BIN_DIR)/esdoc -c esdoc.json
 
 test:
-	$(DEPS_BIN_DIR)/mocha
+	npm run test
 
 dev:
 	$(DEPS_BIN_DIR)/mocha --watch

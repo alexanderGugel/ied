@@ -9,5 +9,7 @@ node_js:
   - "iojs"
 
 script:
-  - make test
-  - make lint
+  - time npm run test:specs
+  - time npm run test:e2e
+  - npm run lint
+  - npm test:coverage

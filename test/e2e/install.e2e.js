@@ -26,7 +26,7 @@ const buildTargets = [
 const base = path.join(__dirname, '../../.tmp/test')
 const ied = path.join(__dirname, '../../lib/cmd')
 
-describe('e2e', () => {
+describe('e2e install', () => {
 	targets.forEach((target) => {
 		describe(`ied install ${target}`, function () {
 			const cwd = path.join(base, target)
@@ -62,6 +62,9 @@ describe('e2e', () => {
 			})
 		})
 	})
+})
+
+describe('e2e install & build', () => {
 	buildTargets.forEach((target) => {
 		describe(`ied install ${buildTargets} --build`, function () {
 			const cwd = path.join(base, target)
