@@ -9,7 +9,7 @@ node_js:
   - "iojs"
 
 script:
-  - time npm run test:specs
+  - time npm run test:spec
   - time npm run test:e2e
   - npm run lint
-  - npm test:coverage
+  - npm run test:coverage

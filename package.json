@@ -46,8 +46,8 @@
   "scripts": {
     "test": "npm run test:specs && npm run test:e2e",
     "test:e2e": "mocha test/e2e",
-    "test:specs": "mocha test/specs",
-    "test:coverage": "nyc --reporter=lcov npm run test:specs -- --reporter dot && nyc report",
+    "test:spec": "mocha test/spec",
+    "test:coverage": "nyc --reporter=lcov npm run test:spec -- --reporter dot && nyc report",
     "lint": "eslint src/ test/",
     "dev": "make dev",
     "prepublish": "make lib"
