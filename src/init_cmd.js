@@ -16,9 +16,7 @@ export default function initCmd (cwd) {
 				console.log('init canceled!')
 				return
 			}
-
 			throw err
 		}
 	})
 }
-

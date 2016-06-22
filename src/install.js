@@ -83,7 +83,7 @@ export class LocalConflictError extends Error {
  */
 export function resolveLocal (nodeModules, parentTarget, name, version, isExplicit) {
 	const linkname = path.join(nodeModules, parentTarget, 'node_modules', name)
-	const fetch = () => EmptyObservable.create()
+	const mockFetch = () => EmptyObservable.create()
 	log(`resolving ${linkname} from node_modules`)
 
 	// support `file:` with symlinks
@@ -104,7 +104,7 @@ export function resolveLocal (nodeModules, parentTarget, name, version, isExplic
 			if (isExplicit && !satisfies(pkgJson.version, version)) {
 				throw new LocalConflictError(name, pkgJson.version, version)
 			}
-			return {parentTarget, pkgJson, target, name, fetch}
+			return {parentTarget, pkgJson, target, name, fetch: mockFetch}
 		})
 	})
 }
@@ -134,7 +134,7 @@ export function resolveRemote (nodeModules, parentTarget, name, version, isExpli
 		case 'hosted':
 			return resolveFromGitHub(nodeModules, parentTarget, parsedSpec)
 		default:
-			throw new Error('Unknown package spec: ' + parsedSpec.type + ' for ' + name)
+			throw new Error(`Unknown package spec: ${parsedSpec.type} for ${name}`)
 	}
 }
 
@@ -152,7 +152,7 @@ export function resolveFromNpm (nodeModules, parentTarget, parsedSpec) {
 	return registry.match(name, spec, options)::map((pkgJson) => {
 		const target = pkgJson.dist.shasum
 		log(`resolved ${raw} to tarball shasum ${target} from npm`)
-		return { parentTarget, pkgJson, target, name, type, fetch }
+		return {parentTarget, pkgJson, target, name, type, fetch}
 	})
 }
 
@@ -173,7 +173,7 @@ export function resolveFromTarball (nodeModules, parentTarget, parsedSpec) {
 		const shasum = hash.digest('hex')
 		const pkgJson = {name, dist: {tarball: spec, shasum}}
 		log(`resolved ${raw} to uri shasum ${shasum} from tarball`)
-		observer.next({ parentTarget, pkgJson, target: shasum, name, type, fetch })
+		observer.next({parentTarget, pkgJson, target: shasum, name, type, fetch})
 		observer.complete()
 	})
 }
@@ -197,17 +197,17 @@ export function resolveFromGitHub (nodeModules, parentTarget, parsedSpec) {
 	const pkgUri = hosted.directUrl
 	// fetch specified ref current commit to be used as a shasum for storage
 	// @TODO handle GitHub API rejections
-	const refUri = url.resolve('https://api.github.com/repos/', githubUri + '/git/refs/heads/' + ref)
+	const refUri = url.resolve(`https://api.github.com/repos/${githubUri}/git/refs/heads/${ref}`)
 	const options = {...config.httpOptions, retries: config.retries}
 	return forkJoinStatic(
-		registry.fetch(pkgUri, options)::map(({ body }) => JSON.parse(body)),
-		registry.fetch(refUri, options)::map(({ body }) => body)
+		registry.fetch(pkgUri, options)::map(({body}) => JSON.parse(body)),
+		registry.fetch(refUri, options)::map(({body}) => body)
 	)::map(([pkgJson, refJson]) => {
-		const tarball = url.resolve('https://codeload.github.com/', githubUri + '/tar.gz/' + ref)
+		const tarball = url.resolve(`https://codeload.github.com/${githubUri}/tar.gz/${ref}`)
 		const shasum = refJson.object.sha
-		pkgJson.dist = {tarball, shasum}
+		pkgJson.dist = {tarball, shasum} // eslint-disable-line no-param-reassign
 		log(`resolved ${name}@${ref} to commit shasum ${shasum} from github`)
-		return { parentTarget, pkgJson, target: shasum, name: pkgJson.name, type, fetch }
+		return {parentTarget, pkgJson, target: shasum, name: pkgJson.name, type, fetch}
 	}, {})
 }
 
@@ -254,7 +254,7 @@ export function resolveAll (nodeModules, targets = Object.create(null), isExplic
 			return EmptyObservable.create()
 		}
 
-		targets[target] = true
+		targets[target] = true // eslint-disable-line no-param-reassign
 
 		// install devDependencies of entry dependency (project-level)
 		const fields = target === '..' ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
@@ -318,20 +318,21 @@ function checkShasum (shasum, expected, tarball) {
 function download (tarball, expected, type) {
 	log(`downloading ${tarball}, expecting ${expected}`)
 	return Observable.create((observer) => {
+		const shasum = crypto.createHash('sha1')
+		const response = needle.get(tarball, config.httpOptions)
+		const cached = response.pipe(cache.write())
+
 		const errorHandler = (error) => observer.error(error)
 		const dataHandler = (chunk) => shasum.update(chunk)
 		const finishHandler = () => {
 			const actualShasum = shasum.digest('hex')
 			log(`downloaded ${actualShasum} into ${cached.path}`)
 			// only actually check shasum integrity for npm tarballs
-			const expectedShasum = ['range', 'version', 'tag'].indexOf(type) !== -1 ? actualShasum : expected
-			observer.next({ tmpPath: cached.path, shasum: expectedShasum })
+			const expectedShasum = ['range', 'version', 'tag'].indexOf(type) !== -1 ?
+				actualShasum : expected
+			observer.next({tmpPath: cached.path, shasum: expectedShasum})
 			observer.complete()
 		}
-
-		const shasum = crypto.createHash('sha1')
-		const response = needle.get(tarball, config.httpOptions)
-		const cached = response.pipe(cache.write())
 
 		response.on('data', dataHandler)
 		response.on('error', errorHandler)
@@ -339,7 +340,7 @@ function download (tarball, expected, type) {
 		cached.on('error', errorHandler)
 		cached.on('finish', finishHandler)
 	})
-	::mergeMap(({ tmpPath, shasum }) => {
+	::mergeMap(({tmpPath, shasum}) => {
 		if (expected) {
 			checkShasum(shasum, expected, tarball)
 		}
@@ -359,7 +360,7 @@ function fixPermissions (target, bin) {
 	}
 	log(`fixing persmissions of ${names} in ${target}`)
 	return ArrayObservable.create(paths)
-		::mergeMap((path) => util.chmod(path, execMode))
+		::mergeMap((filepath) => util.chmod(filepath, execMode))
 }
 
 function fetch (nodeModules) {
@@ -372,7 +373,7 @@ function fetch (nodeModules) {
 		if (error.code !== 'ENOENT') {
 			throw error
 		}
-		const extracted = cache.extract(where, shasum)::_catch((error) => {
+		const extracted = cache.extract(where, shasum)::_catch((error) => { // eslint-disable-line
 			if (error.code !== 'ENOENT') {
 				throw error
 			}
@@ -381,12 +382,12 @@ function fetch (nodeModules) {
 				cache.extract(where, shasum)
 			)
 		})
-		const fixedPermissions = fixPermissions(where, normalizeBin({ name, bin }))
+		const fixedPermissions = fixPermissions(where, normalizeBin({name, bin}))
 		return concatStatic(extracted, fixedPermissions)
 	})
 }
 
 export function fetchAll (nodeModules) {
-	const fetch = (dep) => dep.fetch(nodeModules)::retry(config.retries)
-	return this::distinctKey('target')::mergeMap(fetch)
+	const fetchWithRetry = (dep) => dep.fetch(nodeModules)::retry(config.retries)
+	return this::distinctKey('target')::mergeMap(fetchWithRetry)
 }

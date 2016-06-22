@@ -42,19 +42,19 @@ function debuglog (set) {
 	if (debugEnv === undefined) {
 		debugEnv = process.env.NODE_DEBUG || ''
 	}
-	set = set.toUpperCase()
-	if (!debugs[set]) {
-		if (debugEnv === '*' || new RegExp('\\b' + set + '\\b', 'i').test(debugEnv)) {
+	const upperSet = set.toUpperCase()
+	if (!debugs[upperSet]) {
+		if (debugEnv === '*' || new RegExp(`\\b${upperSet}\\b`, 'i').test(debugEnv)) {
 			const pid = process.pid
-			debugs[set] = (...args) => {
+			debugs[upperSet] = (...args) => {
 				const msg = util.format(...args)
-				console.error('%s %d: %s', set, pid, msg)
+				console.error('%s %d: %s', upperSet, pid, msg)
 			}
 		} else {
-			debugs[set] = Function.prototype
+			debugs[upperSet] = Function.prototype
 		}
 	}
-	return debugs[set]
+	return debugs[upperSet]
 }
 
 export default debuglog

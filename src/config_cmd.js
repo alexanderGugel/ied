@@ -6,14 +6,12 @@ import Table from 'easy-table'
  */
 export default function configCmd () {
 	const table = new Table()
-	const keys = Object.keys(config)
-
-	for (let key of keys) {
+	Object.keys(config).forEach(key => {
 		const value = config[key]
 		table.cell('key', key)
 		table.cell('value', value)
 		table.newRow()
-	}
+	})
 
 	console.log(table.toString())
 }

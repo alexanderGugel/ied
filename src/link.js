@@ -34,7 +34,7 @@ export function getSymlinks (cwd, pkgJson) {
 export function linkToGlobal (cwd) {
 	return readFileJSON(path.join(cwd, 'package.json'))
 		::mergeMap((pkgJson) => getSymlinks(cwd, pkgJson))
-		::mergeMap(([ src, dst ]) => forceSymlink(src, dst))
+		::mergeMap(([src, dst]) => forceSymlink(src, dst))
 }
 
 /**

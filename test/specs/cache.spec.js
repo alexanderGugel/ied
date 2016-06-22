@@ -35,9 +35,9 @@ describe('cache', () => {
 			const writeStream = {}
 			const randomId = '123'
 			sandbox.stub(uuid, 'v4').returns(randomId)
-			sandbox.stub(fs, 'WriteStream').returns(writeStream)
-			assert.equal(cache.write(), writeStream, 'should return result of fs.WriteStream')
-			sinon.assert.calledWithExactly(fs.WriteStream, `${config.cacheDir}/.tmp/${randomId}`)
+			sandbox.stub(fs, 'createWriteStream').returns(writeStream)
+			assert.equal(cache.write(), writeStream, 'should return result of fs.createWriteStream')
+			sinon.assert.calledWithExactly(fs.createWriteStream, `${config.cacheDir}/.tmp/${randomId}`)
 		})
 	})
 
@@ -55,9 +55,9 @@ describe('cache', () => {
 		it('should open a ReadStream to specified shasum in cacheDir', () => {
 			const readStream = {}
 			const shasum = '5e2f6970611f079c7cf857de1dc7aa1b480de7a5'
-			sandbox.stub(fs, 'ReadStream').returns(readStream)
-			assert.equal(cache.read(shasum), readStream, 'should return result of fs.ReadStream')
-			sinon.assert.calledWithExactly(fs.ReadStream, `${config.cacheDir}/${shasum}`)
+			sandbox.stub(fs, 'createReadStream').returns(readStream)
+			assert.equal(cache.read(shasum), readStream, 'should return result of fs.createReadStream')
+			sinon.assert.calledWithExactly(fs.createReadStream, `${config.cacheDir}/${shasum}`)
 		})
 	})
 
@@ -71,7 +71,7 @@ describe('cache', () => {
 
 		context('when cache.read read stream emits an error', () => {
 			it('should throw an error', () => {
-				const readStream = stream.Readable()
+				const readStream = new stream.Readable()
 				sandbox.stub(cache, 'read').returns(readStream)
 				const expectedError = new Error()
 
@@ -91,8 +91,8 @@ describe('cache', () => {
 
 		context('when tar.extract read stream emits an error', () => {
 			it('should thorw an error', () => {
-				const readStream = stream.Readable()
-				sandbox.stub(cache, 'read').returns(stream.Readable())
+				const readStream = new stream.Readable()
+				sandbox.stub(cache, 'read').returns(new stream.Readable())
 				sandbox.stub(tar, 'extract').returns(readStream)
 
 				const expectedError = new Error()

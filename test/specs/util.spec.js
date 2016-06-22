@@ -97,7 +97,7 @@ describe('util', () => {
 		it('should set terminal title', () => {
 			const title = 'some title'
 			util.setTitle(title)
-			const exepctedTitle = String.fromCharCode(27) + ']0;' + title + String.fromCharCode(7)
+			const exepctedTitle = `${String.fromCharCode(27)}]0;${title}${String.fromCharCode(7)}`
 			sinon.assert.calledOnce(process.stdout.write)
 			sinon.assert.calledWithExactly(process.stdout.write, exepctedTitle)
 		})
