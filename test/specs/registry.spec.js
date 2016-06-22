@@ -2,7 +2,7 @@ import sinon from 'sinon'
 import url from 'url'
 import assert from 'assert'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
-import * as registry from '../src/registry'
+import * as registry from '../../src/registry'
 
 describe('registry', () => {
 	const sandbox = sinon.sandbox.create()

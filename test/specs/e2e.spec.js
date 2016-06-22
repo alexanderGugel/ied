@@ -23,10 +23,13 @@ const buildTargets = [
 	'dtrace-provider'
 ]
 
+const base = path.join(__dirname, '../../.tmp/test')
+const ied = path.join(__dirname, '../../lib/cmd')
+
 describe('e2e', () => {
 	targets.forEach((target) => {
 		describe(`ied install ${target}`, function () {
-			let cwd = path.join(__dirname, 'test', target)
+			let cwd = path.join(base, target)
 			this.timeout(60 * 1000)
 
 			before((done) => {
@@ -38,7 +41,7 @@ describe('e2e', () => {
 			})
 
 			before((done) => {
-				spawn('node', [path.join(__dirname, '../lib/cmd'), 'install', target], {
+				spawn('node', [ied, 'install', target], {
 					cwd,
 					stdio: 'inherit'
 				})
@@ -61,7 +64,7 @@ describe('e2e', () => {
 	})
 	buildTargets.forEach((target) => {
 		describe(`ied install ${buildTargets} --build`, function () {
-			let cwd = path.join(__dirname, 'test', target)
+			let cwd = path.join(base, target)
 			this.timeout(60 * 1000)
 
 			before((done) => {
@@ -73,7 +76,7 @@ describe('e2e', () => {
 			})
 
 			before((done) => {
-				spawn('node', [path.join(__dirname, '../lib/cmd'), 'install', '--build', target], {
+				spawn('node', [ied, 'install', '--build', target], {
 					cwd,
 					stdio: 'inherit'
 				})

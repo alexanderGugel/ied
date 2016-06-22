@@ -7,7 +7,6 @@ INSTALL_DIR = $(HOME)/.node_modules
 BIN_DIR = /usr/local/bin
 BIN = ied
 DEPS_BIN_DIR = ./node_modules/.bin
-MOCHA_FLAGS = --compilers js:babel-register --reporter min
 SRC = $(wildcard src/*.js)
 LIB = $(SRC:src/%.js=lib/%.js)
 
@@ -50,10 +49,10 @@ docs: src
 	$(DEPS_BIN_DIR)/esdoc -c esdoc.json
 
 test:
-	$(DEPS_BIN_DIR)/mocha test/*-test.js $(MOCHA_FLAGS)
+	$(DEPS_BIN_DIR)/mocha
 
 dev:
-	$(DEPS_BIN_DIR)/mocha test/*-test.js $(MOCHA_FLAGS) --watch
+	$(DEPS_BIN_DIR)/mocha --watch
 
 watch:
 	NODE_ENV=development $(DEPS_BIN_DIR)/babel -w src --out-dir lib -s inline

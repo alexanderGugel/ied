@@ -1,6 +1,6 @@
 import sinon from 'sinon'
 import assert from 'assert'
-import * as util from '../src/util'
+import * as util from '../../src/util'
 
 describe('util', () => {
 	const sandbox = sinon.sandbox.create()

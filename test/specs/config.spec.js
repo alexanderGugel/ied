@@ -1,5 +1,5 @@
 import assert from 'assert'
-import * as config from '../src/config'
+import * as config from '../../src/config'
 
 describe('config', () => {
 	describe('isWindows', () => {

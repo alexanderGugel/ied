@@ -40,7 +40,8 @@
     "sinon": "^1.17.4"
   },
   "scripts": {
-    "test": "make test",
+    "test": "mocha",
+    "test:watch": "npm run test -- --watch",
     "dev": "make dev",
     "lint": "make lint",
     "prepublish": "make lib"

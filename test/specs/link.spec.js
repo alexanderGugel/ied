@@ -1,7 +1,7 @@
 import assert from 'assert'
 import sinon from 'sinon'
-import * as config from '../src/config'
-import * as link from '../src/link'
+import * as config from '../../src/config'
+import * as link from '../../src/link'
 
 describe('link', () => {
 	const sandbox = sinon.sandbox.create()

@@ -2,6 +2,7 @@
 logs
 *.log
 npm-debug.log*
+.tmp
 
 # Runtime data
 pids
@@ -29,4 +30,3 @@ lib
 
 # eslint docs
 docs
-

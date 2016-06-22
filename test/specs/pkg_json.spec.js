@@ -1,8 +1,8 @@
 import assert from 'assert'
 import sinon from 'sinon'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
-import * as util from '../src/util'
-import * as pkgJson from '../src/pkg_json'
+import * as util from '../../src/util'
+import * as pkgJson from '../../src/pkg_json'
 
 describe('pkgJson', () => {
 	const sandbox = sinon.sandbox.create()

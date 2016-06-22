@@ -1,6 +1,6 @@
 import sinon from 'sinon'
-import * as config from '../src/config'
-import configCmd from '../src/config_cmd'
+import * as config from '../../src/config'
+import configCmd from '../../src/config_cmd'
 
 describe('configCmd', () => {
 	const sandbox = sinon.sandbox.create()
