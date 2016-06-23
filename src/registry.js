@@ -30,10 +30,9 @@ export const requests = Object.create(null)
  * clear the internal cache used for pending and completed HTTP requests.
  */
 export function reset () {
-	const uris = Object.keys(requests)
-	for (let uri of uris) {
+	Object.keys(requests).forEach(uri => {
 		delete requests[uri]
-	}
+	})
 }
 
 /**
@@ -44,7 +43,7 @@ export function reset () {
  * @throws {assert.AssertionError} if the status code is not 200.
  */
 export function checkStatus (uri, resp) {
-	const { statusCode, body: { error } } = resp
+	const {statusCode, body: {error}} = resp
 	assert.equal(statusCode, 200, `error status code ${uri}: ${error}`)
 }
 
@@ -57,7 +56,7 @@ export function checkStatus (uri, resp) {
 export function escapeName (name) {
 	const isScoped = name.charAt(0) === '@'
 	const escapedName = isScoped
-		? '@' + encodeURIComponent(name.substr(1))
+		? `@${encodeURIComponent(name.substr(1))}`
 		: encodeURIComponent(name)
 	return escapedName
 }
@@ -94,6 +93,6 @@ export function fetch (uri, options = {}) {
 export function match (name, version, options = {}) {
 	const escapedName = escapeName(name)
 	const {registry = DEFAULT_REGISTRY, ...fetchOptions} = options
-	const uri = url.resolve(registry, escapedName + '/' + version)
-	return fetch(uri, fetchOptions)::map(({ body }) => body)
+	const uri = url.resolve(registry, `${escapedName}/${version}`)
+	return fetch(uri, fetchOptions)::map(({body}) => body)
 }

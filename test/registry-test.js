@@ -42,7 +42,7 @@ describe('registry', () => {
 	describe('checkStatus', () => {
 		context('when statusCode is not 200', () => {
 			it('should throw an error', () => {
-				const response = { statusCode: 400, body: { error: 'Some error'} }
+				const response = {statusCode: 400, body: {error: 'Some error'}}
 				assert.throws(() => {
 					registry.checkStatus('http://example.com', response)
 				})
@@ -50,7 +50,7 @@ describe('registry', () => {
 		})
 		context('when statusCode is 200', () => {
 			it('should not throw an error', () => {
-				const response = { statusCode: 200, body: {} }
+				const response = {statusCode: 200, body: {}}
 				registry.checkStatus('http://example.com', response)
 			})
 		})

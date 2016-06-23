@@ -66,7 +66,7 @@ export function build (nodeModules, dep) {
 
 		const childProcess = spawn(config.sh, [config.shFlag, script], {
 			cwd: path.join(nodeModules, target, 'package'),
-			env: env,
+			env,
 			stdio: 'inherit'
 			// shell: true // does break `dtrace-provider@0.6.0` build
 		})
@@ -85,12 +85,12 @@ export function build (nodeModules, dep) {
  * @param {Dep} dep - dependency to be parsed.
  * @return {Array.<Object>} - array of script targets to be executed.
  */
-export function parseLifecycleScripts ({ target, pkgJson: { scripts = {} } }) {
+export function parseLifecycleScripts ({target, pkgJson: {scripts = {}}}) {
 	const results = []
 	for (let i = 0; i < LIFECYCLE_SCRIPTS.length; i++) {
 		const name = LIFECYCLE_SCRIPTS[i]
 		const script = scripts[name]
-		if (script) results.push({ target, script })
+		if (script) results.push({target, script})
 	}
 	return results
 }
@@ -110,5 +110,5 @@ export function buildAll (nodeModules) {
 		::concatMap((script) => build(nodeModules, script))
 		::every((code) => code === 0)
 		::filter((ok) => !ok)
-		::_do((ok) => { throw new FailedBuildError() })
+		::_do(() => { throw new FailedBuildError() })
 }

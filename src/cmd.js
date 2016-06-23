@@ -32,7 +32,7 @@ const boolean = [
 ]
 
 const cwd = process.cwd()
-const argv = minimist(process.argv.slice(2), { alias, string, boolean })
+const argv = minimist(process.argv.slice(2), {alias, string, boolean})
 
 if (argv.registry) {
 	config.registry = argv.registry
@@ -88,9 +88,7 @@ let cacheCmd
 		case 'build':
 		case 'stop':
 			runCmd = require('./run_cmd').default
-			const _argv = Object.create(argv)
-			_argv._ = ['run'].concat(argv._)
-			runCmd(cwd, _argv).subscribe()
+			runCmd(cwd, {...argv, _: ['run'].concat(argv._)}).subscribe()
 			break
 		case 'ping':
 			pingCmd = require('./ping_cmd').default

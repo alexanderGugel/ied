@@ -15,6 +15,6 @@ export default function shellCmd (cwd) {
 
 	spawn(config.sh, [], {
 		stdio: 'inherit',
-		env: env
+		env
 	})
 }
