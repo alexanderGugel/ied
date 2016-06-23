@@ -26,7 +26,7 @@ export default function installCmd (cwd, argv) {
 	const nodeModules = path.join(cwd, 'node_modules')
 
 	const resolvedAll = updatedPkgJSONs
-		::map((pkgJson) => ({ pkgJson, target: '..' }))
+		::map((pkgJson) => ({pkgJson, target: '..'}))
 		::resolveAll(nodeModules, undefined, isExplicit)::skip(1)
 		::publishReplay().refCount()
 

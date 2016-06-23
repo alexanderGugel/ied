@@ -42,9 +42,9 @@ function debuglog (set) {
 	if (debugEnv === undefined) {
 		debugEnv = process.env.NODE_DEBUG || ''
 	}
-	set = set.toUpperCase()
+	set = set.toUpperCase() // eslint-disable-line
 	if (!debugs[set]) {
-		if (debugEnv === '*' || new RegExp('\\b' + set + '\\b', 'i').test(debugEnv)) {
+		if (debugEnv === '*' || new RegExp('\\b' + set + '\\b', 'i').test(debugEnv)) { // eslint-disable-line
 			const pid = process.pid
 			debugs[set] = (...args) => {
 				const msg = util.format(...args)

@@ -10,6 +10,6 @@ import {_do} from 'rxjs/operator/do'
  */
 export default function versionCmd () {
 	return readFileJSON(path.join(__dirname, '../package.json'))
-		::map(({ version }) => version)
+		::map(({version}) => version)
 		::_do((version) => console.log(`ied version ${version}`))
 }

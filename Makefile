@@ -44,7 +44,7 @@ clean:
 	rm -rf lib test/test
 
 lint:
-	$(DEPS_BIN_DIR)/eslint src
+	$(DEPS_BIN_DIR)/eslint src/ test/
 
 docs: src
 	$(DEPS_BIN_DIR)/esdoc -c esdoc.json

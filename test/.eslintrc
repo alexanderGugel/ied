@@ -1,0 +1,11 @@
+{
+  "extends": "./../.eslintrc",
+  "parser": "babel-eslint",
+  "env": {
+    mocha: true
+  },
+  "rules": {
+    "func-names": "off",
+    "no-underscore-dangle": "off"
+  }
+}
