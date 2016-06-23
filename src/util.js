@@ -100,9 +100,10 @@ export const mkdirp = createObservableFactory(_mkdirp)
 export function entries () {
 	return this::mergeMap((object) => {
 		const results = []
-		Object.keys(object).forEach(key => {
+		const keys = Object.keys(object)
+		for (const key of keys) {
 			results.push([key, object[key]])
-		})
+		}
 		return results
 	})
 }

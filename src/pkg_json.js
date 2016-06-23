@@ -95,12 +95,13 @@ export function fromFs (baseDir) {
 
 export function updatePkgJson (pkgJson, diff) {
 	const updatedPkgJson = {...pkgJson}
-	Object.keys(diff).forEach(field => {
+	const fields = Object.keys(diff)
+	for (const field of fields) {
 		updatedPkgJson[field] = {
 			...updatedPkgJson[field],
 			...diff[field]
 		}
-	})
+	}
 	return updatedPkgJson
 }
 

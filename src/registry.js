@@ -30,9 +30,10 @@ export const requests = Object.create(null)
  * clear the internal cache used for pending and completed HTTP requests.
  */
 export function reset () {
-	Object.keys(requests).forEach(uri => {
+	const uris = Object.keys(requests)
+	for (const uri of uris) {
 		delete requests[uri]
-	})
+	}
 }
 
 /**
