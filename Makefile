@@ -42,14 +42,14 @@ uninstall:
 clean:
 	rm -rf lib test/test
 
-lint:
-	npm run lint
-
 docs: src
 	$(DEPS_BIN_DIR)/esdoc -c esdoc.json
 
 test:
-	npm run test
+	./lib/cmd.js run test
+
+lint:
+	./lib/cmd.js run lint
 
 dev:
 	$(DEPS_BIN_DIR)/mocha --watch

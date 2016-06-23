@@ -43,7 +43,7 @@
     "sinon": "^1.17.4"
   },
   "scripts": {
-    "test": "npm run test:specs && npm run test:e2e",
+    "test": "npm run test:spec && npm run test:e2e",
     "test:e2e": "mocha test/e2e",
     "test:spec": "mocha test/spec",
     "test:coverage": "nyc --reporter=lcov npm run test:spec -- --reporter dot && nyc report",
