@@ -46,13 +46,13 @@ docs: src
 	$(DEPS_BIN_DIR)/esdoc -c esdoc.json
 
 test:
-	./lib/cmd.js run test
+	./lib/cmd.js test
 
 lint:
 	./lib/cmd.js run lint
 
 dev:
-	$(DEPS_BIN_DIR)/mocha --watch
+	./lib/cmd.js start
 
 watch:
-	NODE_ENV=development $(DEPS_BIN_DIR)/babel -w src --out-dir lib -s inline
+	./lib/cmd.js compile:watch
