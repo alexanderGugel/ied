@@ -17,20 +17,17 @@ import * as config from './config'
  * @return {Function} - cold observable sequence factory.
  */
 export function createObservableFactory (fn, thisArg) {
-	return function () {
-		return Observable.create((observer) => {
-			fn.apply(thisArg, [...arguments, (error, ...results) => {
+	return (...args) =>
+		Observable.create((observer) => {
+			fn.apply(thisArg, [...args, (error, ...results) => {
 				if (error) {
 					observer.error(error)
 				} else {
-					for (let result of results) {
-						observer.next(result)
-					}
+					results.forEach(result => observer.next(result))
 					observer.complete()
 				}
 			}])
 		})
-	}
 }
 
 /**
@@ -38,9 +35,9 @@ export function createObservableFactory (fn, thisArg) {
  * arguments to [`needle`](https://www.npmjs.com/package/needle).
  * @return {Observable} - observable sequence of a single response object.
  */
-export function httpGet () {
+export function httpGet (...args) {
 	return Observable.create((observer) => {
-		needle.get(...arguments, (error, response) => {
+		needle.get(...args, (error, response) => {
 			if (error) observer.error(error)
 			else {
 				observer.next(response)
@@ -102,12 +99,12 @@ export const mkdirp = createObservableFactory(_mkdirp)
  */
 export function entries () {
 	return this::mergeMap((object) => {
+		const results = []
 		const keys = Object.keys(object)
-		const entries = []
-		for (let key of keys) {
-			entries.push([key, object[key]])
+		for (const key of keys) {
+			results.push([key, object[key]])
 		}
-		return entries
+		return results
 	})
 }
 
@@ -127,6 +124,6 @@ export function readFileJSON (file) {
  */
 export function setTitle (title) {
 	process.stdout.write(
-		String.fromCharCode(27) + ']0;' + title + String.fromCharCode(7)
+		`${String.fromCharCode(27)}]0;${title}${String.fromCharCode(7)}`
 	)
 }

@@ -27,7 +27,9 @@
   },
   "devDependencies": {
     "babel-cli": "^6.10.1",
+    "babel-core": "^6.10.4",
     "babel-eslint": "^6.0.5",
+    "babel-plugin-__coverage__": "^11.0.0",
     "babel-plugin-transform-function-bind": "^6.8.0",
     "babel-plugin-transform-object-rest-spread": "^6.8.0",
     "babel-preset-es2015": "^6.9.0",
@@ -35,15 +37,24 @@
     "esdoc": "^0.4.7",
     "esdoc-es7-plugin": "0.0.3",
     "eslint": "^2.13.1",
+    "eslint-config-airbnb-base": "^3.0.1",
+    "eslint-plugin-import": "^1.9.2",
     "mocha": "^2.5.3",
+    "nyc": "^6.6.1",
     "resolve": "^1.1.7",
+    "rimraf": "^2.5.2",
     "sinon": "^1.17.4"
   },
   "scripts": {
-    "test": "make test",
-    "dev": "make dev",
-    "lint": "make lint",
-    "prepublish": "make lib"
+    "start": "npm run test:spec -- --watch",
+    "test": "npm run test:spec && npm run test:e2e",
+    "test:e2e": "rimraf .tmp/test/*; NODE_ENV=test mocha test/e2e",
+    "test:spec": "NODE_ENV=test mocha test/spec",
+    "test:coverage": "nyc --reporter=lcov npm run test:spec -- --reporter dot && nyc report",
+    "compile": "rimraf lib/*; NODE_ENV=production babel src/ -d lib/",
+    "compile:watch": "NODE_ENV=development npm run compile -- -w",
+    "lint": "eslint src/ test/",
+    "prepublish": "npm run compile"
   },
   "repository": {
     "type": "git",
@@ -59,5 +70,9 @@
   "files": [
     "lib",
     "USAGE.txt"
-  ]
+  ],
+  "nyc": {
+    "sourceMap": false,
+    "instrument": false
+  }
 }

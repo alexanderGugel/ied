@@ -94,6 +94,6 @@ export const bearerToken = env.IED_BEARER_TOKEN || null
 export const httpOptions = {
 	proxy,
 	headers: bearerToken
-		? { authorization: `Bearer ${bearerToken}` }
+		? {authorization: `Bearer ${bearerToken}`}
 		: {}
 }

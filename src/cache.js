@@ -33,7 +33,7 @@ export function getTmp () {
  * @return {WriteStream} - Write Stream
  */
 export function write () {
-	return fs.WriteStream(getTmp())
+	return fs.createWriteStream(getTmp())
 }
 
 /**
@@ -43,7 +43,7 @@ export function write () {
  */
 export function read (id) {
 	const filename = path.join(config.cacheDir, id)
-	return fs.ReadStream(filename)
+	return fs.createReadStream(filename)
 }
 
 /**

@@ -1,7 +1,7 @@
 import assert from 'assert'
 import sinon from 'sinon'
-import * as config from '../src/config'
-import * as link from '../src/link'
+import * as config from '../../src/config'
+import * as link from '../../src/link'
 
 describe('link', () => {
 	const sandbox = sinon.sandbox.create()
@@ -11,7 +11,7 @@ describe('link', () => {
 	describe('getSymlinks', () => {
 		context('when bin = {}', () => {
 			it('should return an array of a single global node_modules link', () => {
-				const result = link.getSymlinks('/cwd', { name: 'tap' })
+				const result = link.getSymlinks('/cwd', {name: 'tap'})
 				assert.deepEqual(result, [
 					['/cwd', `${config.globalNodeModules}/tap`]
 				])
@@ -22,7 +22,7 @@ describe('link', () => {
 			it('should include bin link', () => {
 				const result = link.getSymlinks('/cwd', {
 					name: 'tap',
-					bin: { tap: 'bin/cmd' }
+					bin: {tap: 'bin/cmd'}
 				})
 				assert.deepEqual(result, [
 					['/cwd', `${config.globalNodeModules}/tap`],

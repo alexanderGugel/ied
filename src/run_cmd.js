@@ -30,9 +30,9 @@ export default function runCmd (cwd, argv) {
 	const PATH = [path.join(cwd, 'node_modules/.bin'), process.env.PATH]
 		.join(path.delimiter)
 	const env = {...process.env, PATH}
-	const runOptions = { env, stdio: 'inherit' }
+	const runOptions = {env, stdio: 'inherit'}
 
-	return pkgJson::map(({ scripts = {}}) => scripts)::entries()
+	return pkgJson::map(({scripts = {}}) => scripts)::entries() // eslint-disable-line no-shadow
 		::filter(([name]) => ~scripts.indexOf(name))
 		::concatMap(([name, script]) => run(script, runOptions)
 			::map((code) => ([name, script, code])))
@@ -61,7 +61,7 @@ function logCode ([name, script, code]) {
 	else console.error(`${prefix} failed (exit status ${code})`)
 }
 
-function logAvailable ({ scripts = {}}) {
+function logAvailable ({scripts = {}}) {
 	const available = Object.keys(scripts)
 	if (available.length) {
 		console.log(`available scripts: ${available.join(', ')}`)

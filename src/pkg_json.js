@@ -77,7 +77,7 @@ export function parseDependencies (pkgJson, fields) {
  */
 export function normalizeBin (pkgJson) {
 	switch (typeof pkgJson.bin) {
-		case 'string': return ({ [pkgJson.name]: pkgJson.bin })
+		case 'string': return ({[pkgJson.name]: pkgJson.bin})
 		case 'object': return pkgJson.bin
 		default: return {}
 	}
@@ -96,7 +96,7 @@ export function fromFs (baseDir) {
 export function updatePkgJson (pkgJson, diff) {
 	const updatedPkgJson = {...pkgJson}
 	const fields = Object.keys(diff)
-	for (let field of fields) {
+	for (const field of fields) {
 		updatedPkgJson[field] = {
 			...updatedPkgJson[field],
 			...diff[field]
@@ -148,6 +148,5 @@ export function parseArgv (argv) {
 		: argv['save-optional'] ? 'optionalDependencies'
 		: 'dependencies'
 
-	return { [field]: nameVersionPairs }
+	return {[field]: nameVersionPairs}
 }
-

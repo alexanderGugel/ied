@@ -23,10 +23,13 @@ const buildTargets = [
 	'dtrace-provider'
 ]
 
-describe('e2e', () => {
+const base = path.join(__dirname, '../../.tmp/test')
+const ied = path.join(__dirname, '../../lib/cmd')
+
+describe('e2e install', () => {
 	targets.forEach((target) => {
 		describe(`ied install ${target}`, function () {
-			let cwd = path.join(__dirname, 'test', target)
+			const cwd = path.join(base, target)
 			this.timeout(60 * 1000)
 
 			before((done) => {
@@ -38,7 +41,7 @@ describe('e2e', () => {
 			})
 
 			before((done) => {
-				spawn('node', [path.join(__dirname, '../lib/cmd'), 'install', target], {
+				spawn('node', [ied, 'install', target], {
 					cwd,
 					stdio: 'inherit'
 				})
@@ -50,7 +53,7 @@ describe('e2e', () => {
 			})
 
 			it(`should make ${target} require\'able`, (done) => {
-				resolve(target, { basedir: cwd }, (err, res) => {
+				resolve(target, {basedir: cwd}, (err, res) => {
 					assert.ifError(err)
 					assert.notEqual(res.indexOf(cwd), -1)
 					require(res)
@@ -59,9 +62,12 @@ describe('e2e', () => {
 			})
 		})
 	})
+})
+
+describe('e2e install & build', () => {
 	buildTargets.forEach((target) => {
 		describe(`ied install ${buildTargets} --build`, function () {
-			let cwd = path.join(__dirname, 'test', target)
+			const cwd = path.join(base, target)
 			this.timeout(60 * 1000)
 
 			before((done) => {
@@ -73,7 +79,7 @@ describe('e2e', () => {
 			})
 
 			before((done) => {
-				spawn('node', [path.join(__dirname, '../lib/cmd'), 'install', '--build', target], {
+				spawn('node', [ied, 'install', '--build', target], {
 					cwd,
 					stdio: 'inherit'
 				})
@@ -85,7 +91,7 @@ describe('e2e', () => {
 			})
 
 			it(`should make ${target} require\'able`, (done) => {
-				resolve(target, { basedir: cwd }, (err, res) => {
+				resolve(target, {basedir: cwd}, (err, res) => {
 					assert.ifError(err)
 					assert.notEqual(res.indexOf(cwd), -1)
 					require(res)

@@ -1,8 +1,8 @@
 import assert from 'assert'
 import sinon from 'sinon'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
-import * as util from '../src/util'
-import * as pkgJson from '../src/pkg_json'
+import * as util from '../../src/util'
+import * as pkgJson from '../../src/pkg_json'
 
 describe('pkgJson', () => {
 	const sandbox = sinon.sandbox.create()
@@ -38,7 +38,7 @@ describe('pkgJson', () => {
 				bundledDependencies: ['browserify']
 			}
 			const result = pkgJson.parseBundleDependencies(_pkgJson)
-			assert.deepEqual(result, [ 'tap', 'is-array', 'browserify' ])
+			assert.deepEqual(result, ['tap', 'is-array', 'browserify'])
 		})
 	})
 
@@ -75,7 +75,7 @@ describe('pkgJson', () => {
 			}
 			const fields = ['dependencies']
 			const result = pkgJson.parseDependencies(_pkgJson, fields)
-			assert.deepEqual(result, [ ['browserify', '1.0.9'] ])
+			assert.deepEqual(result, [['browserify', '1.0.9']])
 		})
 	})
 
@@ -84,16 +84,16 @@ describe('pkgJson', () => {
 			it('should set name as key', () => {
 				const name = 'some-package'
 				const bin = 'some-file.js'
-				const _pkgJson = { name, bin }
+				const _pkgJson = {name, bin}
 				const result = pkgJson.normalizeBin(_pkgJson)
-				assert.deepEqual(result, { [name]: bin })
+				assert.deepEqual(result, {[name]: bin})
 			})
 		})
 
 		context('when bin is an object', () => {
 			it('should return bin', () => {
-				const bin = { 'some-command': 'some-file.js' }
-				const _pkgJson = { bin }
+				const bin = {'some-command': 'some-file.js'}
+				const _pkgJson = {bin}
 				const result = pkgJson.normalizeBin(_pkgJson)
 				assert.deepEqual(result, bin)
 			})
@@ -109,7 +109,7 @@ describe('pkgJson', () => {
 
 		context('when bin is of some other type', () => {
 			it('should return empty object', () => {
-				const _pkgJson = { bin: 123 }
+				const _pkgJson = {bin: 123}
 				const result = pkgJson.normalizeBin(_pkgJson)
 				assert.deepEqual(result, {})
 			})
@@ -118,7 +118,7 @@ describe('pkgJson', () => {
 
 	describe('fromFs', () => {
 		it('should read in package.json', () => {
-			const _pkgJson = { name: 'some-package' }
+			const _pkgJson = {name: 'some-package'}
 			const readStub = sandbox.stub(util, 'readFileJSON')
 			readStub.returns(ScalarObservable.create(_pkgJson))
 			const next = sinon.spy()
@@ -135,9 +135,9 @@ describe('pkgJson', () => {
 
 	describe('updatePkgJson', () => {
 		it('should patch package.json', () => {
-			const dependencies = { tap: '1.0.0', 'is-array': '2.0.0' }
-			const devDependencies = { browserify: '1.0.0', express: '0.0.1' }
-			const _pkgJson = { dependencies, devDependencies }
+			const dependencies = {tap: '1.0.0', 'is-array': '2.0.0'}
+			const devDependencies = {browserify: '1.0.0', express: '0.0.1'}
+			const _pkgJson = {dependencies, devDependencies}
 			const diff = {
 				dependencies: {
 					ava: '1.0.0'
@@ -171,7 +171,7 @@ describe('pkgJson', () => {
 		})
 
 		it('should create pkgJSON by parsing argv', () => {
-			const _pkgJson = { dependencies: {} }
+			const _pkgJson = {dependencies: {}}
 			sandbox.stub(pkgJson, 'parseArgv').returns(_pkgJson)
 			const next = sinon.spy()
 			const error = sinon.spy()
@@ -188,20 +188,20 @@ describe('pkgJson', () => {
 	describe('parseArgv', () => {
 		context('when --save-dev', () => {
 			it('should add to devDependencies', () => {
-				const result = pkgJson.parseArgv({ _: [null, 'tap@1.0.0'], 'save-dev': true })
-				assert.deepEqual(result, { devDependencies: { tap: '1.0.0' } })
+				const result = pkgJson.parseArgv({_: [null, 'tap@1.0.0'], 'save-dev': true})
+				assert.deepEqual(result, {devDependencies: {tap: '1.0.0'}})
 			})
 		})
 		context('when --save-optional', () => {
 			it('should add to optionalDependencies', () => {
-				const result = pkgJson.parseArgv({ _: [null, 'tap@1.0.0'], 'save-optional': true })
-				assert.deepEqual(result, { optionalDependencies: { tap: '1.0.0' } })
+				const result = pkgJson.parseArgv({_: [null, 'tap@1.0.0'], 'save-optional': true})
+				assert.deepEqual(result, {optionalDependencies: {tap: '1.0.0'}})
 			})
 		})
 		context('when --save', () => {
 			it('should add to dependencies', () => {
-				const result = pkgJson.parseArgv({ _: [null, 'tap@1.0.0'], save: true })
-				assert.deepEqual(result, { dependencies: { tap: '1.0.0' } })
+				const result = pkgJson.parseArgv({_: [null, 'tap@1.0.0'], save: true})
+				assert.deepEqual(result, {dependencies: {tap: '1.0.0'}})
 			})
 		})
 	})
