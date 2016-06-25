@@ -9,51 +9,67 @@ describe('link', () => {
 	afterEach(() => sandbox.restore())
 
 	describe('getSymlinks', () => {
-		context('when bin = {}', () => {
-			it('should return an array of a single global node_modules link', () => {
-				const result = link.getSymlinks('/cwd', {name: 'tap'})
-				assert.deepEqual(result, [
+		const scenarios = [
+			[
+				{
+					name: 'tap'
+				},
+				[
 					['/cwd', `${config.globalNodeModules}/tap`]
-				])
-			})
-		})
-
-		context('when bin = { \'tap\': \'bin/cmd\' }', () => {
-			it('should include bin link', () => {
-				const result = link.getSymlinks('/cwd', {
+				]
+			],
+			[
+				{
+					name: 'tap',
+					bin: 'cmd.js'
+				},
+				[
+					['/cwd', `${config.globalNodeModules}/tap`],
+					[`${config.globalNodeModules}/tap/cmd.js`, `${config.globalBin}/tap`]
+				]
+			],
+			[
+				{
 					name: 'tap',
 					bin: {tap: 'bin/cmd'}
-				})
-				assert.deepEqual(result, [
+				},
+				[
 					['/cwd', `${config.globalNodeModules}/tap`],
-					[
-						`${config.globalNodeModules}/tap/bin/cmd`,
-						`${config.globalBin}/tap`
-					]
-				])
-			})
-		})
-
-		context('when bin = { \'tap\': \'bin/cmd\', \'tap2\': \'bin/cmd2\' }', () => {
-			it('should include all bin links', () => {
-				const result = link.getSymlinks('/cwd', {
+					[`${config.globalNodeModules}/tap/bin/cmd`, `${config.globalBin}/tap`]
+				]
+			],
+			[
+				{
 					name: 'tap',
 					bin: {
 						tap: 'bin/cmd',
 						tap2: 'bin/cmd2'
 					}
-				})
-				assert.deepEqual(result, [
+				},
+				[
 					['/cwd', `${config.globalNodeModules}/tap`],
-					[
-						`${config.globalNodeModules}/tap/bin/cmd`,
-						`${config.globalBin}/tap`
-					],
-					[
-						`${config.globalNodeModules}/tap/bin/cmd2`,
-						`${config.globalBin}/tap2`
-					]
-				])
+					[`${config.globalNodeModules}/tap/bin/cmd`, `${config.globalBin}/tap`],
+					[`${config.globalNodeModules}/tap/bin/cmd2`, `${config.globalBin}/tap2`]
+				]
+			],
+			[
+				{
+					name: 'tap',
+					bin: {tap: 'bin/cmd'}
+				},
+				[
+					['/cwd', `${config.globalNodeModules}/tap`],
+					[`${config.globalNodeModules}/tap/bin/cmd`, `${config.globalBin}/tap`]
+				]
+			]
+		]
+
+		scenarios.forEach(([bin, expected]) => {
+			context(`when pkgJSON = ${JSON.stringify(bin)}`, () => {
+				it(`should return ${JSON.stringify(expected)}`, () => {
+					const actual = link.getSymlinks('/cwd', bin)
+					assert.deepEqual(actual, expected)
+				})
 			})
 		})
 	})

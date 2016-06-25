@@ -92,14 +92,16 @@ describe('util', () => {
 	})
 
 	describe('setTitle', () => {
-		beforeEach(() => sandbox.stub(process.stdout, 'write'))
-
-		it('should set terminal title', () => {
+		it.only('should set terminal title', () => {
 			const title = 'some title'
+			sandbox.stub(process.stdout, 'write')
 			util.setTitle(title)
 			const exepctedTitle = `${String.fromCharCode(27)}]0;${title}${String.fromCharCode(7)}`
 			sinon.assert.calledOnce(process.stdout.write)
 			sinon.assert.calledWithExactly(process.stdout.write, exepctedTitle)
+
+			// otherwise it won't be printed
+			sandbox.restore()
 		})
 	})
 })
