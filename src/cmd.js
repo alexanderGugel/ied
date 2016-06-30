@@ -2,7 +2,7 @@
 
 import minimist from 'minimist'
 import * as config from './config'
-if (process.env.NODE_ENV === 'development') {
+if (['development', 'test'].indexOf(process.env.NODE_ENV) !== -1) {
 	require('source-map-support').install()
 }
 
