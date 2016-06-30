@@ -197,13 +197,13 @@ export function resolveFromGitHub (nodeModules, parentTarget, parsedSpec) {
 	const pkgUri = hosted.directUrl
 	// fetch specified ref current commit to be used as a shasum for storage
 	// @TODO handle GitHub API rejections
-	const refUri = url.resolve(`https://api.github.com/repos/${githubUri}/git/refs/heads/${ref}`)
+	const refUri = url.resolve('https://api.github.com/repos/', `${githubUri}/git/refs/heads/${ref}`)
 	const options = {...config.httpOptions, retries: config.retries}
 	return forkJoinStatic(
 		registry.fetch(pkgUri, options)::map(({body}) => JSON.parse(body)),
 		registry.fetch(refUri, options)::map(({body}) => body)
 	)::map(([pkgJson, refJson]) => {
-		const tarball = url.resolve(`https://codeload.github.com/${githubUri}/tar.gz/${ref}`)
+		const tarball = url.resolve('https://codeload.github.com', `${githubUri}/tar.gz/${ref}`)
 		const shasum = refJson.object.sha
 		pkgJson.dist = {tarball, shasum} // eslint-disable-line no-param-reassign
 		log(`resolved ${name}@${ref} to commit shasum ${shasum} from github`)

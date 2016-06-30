@@ -52,7 +52,9 @@
     "test:spec": "NODE_ENV=test mocha test/spec",
     "test:coverage": "nyc --reporter=lcov npm run test:spec -- --reporter dot && nyc report",
     "compile": "rimraf lib/*; NODE_ENV=production babel src/ -d lib/",
-    "compile:watch": "NODE_ENV=development npm run compile -- -w",
+    "compile:watch": "npm run compile -- -w",
+    "dev": "rimraf lib/*; NODE_ENV=development babel src/ -d lib/ -s",
+    "dev:watch": "npm run dev -- -w",
     "lint": "eslint src/ test/",
     "prepublish": "npm run compile"
   },
