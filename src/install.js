@@ -8,7 +8,6 @@ import {_finally} from 'rxjs/operator/finally'
 import {concatStatic} from 'rxjs/operator/concat'
 import {distinctKey} from 'rxjs/operator/distinctKey'
 import {expand} from 'rxjs/operator/expand'
-import {forkJoin as forkJoinStatic} from 'rxjs/observable/forkJoin'
 import {map} from 'rxjs/operator/map'
 import {_catch} from 'rxjs/operator/catch'
 import {mergeMap} from 'rxjs/operator/mergeMap'
@@ -132,7 +131,7 @@ export function resolveRemote (nodeModules, parentTarget, name, version, isExpli
 		case 'remote':
 			return resolveFromTarball(nodeModules, parentTarget, parsedSpec)
 		case 'hosted':
-			return resolveFromGitHub(nodeModules, parentTarget, parsedSpec)
+			return resolveFromHosted(nodeModules, parentTarget, parsedSpec)
 		default:
 			throw new Error(`Unknown package spec: ${parsedSpec.type} for ${name}`)
 	}
@@ -179,36 +178,44 @@ export function resolveFromTarball (nodeModules, parentTarget, parsedSpec) {
 }
 
 /**
- * resolve a dependency's `package.json` file from the github registry.
+ * resolve a dependency's `package.json` file from an hosted GitHub-like registry.
  * @param	{String} nodeModules - `node_modules` base directory.
  * @param	{String} parentTarget - relative parent's node_modules path.
  * @param	{Object} parsedSpec - parsed package name and specifier.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveFromGitHub (nodeModules, parentTarget, parsedSpec) {
-	const {raw, name, type, spec, hosted} = parsedSpec
-	log(`resolving ${raw} from github`)
+export function resolveFromHosted (nodeModules, parentTarget, parsedSpec) {
+	const {raw, name, type, hosted} = parsedSpec
+	log(`resolving ${raw} from ${hosted.type}`)
 
-	const hashIndex = spec.indexOf('#')
-	const ref = hashIndex !== -1 ? spec.substr(hashIndex + 1) : 'master'
-	const githubUri = spec.substr(7, hashIndex - 7)
+	const [provider, shortcut] = hosted.shortcut.split(':')
+	const [repo, ref = 'master'] = shortcut.split('#')
 
-	// fetch hosted package.json to get package name
-	const pkgUri = hosted.directUrl
-	// fetch specified ref current commit to be used as a shasum for storage
-	// @TODO handle GitHub API rejections
-	const refUri = url.resolve('https://api.github.com/repos/', `${githubUri}/git/refs/heads/${ref}`)
 	const options = {...config.httpOptions, retries: config.retries}
-	return forkJoinStatic(
-		registry.fetch(pkgUri, options)::map(({body}) => JSON.parse(body)),
-		registry.fetch(refUri, options)::map(({body}) => body)
-	)::map(([pkgJson, refJson]) => {
-		const tarball = url.resolve('https://codeload.github.com', `${githubUri}/tar.gz/${ref}`)
-		const shasum = refJson.object.sha
-		pkgJson.dist = {tarball, shasum} // eslint-disable-line no-param-reassign
-		log(`resolved ${name}@${ref} to commit shasum ${shasum} from github`)
-		return {parentTarget, pkgJson, target: shasum, name: pkgJson.name, type, fetch}
-	}, {})
+	// create shasum from directUrl for storage
+	const hash = crypto.createHash('sha1')
+	hash.update(hosted.directUrl)
+	const shasum = hash.digest('hex')
+
+	let tarball
+	switch (hosted.type) {
+		case 'github':
+			tarball = url.resolve('https://codeload.github.com', `${repo}/tar.gz/${ref}`)
+			break
+		case 'bitbucket':
+			tarball = url.resolve('https://bitbucket.org', `${repo}/get/${ref}.tar.gz`)
+			break
+		default:
+			throw new Error(`Unknown hosted type: ${hosted.type} for ${name}`)
+	}
+
+	return registry.fetch(hosted.directUrl, options)
+		::map(({body}) => JSON.parse(body))
+		::map(pkgJson => {
+			pkgJson.dist = {tarball, shasum} // eslint-disable-line no-param-reassign
+			log(`resolved ${name}@${ref} to commit shasum ${shasum} from ${provider}`)
+			return {parentTarget, pkgJson, target: shasum, name: pkgJson.name, type, fetch}
+		})
 }
 
 /**
