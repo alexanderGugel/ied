@@ -90,8 +90,8 @@ export function resolveLocal (nodeModules, parentTarget, name, version, isExplic
 	if (version.substr(0, 5) === 'file:') {
 		log(`resolved ${name}@${version} as local symlink`)
 		const isScoped = name.charAt(0) === '@'
-		const src = path.join(parentTarget, isScoped ? '..' : '', version.substr(5))
-		const dst = path.join('node_modules', parentTarget, 'node_modules', name)
+		const src = path.join('..', isScoped ? '..' : '', version.substr(5))
+		const dst = path.join(config.storageDir, parentTarget, 'node_modules', name)
 		return util.forceSymlink(src, dst)::_finally(progress.complete)
 	}
 
@@ -247,7 +247,7 @@ export function resolve (nodeModules, parentTarget, isExplicit) {
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
 export function resolveAll (nodeModules, targets = Object.create(null), isExplicit) {
-	return this::expand(({target, pkgJson}) => {
+	return this::expand(({target, pkgJson, isEntry = false}) => {
 		// cancel when we get into a circular dependency
 		if (target in targets) {
 			log(`aborting due to circular dependency ${target}`)
@@ -257,7 +257,7 @@ export function resolveAll (nodeModules, targets = Object.create(null), isExplic
 		targets[target] = true // eslint-disable-line no-param-reassign
 
 		// install devDependencies of entry dependency (project-level)
-		const fields = target === '..' ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
+		const fields = isEntry ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
 
 		log(`extracting ${fields} from ${target}`)
 
@@ -280,8 +280,8 @@ function getBinLinks (dep) {
 	const names = Object.keys(bin)
 	for (let i = 0; i < names.length; i++) {
 		const name = names[i]
-		const src = path.join('node_modules', target, 'package', bin[name])
-		const dst = path.join('node_modules', parentTarget, 'node_modules', '.bin', name)
+		const src = path.join(config.storageDir, target, 'package', bin[name])
+		const dst = path.join(config.storageDir, parentTarget, 'node_modules', '.bin', name)
 		binLinks.push([src, dst])
 	}
 	return binLinks
@@ -289,8 +289,8 @@ function getBinLinks (dep) {
 
 function getDirectLink (dep) {
 	const {parentTarget, target, name} = dep
-	const src = path.join('node_modules', target, 'package')
-	const dst = path.join('node_modules', parentTarget, 'node_modules', name)
+	const src = path.join(config.storageDir, target, 'package')
+	const dst = path.join(config.storageDir, parentTarget, 'node_modules', name)
 	return [src, dst]
 }
 
@@ -365,7 +365,7 @@ function fixPermissions (target, bin) {
 
 function fetch (nodeModules) {
 	const {target, type, pkgJson: {name, bin, dist: {tarball, shasum}}} = this
-	const where = path.join(nodeModules, target, 'package')
+	const where = path.join(nodeModules, '..', config.storageDir, target, 'package')
 
 	log(`fetching ${tarball} into ${where}`)
 

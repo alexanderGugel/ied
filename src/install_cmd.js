@@ -11,6 +11,7 @@ import {resolveAll, fetchAll, linkAll} from './install'
 import {init as initCache} from './cache'
 import {fromArgv, fromFs, save} from './pkg_json'
 import {buildAll} from './build'
+import * as config from './config'
 
 /**
  * run the installation command.
@@ -24,9 +25,10 @@ export default function installCmd (cwd, argv) {
 	const updatedPkgJSONs = isExplicit ? fromArgv(cwd, argv) : fromFs(cwd)
 
 	const nodeModules = path.join(cwd, 'node_modules')
+	const target = path.relative(config.storageDir, '.')
 
 	const resolvedAll = updatedPkgJSONs
-		::map((pkgJson) => ({pkgJson, target: '..'}))
+		::map((pkgJson) => ({pkgJson, target, isEntry: true}))
 		::resolveAll(nodeModules, undefined, isExplicit)::skip(1)
 		::publishReplay().refCount()
 

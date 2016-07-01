@@ -29,6 +29,14 @@ export const registry = env.IED_REGISTRY || 'https://registry.npmjs.org/'
 export const cacheDir = env.IED_CACHE_DIR || path.join(home, '.ied_cache')
 
 /**
+ * directory used for locally installed `node_modules`.
+ * configurable via `IED_STORAGE_DIR`, default to `node_modules/.cas`
+ * @type {String}
+ */
+export const storageDir = env.IED_STORAGE_DIR ||
+  path.join('node_modules', '.cas')
+
+/**
  * directory used for globally installed `node_modules`.
  * configurable via `IED_GLOBAL_NODE_MODULES`, default to `.node_modules` in
  * the user's home directory.
