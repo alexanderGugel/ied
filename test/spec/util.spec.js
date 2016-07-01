@@ -92,7 +92,7 @@ describe('util', () => {
 	})
 
 	describe('setTitle', () => {
-		it.only('should set terminal title', () => {
+		it('should set terminal title', () => {
 			const title = 'some title'
 			sandbox.stub(process.stdout, 'write')
 			util.setTitle(title)
