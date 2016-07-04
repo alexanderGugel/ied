@@ -23,12 +23,14 @@ const buildTargets = [
 	'dtrace-provider'
 ]
 
-const fileTargets = [
+const localTargets = [
 	'mocha@file:../../../node_modules/mocha'
 ]
 
-const githubTargets = [
-	'gulp@github:gulpjs/gulp#4.0'
+const hostedTargets = [
+	'gulp@github:gulpjs/gulp#4.0',
+	'double-ended-queue@git+https://github.com/petkaantonov/deque.git',
+	'bitbucket-api@git+https://bitbucket.org/hgarcia/node-bitbucket-api.git'
 ]
 
 const base = path.join(__dirname, '../../.tmp/test')
@@ -110,8 +112,8 @@ describe('e2e install & build', () => {
 	})
 })
 
-describe('e2e `file:` install', () => {
-	fileTargets.forEach((target) => {
+describe('e2e local install', () => {
+	localTargets.forEach((target) => {
 		describe(`ied install ${target}`, function () {
 			const [name] = target.split('@')
 			const cwd = path.join(base, name)
@@ -149,8 +151,8 @@ describe('e2e `file:` install', () => {
 	})
 })
 
-describe('e2e `github:` install', () => {
-	githubTargets.forEach((target) => {
+describe('e2e hosted install', () => {
+	hostedTargets.forEach((target) => {
 		describe(`ied install ${target}`, function () {
 			const [name] = target.split('@')
 			const cwd = path.join(base, name)
