@@ -3,7 +3,7 @@ import {map} from 'rxjs/operator/map'
 import {_do} from 'rxjs/operator/do'
 import {retry} from 'rxjs/operator/retry'
 import {publishReplay} from 'rxjs/operator/publishReplay'
-import {httpGet} from './util'
+import {httpGet, latestSatisfyingVersion} from './util'
 import assert from 'assert'
 
 /**
@@ -93,7 +93,15 @@ export function fetch (uri, options = {}) {
  */
 export function match (name, version, options = {}) {
 	const escapedName = escapeName(name)
-	const {registry = DEFAULT_REGISTRY, ...fetchOptions} = options
-	const uri = url.resolve(registry, `${escapedName}/${version}`)
-	return fetch(uri, fetchOptions)::map(({body}) => body)
+	const {registry = DEFAULT_REGISTRY, legacyMode, ...fetchOptions} = options
+	const uriPath = legacyMode ? escapedName : `${escapedName}/${version}`
+	const uri = url.resolve(registry, uriPath)
+	return fetch(uri, fetchOptions)::map(({body}) => {
+		if (!legacyMode) {
+			return body
+		}
+
+		const matched = latestSatisfyingVersion(body, version)
+		return body.versions[matched]
+	})
 }
