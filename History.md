@@ -1,6 +1,11 @@
-# Change Log
+v2.1.1 / 2016-07-23
+==================
 
-All notable changes to this project will be documented in this file.
+Simplify testing on Windows.
+
+  * Merge pull request #154 from ArjanSchouten/master
+  * Added cross-env so tests can be runned on Windows
+  * Add AUTHORS
 
 v2.1.0 / 2016-07-08
 ==================
