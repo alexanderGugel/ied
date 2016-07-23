@@ -79,6 +79,9 @@ export const rename = createObservableFactory(fs.rename, fs)
 /** @type {Function} Observable wrapper function around `fs.readlink`. */
 export const readlink = createObservableFactory(fs.readlink, fs)
 
+/** @type {Function} Observable wrapper function around `fs.readdir`. */
+export const readdir = createObservableFactory(fs.readdir, fs)
+
 /** @type {Function} Observable wrapper function around `fs.chmod`. */
 export const chmod = createObservableFactory(fs.chmod, fs)
 
