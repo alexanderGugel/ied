@@ -2,8 +2,8 @@
 	"presets": ["es2015"],
 	"plugins": ["transform-function-bind", "transform-object-rest-spread"],
 	"env": {
-    "test": {
-      "plugins": [["__coverage__", {"only": "src/"}]]
-    }
-  }
+		"test": {
+			"plugins": [["__coverage__", {"only": "src/"}]]
+		}
+	}
 }
