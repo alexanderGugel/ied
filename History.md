@@ -1,3 +1,12 @@
+v2.2.0 / 2016-07-26
+==================
+
+  * Release using CI
+  * Merge pull request #156 from alexanderGugel/default-shell
+  * Print available commands in `ied sh`
+  * Fix .babelrc formatting
+  * Default shell to $SHELL
+
 v2.1.1 / 2016-07-23
 ==================
 
