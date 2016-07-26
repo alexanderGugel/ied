@@ -22,6 +22,7 @@ import memoize from 'lodash.memoize'
 import * as cache from './cache'
 import * as config from './config'
 import * as registry from './registry'
+import * as git from './git'
 import * as util from './util'
 import * as progress from './progress'
 import {normalizeBin, parseDependencies} from './pkg_json'
@@ -132,6 +133,8 @@ export function resolveRemote (nodeModules, parentTarget, name, version, isExpli
 			return resolveFromTarball(nodeModules, parentTarget, parsedSpec)
 		case 'hosted':
 			return resolveFromHosted(nodeModules, parentTarget, parsedSpec)
+		case 'git':
+			return resolveFromGit(nodeModules, parentTarget, parsedSpec)
 		default:
 			throw new Error(`Unknown package spec: ${parsedSpec.type} for ${name}`)
 	}
@@ -213,8 +216,42 @@ export function resolveFromHosted (nodeModules, parentTarget, parsedSpec) {
 		::map(({body}) => JSON.parse(body))
 		::map(pkgJson => {
 			pkgJson.dist = {tarball, shasum} // eslint-disable-line no-param-reassign
-			log(`resolved ${name}@${ref} to commit shasum ${shasum} from ${provider}`)
+			log(`resolved ${name}@${ref} to directUrl shasum ${shasum} from ${provider}`)
 			return {parentTarget, pkgJson, target: shasum, name: pkgJson.name, type, fetch}
+		})
+}
+
+/**
+ * resolve a dependency's `package.json` file from a git endpoint.
+ * @param	{String} nodeModules - `node_modules` base directory.
+ * @param	{String} parentTarget - relative parent's node_modules path.
+ * @param	{Object} parsedSpec - parsed package name and specifier.
+ * @return {Observable} - observable sequence of `package.json` objects.
+ */
+export function resolveFromGit (nodeModules, parentTarget, parsedSpec) {
+	const {raw, type, spec} = parsedSpec
+	const mockFetch = () => EmptyObservable.create()
+	log(`resolving ${raw} from git`)
+
+	const [protocol, host] = spec.split('://')
+	const [repo, ref = 'master'] = host.split('#')
+
+	// create shasum from spec for storage
+	const hash = crypto.createHash('sha1')
+	hash.update(spec)
+	const shasum = hash.digest('hex')
+	let repoPath
+
+	return git.clone(repo, ref)
+		::mergeMap(tmpDest => {
+			repoPath = tmpDest
+			return util.readFileJSON(path.resolve(tmpDest, 'package.json'))
+		})
+		::map(pkgJson => {
+			const name = pkgJson.name
+			pkgJson.dist = {shasum, path: repoPath} // eslint-disable-line no-param-reassign
+			log(`resolved ${name}@${ref} to spec shasum ${shasum} from git`)
+			return {parentTarget, pkgJson, target: shasum, name, type, fetch: git.extract}
 		})
 }
 
