@@ -74,7 +74,7 @@ export const retries = parseInt(env.IED_REQUEST_RETRIES, 10) || 5
  * can be overridden using `IED_SH`.
  * @type {String}
  */
-export const sh = env.IED_SH || (platform === 'win32' ? env.comspec || 'cmd' : 'sh')
+export const sh = env.IED_SH || env.SHELL || (platform === 'win32' ? env.comspec || 'cmd' : 'sh')
 
 /**
  * additional flags supplied to the `sh` executable. platform dependent:

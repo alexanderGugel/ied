@@ -74,7 +74,7 @@ let cacheCmd
 		case 'sh':
 		case 'shell':
 			shellCmd = require('./shell_cmd').default
-			shellCmd(cwd)
+			shellCmd(cwd).subscribe()
 			break
 		case 'r':
 		case 'run':
