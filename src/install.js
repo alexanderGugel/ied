@@ -291,7 +291,7 @@ export function resolve (nodeModules, parentTarget, isExplicit) {
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
 export function resolveAll (nodeModules, targets = Object.create(null), isExplicit) {
-	return this::expand(({target, pkgJson, isEntry = false}) => {
+	return this::expand(({target, pkgJson, isEntry = false, isProd = false}) => {
 		// cancel when we get into a circular dependency
 		if (target in targets) {
 			log(`aborting due to circular dependency ${target}`)
@@ -301,7 +301,9 @@ export function resolveAll (nodeModules, targets = Object.create(null), isExplic
 		targets[target] = true // eslint-disable-line no-param-reassign
 
 		// install devDependencies of entry dependency (project-level)
-		const fields = isEntry ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
+		const fields = (isEntry && !isProd)
+			? ENTRY_DEPENDENCY_FIELDS
+			: DEPENDENCY_FIELDS
 
 		log(`extracting ${fields} from ${target}`)
 
