@@ -12,7 +12,6 @@ const alias = {
 	S: 'save',
 	D: 'save-dev',
 	O: 'save-optional',
-	E: 'save-exact',
 	r: 'registry',
 	b: 'build'
 }
@@ -27,7 +26,6 @@ const boolean = [
 	'save',
 	'save-dev',
 	'save-optional',
-	'save-exact',
 	'build'
 ]
 
