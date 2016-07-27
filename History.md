@@ -1,3 +1,15 @@
+v2.3.0 / 2016-07-27
+===================
+
+This release includes support for Git dependencies and a `--prod` flag used for
+excluding `devDependencies`.
+
+  * Merge pull request #157 from alexanderGugel/prod-flag
+  * Add --production flag
+  * Remove save-exact
+  * Merge pull request #155 from mgcrea/feat-resolve-git-remote
+  * Add support for git public/private remotes
+
 v2.2.0 / 2016-07-26
 ==================
 
