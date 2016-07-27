@@ -13,7 +13,8 @@ const alias = {
 	D: 'save-dev',
 	O: 'save-optional',
 	r: 'registry',
-	b: 'build'
+	b: 'build',
+	prod: 'production'
 }
 
 const string = [
@@ -26,7 +27,8 @@ const boolean = [
 	'save',
 	'save-dev',
 	'save-optional',
-	'build'
+	'build',
+	'production'
 ]
 
 const cwd = process.cwd()

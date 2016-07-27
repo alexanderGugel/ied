@@ -29,6 +29,7 @@
                         (default: http://registry.npmjs.org/)
     -b, --build         execute lifecycle scripts upon completion
                         (e.g. postinstall)
+    -prod, --production only install dependencies and optionalDependencies
 
   Example:
     ied install
