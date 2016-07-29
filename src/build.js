@@ -59,13 +59,13 @@ export function build (nodeModules, dep) {
 		const env = {npm_execpath: '', ...process.env}
 
 		env.PATH = [
-			path.join(config.storageDir, target, 'node_modules', '.bin'),
+			path.join(nodeModules, target, 'node_modules', '.bin'),
 			path.resolve(__dirname, '..', 'node_modules', '.bin'),
 			process.env.PATH
 		].join(path.delimiter)
 
 		const childProcess = spawn(config.sh, [config.shFlag, script], {
-			cwd: path.join(config.storageDir, target, 'package'),
+			cwd: path.join(nodeModules, target, 'package'),
 			env,
 			stdio: 'inherit'
 			// shell: true // does break `dtrace-provider@0.6.0` build
