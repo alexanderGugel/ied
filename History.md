@@ -1,3 +1,11 @@
+v2.3.1 / 2016-07-29
+==================
+
+This release reverts the `.cas` change, which broke the resolve function used
+for checking if a dependency was already installed.
+
+  * Revert "Add configurable storage directory that defaults to `node_modules/.cas` (fixes #96)"
+
 v2.3.0 / 2016-07-27
 ===================
 
