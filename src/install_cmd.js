@@ -32,7 +32,7 @@ export default function installCmd (cwd, argv) {
 		::publishReplay().refCount()
 
 	const initialized = initCache()::ignoreElements()
-	const linkedAll = resolvedAll::linkAll(nodeModules)
+	const linkedAll = resolvedAll::linkAll()
 	const fetchedAll = resolvedAll::fetchAll(nodeModules)
 	const installedAll = mergeStatic(linkedAll, fetchedAll)
 

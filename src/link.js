@@ -56,10 +56,9 @@ export function linkFromGlobal (cwd, name) {
  * revert the effects of `ied link` by removing the previously created
  * symbolic links (used for `ied unlink`).
  * @param {String} cwd - current working directory.
- * @param {String} name - name of the dependency to be unlinked.
  * @return {Observable} - observable sequence.
  */
-export function unlinkToGlobal (cwd, name) {
+export function unlinkToGlobal (cwd) {
 	const pkg = require(path.join(cwd, 'package.json'))
 	const symlinks = getSymlinks(cwd, pkg)
 	return ArrayObservable.create(symlinks)

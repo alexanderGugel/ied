@@ -115,10 +115,9 @@ export function resolveLocal (nodeModules, parentTarget, name, version, isExplic
  * @param	{String} parentTarget - relative parent's node_modules path.
  * @param	{String} name - name of the dependency.
  * @param	{String} version - version of the dependency.
- * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
-export function resolveRemote (nodeModules, parentTarget, name, version, isExplicit) {
+export function resolveRemote (nodeModules, parentTarget, name, version) {
 	const source = `${name}@${version}`
 	log(`resolving ${source} from remote registry`)
 
@@ -230,7 +229,6 @@ export function resolveFromHosted (nodeModules, parentTarget, parsedSpec) {
  */
 export function resolveFromGit (nodeModules, parentTarget, parsedSpec) {
 	const {raw, type, spec} = parsedSpec
-	const mockFetch = () => EmptyObservable.create()
 	log(`resolving ${raw} from git`)
 
 	const [protocol, host] = spec.split('://')
@@ -342,11 +340,10 @@ function getDirectLink (dep) {
 
 /**
  * symlink the intermediate results of the underlying observable sequence
- * @param	{String} nodeModules - `node_modules` base directory.
  * @return {Observable} - empty observable sequence that will be completed
  * once all dependencies have been symlinked.
  */
-export function linkAll (nodeModules) {
+export function linkAll () {
 	return this
 		::mergeMap((dep) => [getDirectLink(dep), ...getBinLinks(dep)])
 		::map(([src, dst]) => resolveSymlink(src, dst))
