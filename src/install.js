@@ -149,12 +149,8 @@ export function resolveRemote (nodeModules, parentTarget, name, version) {
 export function resolveFromNpm (nodeModules, parentTarget, parsedSpec) {
 	const {raw, name, type, spec} = parsedSpec
 	log(`resolving ${raw} from npm`)
-	const options = {
-		...config.httpOptions,
-		registry: config.registry,
-		retries: config.retries
-	}
-	return registry.match(name, spec, options)::map((pkgJson) => {
+	const options = {...config.httpOptions, retries: config.retries}
+	return registry.match(config.registry, name, spec, options)::map((pkgJson) => {
 		const target = pkgJson.dist.shasum
 		log(`resolved ${raw} to tarball shasum ${target} from npm`)
 		return {parentTarget, pkgJson, target, name, type, fetch}
