@@ -141,7 +141,7 @@ export function parseArgv (argv) {
 
 	const nameVersionPairs = fromPairs(names.map((target) => {
 		const nameVersion = /^(@?.+?)(?:@(.+)?)?$/.exec(target)
-		return [nameVersion[1], nameVersion[2] || '*']
+		return [nameVersion[1], nameVersion[2] || 'latest']
 	}))
 
 	const field = argv['save-dev'] ? 'devDependencies'
