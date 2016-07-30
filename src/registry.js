@@ -24,8 +24,8 @@ export const requests = Object.create(null)
  */
 export function reset () {
 	const uris = Object.keys(requests)
-	for (const uri of uris) {
-		delete requests[uri]
+	for (let i = 0, len = uris.length; i < len; i++) {
+		delete requests[uris[i]]
 	}
 }
 
