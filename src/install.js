@@ -14,11 +14,11 @@ import {_catch} from 'rxjs/operator/catch'
 import {_do} from 'rxjs/operator/do'
 import {retry} from 'rxjs/operator/retry'
 import {skip} from 'rxjs/operator/skip'
-import {satisfies} from 'semver'
 import needle from 'needle'
 import assert from 'assert'
 import npa from 'npm-package-arg'
 import memoize from 'lodash.memoize'
+import {resolveLocal} from './strategies'
 
 import * as cache from './cache'
 import * as config from './config'
@@ -55,60 +55,6 @@ export const DEPENDENCY_FIELDS = [
 	'dependencies',
 	'optionalDependencies'
 ]
-
-/**
- * error class used for representing an error that occurs due to a lifecycle
- * script that exits with a non-zero status code.
- */
-export class LocalConflictError extends Error {
-	/**
-	 * create instance.
- 	 * @param	{String} name - name of the dependency.
- 	 * @param	{String} version - local version.
- 	 * @param	{String} expected - expected version.
-	 */
-	constructor (name, version, expected) {
-		super(`Local version ${name}@${version} does not match required version @${expected}`)
-		this.name = 'LocalConflictError'
-	}
-}
-
-/**
- * resolve a dependency's `package.json` file from the local file system.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{String} parentTarget - relative parent's node_modules path.
- * @param	{String} name - name of the dependency.
- * @param	{String} version - version of the dependency.
- * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
- * @return {Observable} - observable sequence of `package.json` objects.
- */
-export function resolveLocal (nodeModules, parentTarget, name, version, isExplicit) {
-	const linkname = path.join(nodeModules, parentTarget, 'node_modules', name)
-	const mockFetch = () => EmptyObservable.create()
-	log(`resolving ${linkname} from node_modules`)
-
-	// support `file:` with symlinks
-	if (version.substr(0, 5) === 'file:') {
-		log(`resolved ${name}@${version} as local symlink`)
-		const isScoped = name.charAt(0) === '@'
-		const src = path.join(parentTarget, isScoped ? '..' : '', version.substr(5))
-		const dst = path.join('node_modules', parentTarget, 'node_modules', name)
-		return util.forceSymlink(src, dst)::_finally(progress.complete)
-	}
-
-	return util.readlink(linkname)::mergeMap((rel) => {
-		const target = path.basename(path.dirname(rel))
-		const filename = path.join(linkname, 'package.json')
-		log(`reading package.json from ${filename}`)
-
-		return util.readFileJSON(filename)::map((pkgJson) => {
-			if (isExplicit && !satisfies(pkgJson.version, version)) {
-				throw new LocalConflictError(name, pkgJson.version, version)
-			}
-			return {parentTarget, pkgJson, target, name, fetch: mockFetch}
-		})
-	})
-}
 
 /**
  * resolve a dependency's `package.json` file from a remote registry.
@@ -262,20 +208,20 @@ export function resolveFromGit (nodeModules, parentTarget, parsedSpec) {
  * @return {Obserable} - observable sequence of `package.json` root documents
  * wrapped into dependency objects representing the resolved sub-dependency.
  */
-export function resolve (nodeModules, parentTarget, isExplicit) {
+export function resolve (nodeModules, isExplicit) {
 	return this::mergeMap(([name, version]) => {
 		progress.add()
 		progress.report(`resolving ${name}@${version}`)
 		log(`resolving ${name}@${version}`)
 
-		return resolveLocal(nodeModules, parentTarget, name, version, isExplicit)
-			::_catch((error) => {
-				if (error.name !== 'LocalConflictError' && error.code !== 'ENOENT') {
-					throw error
-				}
-				log(`failed to resolve ${name}@${version} from local ${parentTarget} via ${nodeModules}`)
-				return resolveRemote(nodeModules, parentTarget, name, version, isExplicit)
-			})
+		return resolveLocal(nodeModules, name, version)
+			// ::_catch((error) => {
+			// 	if (error.name !== 'LocalConflictError' && error.code !== 'ENOENT') {
+			// 		throw error
+			// 	}
+			// 	log(`failed to resolve ${name}@${version} from local ${parentTarget} via ${nodeModules}`)
+			// 	return resolveRemote(nodeModules, parentTarget, name, version, isExplicit)
+			// })
 			::_finally(progress.complete)
 	})
 }
@@ -287,27 +233,29 @@ export function resolve (nodeModules, parentTarget, isExplicit) {
  * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
-export function resolveAll (nodeModules, targets = Object.create(null), isExplicit) {
-	return this::expand(({target, pkgJson, isProd = false}) => {
+export function resolveAll (nodeModules, locks = Object.create(null), isExplicit) {
+	return this::expand(({nodeModules, pkgJson, isProd = false}) => {
 		// cancel when we get into a circular dependency
-		if (target in targets) {
-			log(`aborting due to circular dependency ${target}`)
+		if (nodeModules in locks) {
+			log(`aborting due to circular dependency ${nodeModules}`)
 			return EmptyObservable.create()
 		}
 
-		targets[target] = true // eslint-disable-line no-param-reassign
+		locks[nodeModules] = true // eslint-disable-line no-param-reassign
 
 		// install devDependencies of entry dependency (project-level)
-		const fields = (target === '..' && !isProd)
-			? ENTRY_DEPENDENCY_FIELDS
-			: DEPENDENCY_FIELDS
+		// const fields = (nodeModules === '..' && !isProd)
+		// 	? ENTRY_DEPENDENCY_FIELDS
+		// 	: DEPENDENCY_FIELDS
 
-		log(`extracting ${fields} from ${target}`)
+		// log(`extracting ${fields} from ${cwd}`)
+
+		const fields = DEPENDENCY_FIELDS
 
 		const dependencies = parseDependencies(pkgJson, fields)
 
 		return ArrayObservable.create(dependencies)
-			::resolve(nodeModules, target, isExplicit)
+			::resolve(nodeModules, isExplicit)
 	})
 }
 
@@ -330,10 +278,10 @@ function getBinLinks (dep) {
 	return binLinks
 }
 
-function getDirectLink (dep) {
+function getDirectLink (nodeModules, dep) {
 	const {parentTarget, target, name} = dep
 	const src = path.join('node_modules', target, 'package')
-	const dst = path.join('node_modules', parentTarget, 'node_modules', name)
+	const dst = path.join('node_modules', parentTarget, name)
 	return [src, dst]
 }
 
@@ -342,9 +290,9 @@ function getDirectLink (dep) {
  * @return {Observable} - empty observable sequence that will be completed
  * once all dependencies have been symlinked.
  */
-export function linkAll () {
+export function linkAll (nodeModules) {
 	return this
-		::mergeMap((dep) => [getDirectLink(dep), ...getBinLinks(dep)])
+		::mergeMap((dep) => [getDirectLink(nodeModules, dep), ...getBinLinks(dep)])
 		::map(([src, dst]) => resolveSymlink(src, dst))
 		::mergeMap(([src, dst]) => {
 			log(`symlinking ${src} -> ${dst}`)

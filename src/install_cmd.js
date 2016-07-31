@@ -27,14 +27,15 @@ export default function installCmd (cwd, argv) {
 	const nodeModules = path.join(cwd, 'node_modules')
 
 	const resolvedAll = updatedPkgJSONs
-		::map((pkgJson) => ({pkgJson, target: '..', isProd}))
+		::map((pkgJson) => ({pkgJson, nodeModules, isProd}))
 		::resolveAll(nodeModules, undefined, isExplicit)::skip(1)
 		::publishReplay().refCount()
 
 	const initialized = initCache()::ignoreElements()
-	const linkedAll = resolvedAll::linkAll()
+	const linkedAll = resolvedAll::linkAll(nodeModules)
 	const fetchedAll = resolvedAll::fetchAll(nodeModules)
-	const installedAll = mergeStatic(linkedAll, fetchedAll)
+	const installedAll = mergeStatic(linkedAll)
+	// const installedAll = mergeStatic(linkedAll, fetchedAll)
 
 	const builtAll = argv.build
 		? resolvedAll::buildAll(nodeModules)
