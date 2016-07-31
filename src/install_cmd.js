@@ -34,7 +34,7 @@ export default function installCmd (cwd, argv) {
 	const initialized = initCache()::ignoreElements()
 	const linkedAll = resolvedAll::linkAll(nodeModules)
 	const fetchedAll = resolvedAll::fetchAll(nodeModules)
-	const installedAll = mergeStatic(linkedAll)
+	const installedAll = mergeStatic(resolvedAll)
 	// const installedAll = mergeStatic(linkedAll, fetchedAll)
 
 	const builtAll = argv.build

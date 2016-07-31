@@ -208,20 +208,20 @@ export function resolveFromGit (nodeModules, parentTarget, parsedSpec) {
  * @return {Obserable} - observable sequence of `package.json` root documents
  * wrapped into dependency objects representing the resolved sub-dependency.
  */
-export function resolve (nodeModules, isExplicit) {
+export function resolve (nodeModules, parentTarget, isExplicit) {
 	return this::mergeMap(([name, version]) => {
 		progress.add()
 		progress.report(`resolving ${name}@${version}`)
 		log(`resolving ${name}@${version}`)
 
-		return resolveLocal(nodeModules, name, version)
-			// ::_catch((error) => {
-			// 	if (error.name !== 'LocalConflictError' && error.code !== 'ENOENT') {
-			// 		throw error
-			// 	}
-			// 	log(`failed to resolve ${name}@${version} from local ${parentTarget} via ${nodeModules}`)
-			// 	return resolveRemote(nodeModules, parentTarget, name, version, isExplicit)
-			// })
+		return resolveLocal(nodeModules, name, version, isExplicit)
+			::_catch((error) => {
+				if (error.name !== 'LocalConflictError' && error.code !== 'ENOENT') {
+					throw error
+				}
+				log(`failed to resolve ${name}@${version} from local ${parentTarget} via ${nodeModules}`)
+				return resolveRemote(nodeModules, parentTarget, name, version, isExplicit)
+			})
 			::_finally(progress.complete)
 	})
 }
@@ -233,7 +233,8 @@ export function resolve (nodeModules, isExplicit) {
  * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
-export function resolveAll (nodeModules, locks = Object.create(null), isExplicit) {
+export function resolveAll (baseNodeModules, locks = Object.create(null), isExplicit) {
+	console.time('resolveAll')
 	return this::expand(({nodeModules, pkgJson, isProd = false}) => {
 		// cancel when we get into a circular dependency
 		if (nodeModules in locks) {
@@ -255,7 +256,8 @@ export function resolveAll (nodeModules, locks = Object.create(null), isExplicit
 		const dependencies = parseDependencies(pkgJson, fields)
 
 		return ArrayObservable.create(dependencies)
-			::resolve(nodeModules, isExplicit)
+			::mergeMap(([name, version]) => resolveLocal(nodeModules, name, version))
+			::_finally(() => console.timeEnd('resolveAll'))
 	})
 }
 
@@ -292,12 +294,12 @@ function getDirectLink (nodeModules, dep) {
  */
 export function linkAll (nodeModules) {
 	return this
-		::mergeMap((dep) => [getDirectLink(nodeModules, dep), ...getBinLinks(dep)])
-		::map(([src, dst]) => resolveSymlink(src, dst))
-		::mergeMap(([src, dst]) => {
-			log(`symlinking ${src} -> ${dst}`)
-			return util.forceSymlink(src, dst)
-		})
+		// ::mergeMap((dep) => [getDirectLink(nodeModules, dep), ...getBinLinks(dep)])
+		// ::map(([src, dst]) => resolveSymlink(src, dst))
+		// ::mergeMap(([src, dst]) => {
+		// 	log(`symlinking ${src} -> ${dst}`)
+		// 	return util.forceSymlink(src, dst)
+		// })
 }
 
 function checkShasum (shasum, expected, tarball) {

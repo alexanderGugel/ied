@@ -9,7 +9,7 @@ let added = 0
 let status = ''
 
 // start the spinner on startup
-spinner.start()
+// spinner.start()
 
 /**
  * add one or more scheduled tasks.
