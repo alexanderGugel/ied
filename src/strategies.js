@@ -30,7 +30,7 @@ export const registryStrategy = {
 		const options = {...config.httpOptions, retries: config.retries}
 		return registry.match(config.registry, name, version, options)
 			::map((pkgJson) => {
-				const dir = path.resolve(pDir, '../../node_modules', pkgJson.dist.shasum)
+				const dir = path.resolve(pDir, '..', pkgJson.dist.shasum)
 				return {name, version, pDir, pkgJson, dir}
 			})
 	}

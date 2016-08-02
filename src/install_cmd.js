@@ -24,7 +24,7 @@ export default function installCmd (cwd, argv) {
 	const updatedPkgJSONs = isExplicit ? fromArgv(cwd, argv) : fromFs(cwd)
 	const isProd = argv.production
 
-	const dir = path.join(cwd, 'x/x')
+	const dir = path.join(cwd, 'node_modules/x')
 
 	const resolvedAll = updatedPkgJSONs
 		::map((pkgJson) => ({pkgJson, dir, isEntry: true, isProd}))

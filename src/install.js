@@ -285,11 +285,11 @@ export function linkAll () {
 		::mergeMap(({pDir, dir, name}) => [
 			[path.join(dir, 'package'), path.join(pDir, 'node_modules', name)]
 		])
-		// ::_do(([src, dst]) => console.log(`${src} -> ${dst}`))
-		// ::_do(console.log)
 		// ::mergeMap((dep) => [getDirectLink(nodeModules, dep), ...getBinLinks(dep)])
 		::map(([src, dst]) => resolveSymlink(src, dst))
+		// ::_do(([src, dst]) => console.log(`${src} -> ${dst}`))
 		::mergeMap(([src, dst]) => util.forceSymlink(src, dst))
+		// ::_do(console.log)
 }
 
 function checkShasum (shasum, expected, tarball) {
