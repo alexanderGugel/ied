@@ -24,26 +24,30 @@ export default function installCmd (cwd, argv) {
 	const updatedPkgJSONs = isExplicit ? fromArgv(cwd, argv) : fromFs(cwd)
 	const isProd = argv.production
 
-	const nodeModules = path.join(cwd, 'node_modules')
+	const dir = path.join(cwd, 'x/x')
 
 	const resolvedAll = updatedPkgJSONs
-		::map((pkgJson) => ({pkgJson, nodeModules, isProd}))
-		::resolveAll(nodeModules, undefined, isExplicit)::skip(1)
+		::map((pkgJson) => ({pkgJson, dir, isEntry: true, isProd}))
+		::resolveAll()::skip(1)
 		::publishReplay().refCount()
+	const linkedAll = resolvedAll
+		::linkAll()
 
-	const initialized = initCache()::ignoreElements()
-	const linkedAll = resolvedAll::linkAll(nodeModules)
-	const fetchedAll = resolvedAll::fetchAll(nodeModules)
-	const installedAll = mergeStatic(resolvedAll)
-	// const installedAll = mergeStatic(linkedAll, fetchedAll)
+	return linkedAll
 
-	const builtAll = argv.build
-		? resolvedAll::buildAll(nodeModules)
-		: EmptyObservable.create()
+	// const initialized = initCache()::ignoreElements()
 
-	const saved = (argv.save || argv['save-dev'] || argv['save-optional'])
-		? updatedPkgJSONs::save(cwd)
-		: EmptyObservable.create()
+	// const fetchedAll = resolvedAll::fetchAll()
+	// const installedAll = mergeStatic(linkedAll)
+	// // const installedAll = mergeStatic(linkedAll, fetchedAll)
 
-	return concatStatic(initialized, installedAll, saved, builtAll)
+	// const builtAll = argv.build
+	// 	? resolvedAll::buildAll()
+	// 	: EmptyObservable.create()
+
+	// const saved = (argv.save || argv['save-dev'] || argv['save-optional'])
+	// 	? updatedPkgJSONs::save(cwd)
+	// 	: EmptyObservable.create()
+
+	// return concatStatic(initialized, installedAll, saved, builtAll)
 }

@@ -1,44 +1,37 @@
 import path from 'path'
-import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {map} from 'rxjs/operator/map'
-import {_do} from 'rxjs/operator/do'
-import {_finally} from 'rxjs/operator/finally'
 import {mergeStatic} from 'rxjs/operator/merge'
 import {reduce} from 'rxjs/operator/reduce'
+import * as config from './config'
+import * as registry from './registry'
 
 import * as util from './util'
 
 export const localStrategy = {
-	fetch () {
-		return EmptyObservable.create()
-	},
-	resolve (_nodeModules, name, version) {
-		const id = name + ': ' + version
+	resolve (pDir, name, version) {
+		const linkname = path.join(pDir, '../node_modules', name)
+		const filename = path.join(pDir, '../node_modules', name, 'package.json')
 
-		const linkname = path.join(_nodeModules, name)
-		const filename = path.join(linkname, 'package.json')
-		const acc = {name, version, fetch: localStrategy.fetch}
-
-		const target$ = util.readlink(linkname)
-			::map((target) => path.resolve(_nodeModules, target))
-			::map((target) => path.join(target, '../node_modules'))
-			::map((nodeModules) => ({nodeModules}))
+		const nodeModules$ = util.readlink(linkname)
+			::map((link) => ({dir: path.resolve(pDir, '../node_modules', link, '..')}))
 
 		const pkgJson$ = util.readFileJSON(filename)
 			::map((pkgJson) => ({pkgJson}))
 
-		return mergeStatic(target$, pkgJson$)
-			::reduce((result, x) => ({...result, ...x}), acc)
+		return mergeStatic(nodeModules$, pkgJson$)::reduce(
+			(result, x) => ({...result, ...x}),
+			{name, version, pDir}
+		)
 	}
 }
 
 export const registryStrategy = {
-	fetch () {
-	},
-	resolve () {
+	resolve (pDir, name, version) {
+		const options = {...config.httpOptions, retries: config.retries}
+		return registry.match(config.registry, name, version, options)
+			::map((pkgJson) => {
+				const dir = path.resolve(pDir, '../../node_modules', pkgJson.dist.shasum)
+				return {name, version, pDir, pkgJson, dir}
+			})
 	}
-}
-
-export function resolveLocal () {
-	return localStrategy.resolve.apply(this, arguments)
 }

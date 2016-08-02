@@ -18,7 +18,7 @@ import needle from 'needle'
 import assert from 'assert'
 import npa from 'npm-package-arg'
 import memoize from 'lodash.memoize'
-import {resolveLocal} from './strategies'
+import {localStrategy, registryStrategy} from './strategies'
 
 import * as cache from './cache'
 import * as config from './config'
@@ -210,19 +210,19 @@ export function resolveFromGit (nodeModules, parentTarget, parsedSpec) {
  */
 export function resolve (nodeModules, parentTarget, isExplicit) {
 	return this::mergeMap(([name, version]) => {
-		progress.add()
-		progress.report(`resolving ${name}@${version}`)
+		// progress.add()
+		// progress.report(`resolving ${name}@${version}`)
 		log(`resolving ${name}@${version}`)
 
 		return resolveLocal(nodeModules, name, version, isExplicit)
-			::_catch((error) => {
-				if (error.name !== 'LocalConflictError' && error.code !== 'ENOENT') {
-					throw error
-				}
-				log(`failed to resolve ${name}@${version} from local ${parentTarget} via ${nodeModules}`)
-				return resolveRemote(nodeModules, parentTarget, name, version, isExplicit)
-			})
-			::_finally(progress.complete)
+			// ::_catch((error) => {
+			// 	if (error.name !== 'LocalConflictError' && error.code !== 'ENOENT') {
+			// 		throw error
+			// 	}
+			// 	log(`failed to resolve ${name}@${version} from local ${parentTarget} via ${nodeModules}`)
+			// 	return resolveRemote(nodeModules, parentTarget, name, version, isExplicit)
+			// })
+			// ::_finally(progress.complete)
 	})
 }
 
@@ -233,31 +233,26 @@ export function resolve (nodeModules, parentTarget, isExplicit) {
  * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
-export function resolveAll (baseNodeModules, locks = Object.create(null), isExplicit) {
-	console.time('resolveAll')
-	return this::expand(({nodeModules, pkgJson, isProd = false}) => {
+export function resolveAll (locks = Object.create(null), isExplicit) {
+	return this::expand(({dir: pDir, pkgJson: pPkgJson, isEntry = false, isProd = false}) => {
 		// cancel when we get into a circular dependency
-		if (nodeModules in locks) {
-			log(`aborting due to circular dependency ${nodeModules}`)
-			return EmptyObservable.create()
-		}
-
-		locks[nodeModules] = true // eslint-disable-line no-param-reassign
+		if (pDir in locks) return EmptyObservable.create()
+		locks[pDir] = true // eslint-disable-line no-param-reassign
 
 		// install devDependencies of entry dependency (project-level)
-		// const fields = (nodeModules === '..' && !isProd)
-		// 	? ENTRY_DEPENDENCY_FIELDS
-		// 	: DEPENDENCY_FIELDS
+		const fields = (isEntry && !isProd)
+			? ENTRY_DEPENDENCY_FIELDS
+			: DEPENDENCY_FIELDS
 
-		// log(`extracting ${fields} from ${cwd}`)
-
-		const fields = DEPENDENCY_FIELDS
-
-		const dependencies = parseDependencies(pkgJson, fields)
-
+		const dependencies = parseDependencies(pPkgJson, fields)
 		return ArrayObservable.create(dependencies)
-			::mergeMap(([name, version]) => resolveLocal(nodeModules, name, version))
-			::_finally(() => console.timeEnd('resolveAll'))
+			::mergeMap(([name, version]) =>
+				localStrategy.resolve(pDir, name, version)
+					::_catch((error) => {
+						if (error.code !== 'ENOENT') throw error
+						return registryStrategy.resolve(pDir, name, version)
+					})
+			)
 	})
 }
 
@@ -280,26 +275,21 @@ function getBinLinks (dep) {
 	return binLinks
 }
 
-function getDirectLink (nodeModules, dep) {
-	const {parentTarget, target, name} = dep
-	const src = path.join('node_modules', target, 'package')
-	const dst = path.join('node_modules', parentTarget, name)
-	return [src, dst]
-}
-
 /**
  * symlink the intermediate results of the underlying observable sequence
  * @return {Observable} - empty observable sequence that will be completed
  * once all dependencies have been symlinked.
  */
-export function linkAll (nodeModules) {
+export function linkAll () {
 	return this
+		::mergeMap(({pDir, dir, name}) => [
+			[path.join(dir, 'package'), path.join(pDir, 'node_modules', name)]
+		])
+		// ::_do(([src, dst]) => console.log(`${src} -> ${dst}`))
+		// ::_do(console.log)
 		// ::mergeMap((dep) => [getDirectLink(nodeModules, dep), ...getBinLinks(dep)])
-		// ::map(([src, dst]) => resolveSymlink(src, dst))
-		// ::mergeMap(([src, dst]) => {
-		// 	log(`symlinking ${src} -> ${dst}`)
-		// 	return util.forceSymlink(src, dst)
-		// })
+		::map(([src, dst]) => resolveSymlink(src, dst))
+		::mergeMap(([src, dst]) => util.forceSymlink(src, dst))
 }
 
 function checkShasum (shasum, expected, tarball) {
