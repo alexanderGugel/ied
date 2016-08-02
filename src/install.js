@@ -233,11 +233,11 @@ export function resolve (nodeModules, parentTarget, isExplicit) {
  * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
-export function resolveAll (locks = Object.create(null), isExplicit) {
-	return this::expand(({dir: pDir, pkgJson: pPkgJson, isEntry = false, isProd = false}) => {
+export function resolveAll (baseDir, locks = Object.create(null), isExplicit) {
+	return this::expand(({id: pId, pkgJson: pPkgJson, isEntry = false, isProd = false}) => {
 		// cancel when we get into a circular dependency
-		if (pDir in locks) return EmptyObservable.create()
-		locks[pDir] = true // eslint-disable-line no-param-reassign
+		if (pId in locks) return EmptyObservable.create()
+		locks[pId] = true // eslint-disable-line no-param-reassign
 
 		// install devDependencies of entry dependency (project-level)
 		const fields = (isEntry && !isProd)
@@ -247,11 +247,12 @@ export function resolveAll (locks = Object.create(null), isExplicit) {
 		const dependencies = parseDependencies(pPkgJson, fields)
 		return ArrayObservable.create(dependencies)
 			::mergeMap(([name, version]) =>
-				localStrategy.resolve(pDir, name, version)
+				localStrategy.resolve(baseDir, pId, name, version)
 					::_catch((error) => {
 						if (error.code !== 'ENOENT') throw error
-						return registryStrategy.resolve(pDir, name, version)
+						return registryStrategy.resolve(baseDir, pId, name, version)
 					})
+					::map(x => ({...x, name, version, pId}))
 			)
 	})
 }
@@ -261,18 +262,24 @@ function resolveSymlink (src, dst) {
 	return [relSrc, dst]
 }
 
-function getBinLinks (dep) {
-	const {pkgJson, parentTarget, target} = dep
+function getBinLinks (baseDir, pId, id, pkgJson) {
 	const binLinks = []
 	const bin = normalizeBin(pkgJson)
 	const names = Object.keys(bin)
 	for (let i = 0; i < names.length; i++) {
 		const name = names[i]
-		const src = path.join('node_modules', target, 'package', bin[name])
-		const dst = path.join('node_modules', parentTarget, 'node_modules', '.bin', name)
+		const src = path.join(baseDir, id, 'package', bin[name])
+		const dst = path.join(baseDir, pId, 'node_modules', '.bin', name)
 		binLinks.push([src, dst])
 	}
 	return binLinks
+}
+
+function getDirectLink (baseDir, pId, id, name) {
+	return [
+		path.join(baseDir, id, 'package'),
+		path.join(baseDir, pId, 'node_modules', name)
+	]
 }
 
 /**
@@ -280,16 +287,14 @@ function getBinLinks (dep) {
  * @return {Observable} - empty observable sequence that will be completed
  * once all dependencies have been symlinked.
  */
-export function linkAll () {
+export function linkAll (baseDir) {
 	return this
-		::mergeMap(({pDir, dir, name}) => [
-			[path.join(dir, 'package'), path.join(pDir, 'node_modules', name)]
+		::mergeMap(({pId, id, name, pkgJson}) => [
+			getDirectLink(baseDir, pId, id, name),
+			...getBinLinks(baseDir, pId, id, pkgJson)
 		])
-		// ::mergeMap((dep) => [getDirectLink(nodeModules, dep), ...getBinLinks(dep)])
 		::map(([src, dst]) => resolveSymlink(src, dst))
-		// ::_do(([src, dst]) => console.log(`${src} -> ${dst}`))
 		::mergeMap(([src, dst]) => util.forceSymlink(src, dst))
-		// ::_do(console.log)
 }
 
 function checkShasum (shasum, expected, tarball) {
@@ -369,7 +374,10 @@ function fetch (nodeModules) {
 	})
 }
 
-export function fetchAll (nodeModules) {
-	const fetchWithRetry = (dep) => dep.fetch(nodeModules)::retry(config.retries)
-	return this::distinctKey('target')::mergeMap(fetchWithRetry)
+export function fetchAll (baseDir) {
+	// const fetchWithRetry = (dep) => dep.fetch(nodeModules)::retry(config.retries)
+	return this::distinctKey('id')
+		::map(x => x.id)
+		::_do(console.log)
+	// ::mergeMap(fetchWithRetry)
 }

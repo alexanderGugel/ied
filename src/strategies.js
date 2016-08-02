@@ -7,31 +7,34 @@ import * as registry from './registry'
 
 import * as util from './util'
 
+export function NotFoundError (baseDir, pId, name, version) {
+	this.name = 'NotFoundError'
+	this.path = path.join(baseDir, pId, 'node_modules', name)
+	this.version = version
+	this.message = `${this.path}@${this.version} not found`
+	Error.captureStackTrace(this, this.constructor)
+}
+
 export const localStrategy = {
-	resolve (pDir, name, version) {
-		const linkname = path.join(pDir, '../node_modules', name)
-		const filename = path.join(pDir, '../node_modules', name, 'package.json')
+	resolve (baseDir, pId, name) {
+		const linkname = path.join(baseDir, pId, 'node_modules', name)
+		const filename = path.join(linkname, 'package.json')
 
 		const nodeModules$ = util.readlink(linkname)
-			::map((link) => ({dir: path.resolve(pDir, '../node_modules', link, '..')}))
+			::map((link) => ({id: path.basename(path.dirname(link))}))
 
 		const pkgJson$ = util.readFileJSON(filename)
 			::map((pkgJson) => ({pkgJson}))
 
-		return mergeStatic(nodeModules$, pkgJson$)::reduce(
-			(result, x) => ({...result, ...x}),
-			{name, version, pDir}
-		)
+		return mergeStatic(nodeModules$, pkgJson$)
+			::reduce((result, x) => ({...result, ...x}), {})
 	}
 }
 
 export const registryStrategy = {
-	resolve (pDir, name, version) {
+	resolve (baseDir, pId, name, version) {
 		const options = {...config.httpOptions, retries: config.retries}
 		return registry.match(config.registry, name, version, options)
-			::map((pkgJson) => {
-				const dir = path.resolve(pDir, '..', pkgJson.dist.shasum)
-				return {name, version, pDir, pkgJson, dir}
-			})
+			::map((pkgJson) => ({pkgJson, id: pkgJson.dist.shasum}))
 	}
 }

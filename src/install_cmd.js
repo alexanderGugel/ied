@@ -24,22 +24,21 @@ export default function installCmd (cwd, argv) {
 	const updatedPkgJSONs = isExplicit ? fromArgv(cwd, argv) : fromFs(cwd)
 	const isProd = argv.production
 
-	const dir = path.join(cwd, 'node_modules/x')
+	const baseDir = path.join(cwd, 'node_modules')
 
 	const resolvedAll = updatedPkgJSONs
-		::map((pkgJson) => ({pkgJson, dir, isEntry: true, isProd}))
-		::resolveAll()::skip(1)
+		::map((pkgJson) => ({pkgJson, id: '..', isEntry: true, isProd}))
+		::resolveAll(baseDir)::skip(1)
 		::publishReplay().refCount()
-	const linkedAll = resolvedAll
-		::linkAll()
 
-	return linkedAll
+	const fetchedAll = resolvedAll::fetchAll(baseDir)
+	const linkedAll = resolvedAll::linkAll(baseDir)
 
-	// const initialized = initCache()::ignoreElements()
+	const initialized = initCache()::ignoreElements()
 
 	// const fetchedAll = resolvedAll::fetchAll()
 	// const installedAll = mergeStatic(linkedAll)
-	// // const installedAll = mergeStatic(linkedAll, fetchedAll)
+	// const installedAll = mergeStatic(linkedAll, fetchedAll)
 
 	// const builtAll = argv.build
 	// 	? resolvedAll::buildAll()
@@ -50,4 +49,6 @@ export default function installCmd (cwd, argv) {
 	// 	: EmptyObservable.create()
 
 	// return concatStatic(initialized, installedAll, saved, builtAll)
+
+	return concatStatic(initialized, mergeStatic(fetchedAll, linkedAll))
 }
