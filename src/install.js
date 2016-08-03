@@ -1,259 +1,63 @@
-import crypto from 'crypto'
 import path from 'path'
-import url from 'url'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
-import {Observable} from 'rxjs/Observable'
-import {_finally} from 'rxjs/operator/finally'
-import {concatStatic} from 'rxjs/operator/concat'
 import {distinctKey} from 'rxjs/operator/distinctKey'
 import {expand} from 'rxjs/operator/expand'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {_catch} from 'rxjs/operator/catch'
-import {_do} from 'rxjs/operator/do'
 import {retry} from 'rxjs/operator/retry'
-import {skip} from 'rxjs/operator/skip'
-import needle from 'needle'
-import assert from 'assert'
-import npa from 'npm-package-arg'
-import memoize from 'lodash.memoize'
 import {localStrategy, registryStrategy} from './strategies'
 
-import * as cache from './cache'
 import * as config from './config'
-import * as registry from './registry'
-import * as git from './git'
 import * as util from './util'
-import * as progress from './progress'
 import {normalizeBin, parseDependencies} from './pkg_json'
 
-import debuglog from './debuglog'
-
-const log = debuglog('install')
-const cachedNpa = memoize(npa)
-
-/**
- * properties of project-level `package.json` files that will be checked for
- * dependencies.
- * @type {Array.<String>}
- * @readonly
- */
-export const ENTRY_DEPENDENCY_FIELDS = [
+export const ENTRY_DEP_FIELDS = [
 	'dependencies',
 	'devDependencies',
 	'optionalDependencies'
 ]
 
-/**
- * properties of `package.json` of sub-dependencies that will be checked for
- * dependences.
- * @type {Array.<String>}
- * @readonly
- */
-export const DEPENDENCY_FIELDS = [
+export const DEP_FIELDS = [
 	'dependencies',
 	'optionalDependencies'
 ]
 
-/**
- * resolve a dependency's `package.json` file from a remote registry.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{String} parentTarget - relative parent's node_modules path.
- * @param	{String} name - name of the dependency.
- * @param	{String} version - version of the dependency.
- * @return {Observable} - observable sequence of `package.json` objects.
- */
-export function resolveRemote (nodeModules, parentTarget, name, version) {
-	const source = `${name}@${version}`
-	log(`resolving ${source} from remote registry`)
+export const strategies = [
+	localStrategy,
+	registryStrategy
+]
 
-	const parsedSpec = cachedNpa(source)
-
-	switch (parsedSpec.type) {
-		case 'range':
-		case 'version':
-		case 'tag':
-			return resolveFromNpm(nodeModules, parentTarget, parsedSpec)
-		case 'remote':
-			return resolveFromTarball(nodeModules, parentTarget, parsedSpec)
-		case 'hosted':
-			return resolveFromHosted(nodeModules, parentTarget, parsedSpec)
-		case 'git':
-			return resolveFromGit(nodeModules, parentTarget, parsedSpec)
-		default:
-			throw new Error(`Unknown package spec: ${parsedSpec.type} for ${name}`)
-	}
+function createResolver (baseDir, pId) {
+	return this::mergeMap(([name, version]) =>
+		localStrategy.resolve(baseDir, pId, name, version)
+			::_catch(error => {
+				if (error.code !== 'ENOENT') throw error
+				return registryStrategy.resolve(baseDir, pId, name, version)
+			})
+		::map(x => ({...x, name, version, pId}))
+	)
 }
 
-/**
- * resolve a dependency's `package.json` file from the npm registry.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{String} parentTarget - relative parent's node_modules path.
- * @param	{Object} parsedSpec - parsed package name and specifier.
- * @return {Observable} - observable sequence of `package.json` objects.
- */
-export function resolveFromNpm (nodeModules, parentTarget, parsedSpec) {
-	const {raw, name, type, spec} = parsedSpec
-	log(`resolving ${raw} from npm`)
-	const options = {...config.httpOptions, retries: config.retries}
-	return registry.match(config.registry, name, spec, options)
-		::_do((pkgJson) => { log(`resolved ${raw} to tarball shasum ${pkgJson.dist.shasum} from npm`) })
-		::map((pkgJson) => ({parentTarget, pkgJson, target: pkgJson.dist.shasum, name, type, fetch}))
-}
+export function resolveAll (baseDir) {
+	const locks = Object.create(null)
 
-/**
- * resolve a dependency's `package.json` file from an url tarball.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{String} parentTarget - relative parent's node_modules path.
- * @param	{Object} parsedSpec - parsed package name and specifier.
- * @return {Observable} - observable sequence of `package.json` objects.
- */
-export function resolveFromTarball (nodeModules, parentTarget, parsedSpec) {
-	const {raw, name, type, spec} = parsedSpec
-	log(`resolving ${raw} from tarball`)
-	return Observable.create((observer) => {
-		// create shasum from url for storage
-		const hash = crypto.createHash('sha1')
-		hash.update(raw)
-		const shasum = hash.digest('hex')
-		const pkgJson = {name, dist: {tarball: spec, shasum}}
-		log(`resolved ${raw} to uri shasum ${shasum} from tarball`)
-		observer.next({parentTarget, pkgJson, target: shasum, name, type, fetch})
-		observer.complete()
-	})
-}
+	return this::expand((parent) => {
+		if (parent.id in locks) {
+			return EmptyObservable.create()
+		}
 
-/**
- * resolve a dependency's `package.json` file from an hosted GitHub-like registry.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{String} parentTarget - relative parent's node_modules path.
- * @param	{Object} parsedSpec - parsed package name and specifier.
- * @return {Observable} - observable sequence of `package.json` objects.
- */
-export function resolveFromHosted (nodeModules, parentTarget, parsedSpec) {
-	const {raw, name, type, hosted} = parsedSpec
-	log(`resolving ${raw} from ${hosted.type}`)
-
-	const [provider, shortcut] = hosted.shortcut.split(':')
-	const [repo, ref = 'master'] = shortcut.split('#')
-
-	const options = {...config.httpOptions, retries: config.retries}
-	// create shasum from directUrl for storage
-	const hash = crypto.createHash('sha1')
-	hash.update(hosted.directUrl)
-	const shasum = hash.digest('hex')
-
-	let tarball
-	switch (hosted.type) {
-		case 'github':
-			tarball = url.resolve('https://codeload.github.com', `${repo}/tar.gz/${ref}`)
-			break
-		case 'bitbucket':
-			tarball = url.resolve('https://bitbucket.org', `${repo}/get/${ref}.tar.gz`)
-			break
-		default:
-			throw new Error(`Unknown hosted type: ${hosted.type} for ${name}`)
-	}
-
-	return registry.fetch(hosted.directUrl, options)
-		::map(({body}) => JSON.parse(body))
-		::map(pkgJson => {
-			pkgJson.dist = {tarball, shasum} // eslint-disable-line no-param-reassign
-			log(`resolved ${name}@${ref} to directUrl shasum ${shasum} from ${provider}`)
-			return {parentTarget, pkgJson, target: shasum, name: pkgJson.name, type, fetch}
-		})
-}
-
-/**
- * resolve a dependency's `package.json` file from a git endpoint.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{String} parentTarget - relative parent's node_modules path.
- * @param	{Object} parsedSpec - parsed package name and specifier.
- * @return {Observable} - observable sequence of `package.json` objects.
- */
-export function resolveFromGit (nodeModules, parentTarget, parsedSpec) {
-	const {raw, type, spec} = parsedSpec
-	log(`resolving ${raw} from git`)
-
-	const [protocol, host] = spec.split('://')
-	const [repo, ref = 'master'] = host.split('#')
-
-	// create shasum from spec for storage
-	const hash = crypto.createHash('sha1')
-	hash.update(spec)
-	const shasum = hash.digest('hex')
-	let repoPath
-
-	return git.clone(repo, ref)
-		::mergeMap(tmpDest => {
-			repoPath = tmpDest
-			return util.readFileJSON(path.resolve(tmpDest, 'package.json'))
-		})
-		::map(pkgJson => {
-			const name = pkgJson.name
-			pkgJson.dist = {shasum, path: repoPath} // eslint-disable-line no-param-reassign
-			log(`resolved ${name}@${ref} to spec shasum ${shasum} from git`)
-			return {parentTarget, pkgJson, target: shasum, name, type, fetch: git.extract}
-		})
-}
-
-/**
- * resolve an individual sub-dependency based on the parent's target and the
- * current working directory.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{String} parentTarget - target path used for determining the sub-
- * dependency's path.
- * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
- * @return {Obserable} - observable sequence of `package.json` root documents
- * wrapped into dependency objects representing the resolved sub-dependency.
- */
-export function resolve (nodeModules, parentTarget, isExplicit) {
-	return this::mergeMap(([name, version]) => {
-		// progress.add()
-		// progress.report(`resolving ${name}@${version}`)
-		log(`resolving ${name}@${version}`)
-
-		return resolveLocal(nodeModules, name, version, isExplicit)
-			// ::_catch((error) => {
-			// 	if (error.name !== 'LocalConflictError' && error.code !== 'ENOENT') {
-			// 		throw error
-			// 	}
-			// 	log(`failed to resolve ${name}@${version} from local ${parentTarget} via ${nodeModules}`)
-			// 	return resolveRemote(nodeModules, parentTarget, name, version, isExplicit)
-			// })
-			// ::_finally(progress.complete)
-	})
-}
-
-/**
- * resolve all dependencies starting at the current working directory.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{Object} [targets=Object.create(null)] - resolved / active targets.
- * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
- * @return {Observable} - an observable sequence of resolved dependencies.
- */
-export function resolveAll (baseDir, locks = Object.create(null), isExplicit) {
-	return this::expand(({id: pId, pkgJson: pPkgJson, isEntry = false, isProd = false}) => {
-		// cancel when we get into a circular dependency
-		if (pId in locks) return EmptyObservable.create()
-		locks[pId] = true // eslint-disable-line no-param-reassign
+		locks[parent.id] = true
 
 		// install devDependencies of entry dependency (project-level)
-		const fields = (isEntry && !isProd)
-			? ENTRY_DEPENDENCY_FIELDS
-			: DEPENDENCY_FIELDS
+		const fields = (parent.isEntry && !parent.isProd)
+			? ENTRY_DEP_FIELDS
+			: DEP_FIELDS
 
-		const dependencies = parseDependencies(pPkgJson, fields)
+		const dependencies = parseDependencies(parent.pkgJson, fields)
 		return ArrayObservable.create(dependencies)
-			::mergeMap(([name, version]) =>
-				localStrategy.resolve(baseDir, pId, name, version)
-					::_catch((error) => {
-						if (error.code !== 'ENOENT') throw error
-						return registryStrategy.resolve(baseDir, pId, name, version)
-					})
-					::map(x => ({...x, name, version, pId}))
-			)
+			::createResolver(baseDir, parent.id)
 	})
 }
 

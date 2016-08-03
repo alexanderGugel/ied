@@ -1,5 +1,3 @@
-import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
-import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {Observable} from 'rxjs/Observable'
 import {_catch} from 'rxjs/operator/catch'
@@ -8,11 +6,8 @@ import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {mergeStatic} from 'rxjs/operator/merge'
 import {reduce} from 'rxjs/operator/reduce'
-import {ignoreElements} from 'rxjs/operator/ignoreElements'
-import {retryWhen} from 'rxjs/operator/retryWhen'
-import {concatMap} from 'rxjs/operator/concatMap'
+import {_do} from 'rxjs/operator/do'
 
-import assert from 'assert'
 import crypto from 'crypto'
 import needle from 'needle'
 import path from 'path'
@@ -21,11 +16,7 @@ import * as cache from './cache'
 import * as config from './config'
 import * as registry from './registry'
 import * as util from './util'
-import {normalizeBin} from './pkg_json'
-
 import debuglog from './debuglog'
-
-const log = debuglog('strategies')
 
 export const localStrategy = {
 	fetch: EmptyObservable.create,
@@ -40,12 +31,44 @@ export const localStrategy = {
 		const pkgJson$ = util.readFileJSON(filename)
 			::map((pkgJson) => ({pkgJson}))
 
-		return mergeStatic(nodeModules$, pkgJson$)
-			::reduce((result, x) => ({...result, ...x}), {strategy: localStrategy})
+		return mergeStatic(nodeModules$, pkgJson$)::reduce(
+			(result, x) => ({...result, ...x}),
+			{strategy: localStrategy}
+		)
 	}
 }
 
 export const registryStrategy = {
+	log: debuglog('registryStrategy'),
+
+	download (tarball, shasum) {
+		registryStrategy.log('SCHEDULE download', tarball, shasum)
+		return Observable.create((observer) => {
+			const hash = crypto.createHash('sha1')
+			const response = needle.get(tarball, config.httpOptions)
+
+			// TODO Perf Write into final package directory
+			const cached = response.pipe(cache.write())
+
+			const errorHandler = (error) => observer.error(error)
+			const dataHandler = (chunk) => hash.update(chunk)
+			const finishHandler = () => {
+				observer.next({tmpPath: cached.path, shasum: hash.digest('hex')})
+				observer.complete()
+			}
+
+			response.on('data', dataHandler)
+			response.on('error', errorHandler)
+			cached.on('error', errorHandler)
+			cached.on('finish', finishHandler)
+		})
+		::mergeMap(({tmpPath}) => {
+			const newPath = path.join(config.cacheDir, shasum)
+			registryStrategy.log('DONE     download', tarball, shasum)
+			return util.rename(tmpPath, newPath)
+		})
+	},
+
 	fetch (baseDir, {id, pkgJson}) {
 		const {dist: {tarball, shasum}} = pkgJson
 		const where = path.join(baseDir, id, 'package')
@@ -54,89 +77,39 @@ export const registryStrategy = {
 		return extracted
 			::_catch((err) => {
 				if (err.code !== 'ENOENT') throw err
-				return concatStatic(download(tarball, shasum), extracted)
+				return concatStatic(
+					registryStrategy.download(tarball, shasum),
+					extracted
+				)
 			})
-			::mergeMap(() => fixPermissions(where, normalizeBin(pkgJson)))
 	},
 
 	resolve (baseDir, pId, name, version) {
+		registryStrategy.log('SCHEDULE resolve', baseDir, pId, name, version)
 		const options = {...config.httpOptions, retries: config.retries}
-
 		return registry.match(config.registry, name, version, options)
 			::map((pkgJson) => ({
 				pkgJson,
 				id: pkgJson.dist.shasum,
 				strategy: registryStrategy
 			}))
+			::_do(() => {
+				registryStrategy.log('DONE     resolve', baseDir, pId, name, version)
+			})
 	}
 }
 
-function checkShasum (shasum, expected, tarball) {
-	assert.equal(
-		shasum,
-		expected,
-		`shasum mismatch for ${tarball}: ${shasum} <-> ${expected}`
-	)
-}
+// ::mergeMap(() => fixPermissions(where, normalizeBin(pkgJson)))
 
-function download (tarball, shasum) {
-	// , type
-	// log(`downloading ${tarball}, expecting ${expected}`)
-	return Observable.create((observer) => {
-		const hash = crypto.createHash('sha1')
-		const response = needle.get(tarball, config.httpOptions)
-		const cached = response.pipe(cache.write())
-
-		const errorHandler = (error) => observer.error(error)
-		const dataHandler = (chunk) => hash.update(chunk)
-		const finishHandler = () => {
-			const actualShasum = hash.digest('hex')
-			log(`downloaded ${actualShasum} into ${cached.path}`)
-
-			// only actually check shasum integrity for npm tarballs
-			// TODO
-			// const expectedShasum = ['range', 'version', 'tag'].indexOf(type) !== -1
-			// 	? actualShasum
-			// 	: expected
-
-			observer.next({tmpPath: cached.path, shasum})
-			observer.complete()
-		}
-
-		response.on('data', dataHandler)
-		response.on('error', errorHandler)
-
-		cached.on('error', errorHandler)
-		cached.on('finish', finishHandler)
-	})
-	::mergeMap(({tmpPath, shasum: actualShasum}) => {
-		// TODO shasum check
-		// if (actualShasum) {
-		// 	checkShasum(shasum, expected, tarball)
-		// }
-
-		const newPath = path.join(config.cacheDir, shasum)
-		return util.rename(tmpPath, newPath)
-	})
-}
-
-function fixPermissions (dir, bin) {
-	const execMode = 0o777 & (~process.umask())
-	const paths = []
-	const names = Object.keys(bin)
-	for (let i = 0; i < names.length; i++) {
-		const name = names[i]
-		paths.push(path.resolve(dir, bin[name]))
-	}
-	return ArrayObservable.create(paths)::mergeMap(
-		(filepath) => util.chmod(filepath, execMode)
-	)
-}
-
-// export function NotFoundError (baseDir, pId, name, version) {
-// 	this.name = 'NotFoundError'
-// 	this.path = path.join(baseDir, pId, 'node_modules', name)
-// 	this.version = version
-// 	this.message = `${this.path}@${this.version} not found`
-// 	Error.captureStackTrace(this, this.constructor)
+// function fixPermissions (dir, bin) {
+// 	const execMode = 0o777 & (~process.umask())
+// 	const paths = []
+// 	const names = Object.keys(bin)
+// 	for (let i = 0; i < names.length; i++) {
+// 		const name = names[i]
+// 		paths.push(path.resolve(dir, bin[name]))
+// 	}
+// 	return ArrayObservable.create(paths)::mergeMap(
+// 		(filepath) => util.chmod(filepath, execMode)
+// 	)
 // }
