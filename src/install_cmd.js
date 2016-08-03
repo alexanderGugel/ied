@@ -31,8 +31,8 @@ export default function installCmd (cwd, argv) {
 		::resolveAll(baseDir)::skip(1)
 		::publishReplay().refCount()
 
-	const fetchedAll = resolvedAll::fetchAll(baseDir)
 	const linkedAll = resolvedAll::linkAll(baseDir)
+	const fetchedAll = resolvedAll::fetchAll(baseDir)
 
 	const initialized = initCache()::ignoreElements()
 
@@ -50,5 +50,5 @@ export default function installCmd (cwd, argv) {
 
 	// return concatStatic(initialized, installedAll, saved, builtAll)
 
-	return concatStatic(initialized, mergeStatic(fetchedAll, linkedAll))
+	return concatStatic(initialized, mergeStatic(linkedAll, fetchedAll))
 }

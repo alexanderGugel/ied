@@ -297,87 +297,9 @@ export function linkAll (baseDir) {
 		::mergeMap(([src, dst]) => util.forceSymlink(src, dst))
 }
 
-function checkShasum (shasum, expected, tarball) {
-	assert.equal(shasum, expected,
-		`shasum mismatch for ${tarball}: ${shasum} <-> ${expected}`)
-}
-
-function download (tarball, expected, type) {
-	log(`downloading ${tarball}, expecting ${expected}`)
-	return Observable.create((observer) => {
-		const shasum = crypto.createHash('sha1')
-		const response = needle.get(tarball, config.httpOptions)
-		const cached = response.pipe(cache.write())
-
-		const errorHandler = (error) => observer.error(error)
-		const dataHandler = (chunk) => shasum.update(chunk)
-		const finishHandler = () => {
-			const actualShasum = shasum.digest('hex')
-			log(`downloaded ${actualShasum} into ${cached.path}`)
-			// only actually check shasum integrity for npm tarballs
-			const expectedShasum = ['range', 'version', 'tag'].indexOf(type) !== -1 ?
-				actualShasum : expected
-			observer.next({tmpPath: cached.path, shasum: expectedShasum})
-			observer.complete()
-		}
-
-		response.on('data', dataHandler)
-		response.on('error', errorHandler)
-
-		cached.on('error', errorHandler)
-		cached.on('finish', finishHandler)
-	})
-	::mergeMap(({tmpPath, shasum}) => {
-		if (expected) {
-			checkShasum(shasum, expected, tarball)
-		}
-
-		const newPath = path.join(config.cacheDir, shasum)
-		return util.rename(tmpPath, newPath)
-	})
-}
-
-function fixPermissions (target, bin) {
-	const execMode = 0o777 & (~process.umask())
-	const paths = []
-	const names = Object.keys(bin)
-	for (let i = 0; i < names.length; i++) {
-		const name = names[i]
-		paths.push(path.resolve(target, bin[name]))
-	}
-	log(`fixing persmissions of ${names} in ${target}`)
-	return ArrayObservable.create(paths)
-		::mergeMap((filepath) => util.chmod(filepath, execMode))
-}
-
-function fetch (nodeModules) {
-	const {target, type, pkgJson: {name, bin, dist: {tarball, shasum}}} = this
-	const where = path.join(nodeModules, target, 'package')
-
-	log(`fetching ${tarball} into ${where}`)
-
-	return util.stat(where)::skip(1)::_catch((error) => {
-		if (error.code !== 'ENOENT') {
-			throw error
-		}
-		const extracted = cache.extract(where, shasum)::_catch((error) => { // eslint-disable-line
-			if (error.code !== 'ENOENT') {
-				throw error
-			}
-			return concatStatic(
-				download(tarball, shasum, type),
-				cache.extract(where, shasum)
-			)
-		})
-		const fixedPermissions = fixPermissions(where, normalizeBin({name, bin}))
-		return concatStatic(extracted, fixedPermissions)
-	})
-}
-
 export function fetchAll (baseDir) {
-	// const fetchWithRetry = (dep) => dep.fetch(nodeModules)::retry(config.retries)
-	return this::distinctKey('id')
-		::map(x => x.id)
-		::_do(console.log)
-	// ::mergeMap(fetchWithRetry)
+	return this::distinctKey('id')::mergeMap((dep) =>
+		dep.strategy.fetch.call(null, baseDir, dep)
+			::retry(config.retries)
+	)
 }
