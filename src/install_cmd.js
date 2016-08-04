@@ -1,54 +1,45 @@
-import path from 'path'
-import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
-import {concatStatic} from 'rxjs/operator/concat'
-import {publishReplay} from 'rxjs/operator/publishReplay'
 import {skip} from 'rxjs/operator/skip'
 import {map} from 'rxjs/operator/map'
 import {mergeStatic} from 'rxjs/operator/merge'
-import {ignoreElements} from 'rxjs/operator/ignoreElements'
+import {publishReplay} from 'rxjs/operator/publishReplay'
 
-import {resolveAll, fetchAll, linkAll} from './install'
-import {init as initCache} from './cache'
-import {fromArgv, fromFs, save} from './pkg_json'
-import {buildAll} from './build'
+import path from 'path'
+
+import resolveAll from './resolve_all'
+import fetchAll from './fetch_all'
+import linkAll from './link_all'
+import {fromArgv, fromFs} from './pkg_json'
+
+const createEntryDep = ({production: isProd}) =>
+	pkgJson =>
+		({pkgJson, id: '..', isEntry: true, isProd})
 
 /**
- * run the installation command.
- * @param  {String} cwd - current working directory (absolute path).
- * @param  {Object} argv - parsed command line arguments.
- * @return {Observable} - an observable sequence that will be completed once
- * the installation is complete.
+ * check if explicit dependencies have been requested. used for either reading
+ * dependencies to be installed from the local `package.json` or from the
+ * supplied command line arguments.
+ * @param  {Object} argv - command line arguments.
+ * @return {boolean} boolean value indicating if explicit dependencies have
+ * been requested.
  */
-export default function installCmd (cwd, argv) {
-	const isExplicit = argv._.length - 1
-	const updatedPkgJSONs = isExplicit ? fromArgv(cwd, argv) : fromFs(cwd)
-	const isProd = argv.production
+const isExplitit = argv =>
+	!!(argv._.length - 1)
 
-	const baseDir = path.join(cwd, 'node_modules')
+const getPkgJson = (cwd, argv) =>
+	(isExplitit(argv) ? fromArgv(cwd, argv) : fromFs(cwd))
 
-	const resolvedAll = updatedPkgJSONs
-		::map((pkgJson) => ({pkgJson, id: '..', isEntry: true, isProd}))
-		::resolveAll(baseDir)::skip(1)
+function install (dir, config) {
+	return mergeStatic(
+		this::linkAll(dir, config),
+		this::fetchAll(dir, config)
+	)
+}
+
+export default (cwd, argv, config) => {
+	const dir = path.join(cwd, 'node_modules')
+	return getPkgJson(cwd, argv)
+		::map(createEntryDep(argv))
+		::resolveAll(dir)::skip(1)
 		::publishReplay().refCount()
-
-	const linkedAll = resolvedAll::linkAll(baseDir)
-	const fetchedAll = resolvedAll::fetchAll(baseDir)
-
-	const initialized = initCache()::ignoreElements()
-
-	// const fetchedAll = resolvedAll::fetchAll()
-	// const installedAll = mergeStatic(linkedAll)
-	// const installedAll = mergeStatic(linkedAll, fetchedAll)
-
-	// const builtAll = argv.build
-	// 	? resolvedAll::buildAll()
-	// 	: EmptyObservable.create()
-
-	// const saved = (argv.save || argv['save-dev'] || argv['save-optional'])
-	// 	? updatedPkgJSONs::save(cwd)
-	// 	: EmptyObservable.create()
-
-	// return concatStatic(initialized, installedAll, saved, builtAll)
-
-	return concatStatic(initialized, mergeStatic(linkedAll, fetchedAll))
+		::install(dir, config)
 }

@@ -2,6 +2,7 @@
 
 import minimist from 'minimist'
 import * as config from './config'
+
 if (['development', 'test'].indexOf(process.env.NODE_ENV) !== -1) {
 	require('source-map-support').install()
 }
@@ -69,7 +70,7 @@ let cacheCmd
 		case 'i':
 		case 'install':
 			installCmd = require('./install_cmd').default
-			installCmd(cwd, argv).subscribe()
+			installCmd(cwd, argv, config).subscribe()
 			break
 		case 'sh':
 		case 'shell':

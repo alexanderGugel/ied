@@ -6,6 +6,7 @@ import needle from 'needle'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import * as config from './config'
+import path from 'path'
 
 /**
  * given an arbitrary asynchronous function that accepts a callback function,
@@ -16,9 +17,9 @@ import * as config from './config'
  * @param  {thisArg} [thisArg] - optional context.
  * @return {Function} - cold observable sequence factory.
  */
-export function createObservableFactory (fn, thisArg) {
-	return (...args) =>
-		Observable.create((observer) => {
+export const createObservableFactory = (fn, thisArg) =>
+	(...args) =>
+		Observable.create(observer => {
 			fn.apply(thisArg, [...args, (error, ...results) => {
 				if (error) {
 					observer.error(error)
@@ -28,41 +29,40 @@ export function createObservableFactory (fn, thisArg) {
 				}
 			}])
 		})
-}
 
 /**
  * send a GET request to the given HTTP endpoint by passing the supplied
  * arguments to [`needle`](https://www.npmjs.com/package/needle).
  * @return {Observable} - observable sequence of a single response object.
  */
-export function httpGet (...args) {
-	return Observable.create((observer) => {
+export const httpGet = (...args) =>
+	Observable.create(observer => {
 		needle.get(...args, (error, response) => {
-			if (error) observer.error(error)
-			else {
+			if (error) {
+				observer.error(error)
+			} else {
 				observer.next(response)
 				observer.complete()
 			}
 		})
 	})
-}
 
 /**
  * GETs JSON documents from an HTTP endpoint.
  * @param  {String} url - endpoint to which the GET request should be made
  * @return {Object} An observable sequence of the fetched JSON document.
  */
-export function httpGetJSON (url) {
-	return Observable.create((observer) => {
+export const httpGetJSON = url =>
+	Observable.create(observer => {
 		needle.get(url, config.httpOptions, (error, response) => {
-			if (error) observer.error(error)
-			else {
+			if (error) {
+				observer.error(error)
+			} else {
 				observer.next(response.body)
 				observer.complete()
 			}
 		})
 	})
-}
 
 /** @type {Function} Observable wrapper function around `fs.readFile`. */
 export const readFile = createObservableFactory(fs.readFile, fs)
@@ -117,16 +117,17 @@ export function entries () {
  * @return {Observable} - observable sequence of a single object representing
  * the read JSON file.
  */
-export function readFileJSON (file) {
-	return readFile(file, 'utf8')::map(JSON.parse)
-}
+export const readFileJSON = file =>
+	readFile(file, 'utf8')::map(JSON.parse)
 
 /**
  * set the terminal title using the required ANSI escape codes.
  * @param {String} title - title to be set.
  */
-export function setTitle (title) {
-	process.stdout.write(
-		`${String.fromCharCode(27)}]0;${title}${String.fromCharCode(7)}`
-	)
+export const setTitle = title => {
+	const raw = `${String.fromCharCode(27)}]0;${title}${String.fromCharCode(7)}`
+	process.stdout.write(raw)
 }
+
+export const resolveSymlink = (src, dst) =>
+	[path.relative(path.dirname(dst), src), dst]

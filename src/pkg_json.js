@@ -85,11 +85,11 @@ export function normalizeBin (pkgJson) {
 
 /**
  * create an instance by reading a `package.json` from disk.
- * @param  {String} baseDir - base directory of the project.
+ * @param  {String} dir - base directory of the project.
  * @return {Observabel} - an observable sequence of an `EntryDep`.
  */
-export function fromFs (baseDir) {
-	const filename = path.join(baseDir, 'package.json')
+export function fromFs (dir) {
+	const filename = path.join(dir, 'package.json')
 	return util.readFileJSON(filename)
 }
 
