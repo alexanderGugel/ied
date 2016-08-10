@@ -36,28 +36,11 @@ export function createObservableFactory (fn, thisArg) {
  * @return {Observable} - observable sequence of a single response object.
  */
 export function httpGet (...args) {
-	return Observable.create((observer) => {
+	return Observable.create(observer => {
 		needle.get(...args, (error, response) => {
 			if (error) observer.error(error)
 			else {
 				observer.next(response)
-				observer.complete()
-			}
-		})
-	})
-}
-
-/**
- * GETs JSON documents from an HTTP endpoint.
- * @param  {String} url - endpoint to which the GET request should be made
- * @return {Object} An observable sequence of the fetched JSON document.
- */
-export function httpGetJSON (url) {
-	return Observable.create((observer) => {
-		needle.get(url, config.httpOptions, (error, response) => {
-			if (error) observer.error(error)
-			else {
-				observer.next(response.body)
 				observer.complete()
 			}
 		})

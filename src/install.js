@@ -13,7 +13,6 @@ import {_catch} from 'rxjs/operator/catch'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {retry} from 'rxjs/operator/retry'
 import {skip} from 'rxjs/operator/skip'
-import {satisfies} from 'semver'
 import needle from 'needle'
 import assert from 'assert'
 import npa from 'npm-package-arg'
@@ -22,6 +21,7 @@ import memoize from 'lodash.memoize'
 import * as cache from './cache'
 import * as config from './config'
 import * as registry from './registry'
+import * as local from './local'
 import * as git from './git'
 import * as util from './util'
 import * as progress from './progress'
@@ -56,60 +56,6 @@ export const DEPENDENCY_FIELDS = [
 ]
 
 /**
- * error class used for representing an error that occurs due to a lifecycle
- * script that exits with a non-zero status code.
- */
-export class LocalConflictError extends Error {
-	/**
-	 * create instance.
- 	 * @param	{String} name - name of the dependency.
- 	 * @param	{String} version - local version.
- 	 * @param	{String} expected - expected version.
-	 */
-	constructor (name, version, expected) {
-		super(`Local version ${name}@${version} does not match required version @${expected}`)
-		this.name = 'LocalConflictError'
-	}
-}
-
-/**
- * resolve a dependency's `package.json` file from the local file system.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{String} parentTarget - relative parent's node_modules path.
- * @param	{String} name - name of the dependency.
- * @param	{String} version - version of the dependency.
- * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
- * @return {Observable} - observable sequence of `package.json` objects.
- */
-export function resolveLocal (nodeModules, parentTarget, name, version, isExplicit) {
-	const linkname = path.join(nodeModules, parentTarget, 'node_modules', name)
-	const mockFetch = () => EmptyObservable.create()
-	log(`resolving ${linkname} from node_modules`)
-
-	// support `file:` with symlinks
-	if (version.substr(0, 5) === 'file:') {
-		log(`resolved ${name}@${version} as local symlink`)
-		const isScoped = name.charAt(0) === '@'
-		const src = path.join(parentTarget, isScoped ? '..' : '', version.substr(5))
-		const dst = path.join('node_modules', parentTarget, 'node_modules', name)
-		return util.forceSymlink(src, dst)::_finally(progress.complete)
-	}
-
-	return util.readlink(linkname)::mergeMap((rel) => {
-		const target = path.basename(path.dirname(rel))
-		const filename = path.join(linkname, 'package.json')
-		log(`reading package.json from ${filename}`)
-
-		return util.readFileJSON(filename)::map((pkgJson) => {
-			if (isExplicit && !satisfies(pkgJson.version, version)) {
-				throw new LocalConflictError(name, pkgJson.version, version)
-			}
-			return {parentTarget, pkgJson, target, name, fetch: mockFetch}
-		})
-	})
-}
-
-/**
  * resolve a dependency's `package.json` file from a remote registry.
  * @param	{String} nodeModules - `node_modules` base directory.
  * @param	{String} parentTarget - relative parent's node_modules path.
@@ -127,7 +73,10 @@ export function resolveRemote (nodeModules, parentTarget, name, version) {
 		case 'range':
 		case 'version':
 		case 'tag':
-			return resolveFromNpm(nodeModules, parentTarget, parsedSpec)
+			return registry.resolve(nodeModules, parentTarget, name, version, {
+				...config.httpOptions,
+				registry: config.registry
+			})
 		case 'remote':
 			return resolveFromTarball(nodeModules, parentTarget, parsedSpec)
 		case 'hosted':
@@ -137,24 +86,6 @@ export function resolveRemote (nodeModules, parentTarget, name, version) {
 		default:
 			throw new Error(`Unknown package spec: ${parsedSpec.type} for ${name}`)
 	}
-}
-
-/**
- * resolve a dependency's `package.json` file from the npm registry.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{String} parentTarget - relative parent's node_modules path.
- * @param	{Object} parsedSpec - parsed package name and specifier.
- * @return {Observable} - observable sequence of `package.json` objects.
- */
-export function resolveFromNpm (nodeModules, parentTarget, parsedSpec) {
-	const {raw, name, type, spec} = parsedSpec
-	log(`resolving ${raw} from npm`)
-	const options = {...config.httpOptions, retries: config.retries}
-	return registry.match(name, spec, options)::map((pkgJson) => {
-		const target = pkgJson.dist.shasum
-		log(`resolved ${raw} to tarball shasum ${target} from npm`)
-		return {parentTarget, pkgJson, target, name, type, fetch}
-	})
 }
 
 /**
@@ -211,7 +142,7 @@ export function resolveFromHosted (nodeModules, parentTarget, parsedSpec) {
 			throw new Error(`Unknown hosted type: ${hosted.type} for ${name}`)
 	}
 
-	return registry.fetch(hosted.directUrl, options)
+	return registry.getJson(hosted.directUrl, options)
 		::map(({body}) => JSON.parse(body))
 		::map(pkgJson => {
 			pkgJson.dist = {tarball, shasum} // eslint-disable-line no-param-reassign
@@ -269,7 +200,7 @@ export function resolve (nodeModules, parentTarget, isExplicit) {
 		progress.report(`resolving ${name}@${version}`)
 		log(`resolving ${name}@${version}`)
 
-		return resolveLocal(nodeModules, parentTarget, name, version, isExplicit)
+		return local.resolve(nodeModules, parentTarget, name, version, isExplicit)
 			::_catch((error) => {
 				if (error.name !== 'LocalConflictError' && error.code !== 'ENOENT') {
 					throw error
@@ -406,7 +337,7 @@ function fixPermissions (target, bin) {
 		::mergeMap((filepath) => util.chmod(filepath, execMode))
 }
 
-function fetch (nodeModules) {
+export function fetch (nodeModules) {
 	const {target, type, pkgJson: {name, bin, dist: {tarball, shasum}}} = this
 	const where = path.join(nodeModules, target, 'package')
 
