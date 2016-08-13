@@ -5,7 +5,6 @@ import _forceSymlink from 'force-symlink'
 import needle from 'needle'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
-import * as config from './config'
 
 /**
  * given an arbitrary asynchronous function that accepts a callback function,
@@ -16,9 +15,9 @@ import * as config from './config'
  * @param  {thisArg} [thisArg] - optional context.
  * @return {Function} - cold observable sequence factory.
  */
-export function createObservableFactory (fn, thisArg) {
-	return (...args) =>
-		Observable.create((observer) => {
+export const createObservableFactory = (fn, thisArg) =>
+	(...args) =>
+		Observable.create(observer => {
 			fn.apply(thisArg, [...args, (error, ...results) => {
 				if (error) {
 					observer.error(error)
@@ -28,7 +27,6 @@ export function createObservableFactory (fn, thisArg) {
 				}
 			}])
 		})
-}
 
 /**
  * send a GET request to the given HTTP endpoint by passing the supplied
