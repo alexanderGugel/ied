@@ -13,7 +13,7 @@
     "lodash.memoize": "^4.1.0",
     "minimist": "^1.2.0",
     "mkdirp": "^0.5.1",
-    "needle": "^1.0.0",
+    "needle": "1.0.0",
     "node-gyp": "^3.4.0",
     "node-pre-gyp": "^0.6.29",
     "node-uuid": "^1.4.7",
