@@ -5,7 +5,9 @@ import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {Observable} from 'rxjs/Observable'
 import {_finally} from 'rxjs/operator/finally'
+import {_do} from 'rxjs/operator/do'
 import {concatStatic} from 'rxjs/operator/concat'
+import {first} from 'rxjs/operator/first'
 import {distinctKey} from 'rxjs/operator/distinctKey'
 import {expand} from 'rxjs/operator/expand'
 import {map} from 'rxjs/operator/map'
@@ -55,6 +57,18 @@ export const DEPENDENCY_FIELDS = [
 	'optionalDependencies'
 ]
 
+export const strategies = [
+	local,
+	registry
+]
+
+export const findStrategy = (name, version) =>
+	concatStatic(
+		local.resolve(name, version),
+		registry.resolve(name, version)
+	)
+	::first()
+
 /**
  * resolve a dependency's `package.json` file from a remote registry.
  * @param	{String} nodeModules - `node_modules` base directory.
@@ -63,6 +77,7 @@ export const DEPENDENCY_FIELDS = [
  * @param	{String} version - version of the dependency.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
+
 export function resolveRemote (nodeModules, parentTarget, name, version) {
 	const source = `${name}@${version}`
 	log(`resolving ${source} from remote registry`)
@@ -219,27 +234,18 @@ export function resolve (nodeModules, parentTarget, isExplicit) {
  * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
  * @return {Observable} - an observable sequence of resolved dependencies.
  */
-export function resolveAll (nodeModules, targets = Object.create(null), isExplicit) {
-	return this::expand(({target, pkgJson, isProd = false}) => {
-		// cancel when we get into a circular dependency
-		if (target in targets) {
-			log(`aborting due to circular dependency ${target}`)
+export function resolveAll (nodeModules) {
+	const targets = Object.create(null)
+
+	return this::expand(result => {
+		if (targets[result.target]) {
 			return EmptyObservable.create()
 		}
-
-		targets[target] = true // eslint-disable-line no-param-reassign
-
-		// install devDependencies of entry dependency (project-level)
-		const fields = (target === '..' && !isProd)
-			? ENTRY_DEPENDENCY_FIELDS
-			: DEPENDENCY_FIELDS
-
-		log(`extracting ${fields} from ${target}`)
-
-		const dependencies = parseDependencies(pkgJson, fields)
-
-		return ArrayObservable.create(dependencies)
-			::resolve(nodeModules, target, isExplicit)
+		targets[result.target] = true
+		const isEntry = result.target === '..' && !result.isProd
+		const fields = isEntry ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
+		return ArrayObservable.create(parseDependencies(result.pkgJson, fields))
+			::resolve(nodeModules, result.target, result.isExplicit)
 	})
 }
 
@@ -269,25 +275,16 @@ function getDirectLink (dep) {
 	return [src, dst]
 }
 
-/**
- * symlink the intermediate results of the underlying observable sequence
- * @return {Observable} - empty observable sequence that will be completed
- * once all dependencies have been symlinked.
- */
 export function linkAll () {
 	return this
 		::mergeMap((dep) => [getDirectLink(dep), ...getBinLinks(dep)])
 		::map(([src, dst]) => resolveSymlink(src, dst))
-		::mergeMap(([src, dst]) => {
-			log(`symlinking ${src} -> ${dst}`)
-			return util.forceSymlink(src, dst)
-		})
+		::mergeMap(([src, dst]) => util.forceSymlink(src, dst))
 }
 
-function checkShasum (shasum, expected, tarball) {
-	assert.equal(shasum, expected,
+export const checkShasum = (shasum, expected, tarball) =>
+	void assert.equal(shasum, expected,
 		`shasum mismatch for ${tarball}: ${shasum} <-> ${expected}`)
-}
 
 function download (tarball, expected, type) {
 	log(`downloading ${tarball}, expecting ${expected}`)
@@ -362,6 +359,7 @@ export function fetch (nodeModules) {
 }
 
 export function fetchAll (nodeModules) {
-	const fetchWithRetry = (dep) => dep.fetch(nodeModules)::retry(config.retries)
-	return this::distinctKey('target')::mergeMap(fetchWithRetry)
+	return this
+		::distinctKey('target')
+		::map(dep => dep.fetch(nodeModules))
 }

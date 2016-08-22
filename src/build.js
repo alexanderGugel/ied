@@ -49,7 +49,7 @@ export class FailedBuildError extends Error {
  * @param  {String} dep.script - script to be executed (usually using `sh`).
  * @return {Observable} - observable sequence of the returned exit code.
  */
-export function build (nodeModules, dep) {
+export const build = nodeModules => dep => {
 	const {target, script} = dep
 	log(`executing "${script}" from ${target}`)
 
@@ -103,12 +103,11 @@ export function parseLifecycleScripts ({target, pkgJson: {scripts = {}}}) {
  * @return {Observable} - empty observable sequence that will be completed once
  * all lifecycle scripts have been executed.
  */
-export function buildAll (nodeModules) {
-	return this
+export const buildAll = nodeModules => o =>
+	o
 		::map(parseLifecycleScripts)
 		::mergeMap((scripts) => ArrayObservable.create(scripts))
-		::concatMap((script) => build(nodeModules, script))
+		::concatMap(build(nodeModules))
 		::every((code) => code === 0)
 		::filter((ok) => !ok)
 		::_do(() => { throw new FailedBuildError() })
-}

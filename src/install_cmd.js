@@ -27,22 +27,29 @@ export default function installCmd (cwd, argv) {
 	const nodeModules = path.join(cwd, 'node_modules')
 
 	const resolvedAll = updatedPkgJSONs
-		::map((pkgJson) => ({pkgJson, target: '..', isProd}))
-		::resolveAll(nodeModules, undefined, isExplicit)::skip(1)
+		::map((pkgJson) => ({pkgJson, target: '..', isProd, isExplicit}))
+		::resolveAll(nodeModules)::skip(1)
 		::publishReplay().refCount()
 
 	const initialized = initCache()::ignoreElements()
-	const linkedAll = resolvedAll::linkAll()
-	const fetchedAll = resolvedAll::fetchAll(nodeModules)
-	const installedAll = mergeStatic(linkedAll, fetchedAll)
+	const installedAll = mergeStatic(
+		resolvedAll::linkAll(),
+		resolvedAll::fetchAll(nodeModules)
+	)
 
 	const builtAll = argv.build
-		? resolvedAll::buildAll(nodeModules)
+		? resolvedAll.lift(buildAll(nodeModules))
 		: EmptyObservable.create()
 
-	const saved = (argv.save || argv['save-dev'] || argv['save-optional'])
+	const shouldSave = argv.save || argv['save-dev'] || argv['save-optional']
+	const saved = shouldSave
 		? updatedPkgJSONs::save(cwd)
 		: EmptyObservable.create()
 
-	return concatStatic(initialized, installedAll, saved, builtAll)
+	return concatStatic(
+		initialized,
+		installedAll,
+		saved,
+		builtAll
+	)
 }
