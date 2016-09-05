@@ -1,65 +1,47 @@
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
-import {_do} from 'rxjs/operator/do'
 import {map} from 'rxjs/operator/map'
-import {mergeStatic} from 'rxjs/operator/merge'
-import {reduce} from 'rxjs/operator/reduce'
-
+import {_catch} from 'rxjs/operator/catch'
+import {forkJoin} from 'rxjs/observable/forkJoin'
+import {readlink, readFile} from './util'
 import path from 'path'
-import {inherits} from 'util'
-import {satisfies} from 'semver'
 
-import * as util from './util'
+const getLinkname = (dir, parentTarget, name) =>
+	path.join(dir, parentTarget, 'node_modules', name)
 
-// thrown when the currently installed version does not satisfy the semantic
-// version constraint.
-inherits(LocalConflictError, Error)
-function LocalConflictError (name, version, expected) {
-	Error.captureStackTrace(this, this.constructor)
-	this.name = 'LocalConflictError'
-	this.message = `Local version ${name}@${version} does not match required\
-version @${expected}`
-	this.extra = {name, version, expected}
-}
-
-export const fetch = () =>
-	EmptyObservable.create()
-
-const getLinkname = (nodeModules, parentTarget, name) =>
-	path.join(nodeModules, parentTarget, 'node_modules', name)
-
-const getTarget = dst => ({
-	target: path.basename(path.dirname(dst))
-})
-
-const checkConflict = (name, version) => ({pkgJson}) => {
-	if (!satisfies(pkgJson.version, version)) {
-		throw new LocalConflictError(name, pkgJson.version, version)
-	}
-}
+const getDir = dst =>
+	path.basename(path.dirname(dst))
 
 const readTarget = linkname =>
-	util.readlink(linkname)::map(getTarget)
+	readlink(linkname)::map(getDir)
 
 const readPkgJson = filename =>
-	util.readFile(filename, 'utf8')
-		::map(JSON.parse)
-		::map(pkgJson => ({pkgJson}))
+	readFile(filename)::map(JSON.parse)
 
-const acc = (_, x) =>
-	({..._, ...x})
+const empty = () =>
+	EmptyObservable.create()
 
-export const resolve = (nodeModules, parentTarget, name, version, isExplicit) => {
-	const linkname = getLinkname(nodeModules, parentTarget, name)
+// EmptyObservable accepts a scheduler, but fetch is invoked with the
+// node_modules path, which means we can't alias fetch to the
+// EmptyObservable.create.
+const fetch = empty
+
+const readTargetPkgJson = (dir, parentTarget, name) => {
+	const linkname = getLinkname(dir, parentTarget, name)
 	const filename = path.join(linkname, 'package.json')
 
-	return mergeStatic(
+	return forkJoin(
 		readTarget(linkname),
 		readPkgJson(filename)
 	)
-		::reduce(acc, {parentTarget, name, fetch})
-		::_do(
-			isExplicit
-			? checkConflict(name, version)
-			: Function.prototype
-		)
 }
+
+export const resolve = (dir, parentTarget, name) =>
+	readTargetPkgJson(dir, parentTarget, name)
+		::map(([target, pkgJson]) => ({
+			target,
+			pkgJson,
+			parentTarget,
+			name,
+			fetch
+		}))
+		::_catch(empty)

@@ -1,55 +1,50 @@
 import path from 'path'
-import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {concatStatic} from 'rxjs/operator/concat'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import {skip} from 'rxjs/operator/skip'
 import {map} from 'rxjs/operator/map'
 import {mergeStatic} from 'rxjs/operator/merge'
-import {ignoreElements} from 'rxjs/operator/ignoreElements'
 
 import {resolveAll, fetchAll, linkAll} from './install'
 import {init as initCache} from './cache'
-import {fromArgv, fromFs, save} from './pkg_json'
-import {buildAll} from './build'
+import {fromArgv, fromFs} from './pkg_json'
 
-/**
- * run the installation command.
- * @param  {String} cwd - current working directory (absolute path).
- * @param  {Object} argv - parsed command line arguments.
- * @return {Observable} - an observable sequence that will be completed once
- * the installation is complete.
- */
-export default function installCmd (cwd, argv) {
-	const isExplicit = argv._.length - 1
-	const updatedPkgJSONs = isExplicit ? fromArgv(cwd, argv) : fromFs(cwd)
-	const isProd = argv.production
-
-	const nodeModules = path.join(cwd, 'node_modules')
-
-	const resolvedAll = updatedPkgJSONs
-		::map((pkgJson) => ({pkgJson, target: '..', isProd, isExplicit}))
-		::resolveAll(nodeModules)::skip(1)
-		::publishReplay().refCount()
-
-	const initialized = initCache()::ignoreElements()
-	const installedAll = mergeStatic(
-		resolvedAll::linkAll(),
-		resolvedAll::fetchAll(nodeModules)
+function installAll (dir) {
+	return mergeStatic(
+		this::linkAll(),
+		this::fetchAll(dir)
 	)
+}
 
-	const builtAll = argv.build
-		? resolvedAll.lift(buildAll(nodeModules))
-		: EmptyObservable.create()
+const parseArgv = ({_, production}) => ({
+	isExplicit: !!(_.length - 1),
+	isProd: production
+})
 
-	const shouldSave = argv.save || argv['save-dev'] || argv['save-optional']
-	const saved = shouldSave
-		? updatedPkgJSONs::save(cwd)
-		: EmptyObservable.create()
+const target = '..'
+
+export default (cwd, argv) => {
+	const {isExplicit, isProd} = parseArgv(argv)
+	const dir = path.join(cwd, 'node_modules')
+
+	// generate the "source" package.json file from which dependencies are being
+	// parsed and installed.
+	const srcPkgJson = isExplicit ? fromArgv(cwd, argv) : fromFs(cwd)
+
+	const installedAll = srcPkgJson
+		::map(pkgJson => ({
+			pkgJson,
+			target,
+			isProd,
+			isExplicit
+		}))
+		::resolveAll(dir)
+		::skip(1)
+		::publishReplay().refCount()
+		::installAll(dir)
 
 	return concatStatic(
-		initialized,
-		installedAll,
-		saved,
-		builtAll
+		initCache(),
+		installedAll
 	)
 }

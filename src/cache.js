@@ -1,6 +1,7 @@
 import {Observable} from 'rxjs/Observable'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {retryWhen} from 'rxjs/operator/retryWhen'
+import {ignoreElements} from 'rxjs/operator/ignoreElements'
 import gunzip from 'gunzip-maybe'
 import tar from 'tar-fs'
 import fs from 'fs'
@@ -14,37 +15,32 @@ import * as config from './config'
  * @return {Observable} - observable sequence that will be completed once the
  * base directory of the cache has been created.
  */
-export function init () {
-	return util.mkdirp(path.join(config.cacheDir, '.tmp'))
-}
+export const init = () =>
+	util.mkdirp(path.join(config.cacheDir, '.tmp'))
+		::ignoreElements()
 
 /**
  * get a random temporary filename.
  * @return {String} - temporary filename.
  */
-export function getTmp () {
-	const filename = path.join(config.cacheDir, '.tmp', uuid.v4())
-	return filename
-}
+export const getTmp = () =>
+	path.join(config.cacheDir, '.tmp', uuid.v4())
 
 /**
  * open a write stream into a temporarily cached file for caching a new
  * package.
  * @return {WriteStream} - Write Stream
  */
-export function write () {
-	return fs.createWriteStream(getTmp())
-}
+export const write = () =>
+	fs.createWriteStream(getTmp())
 
 /**
  * open a read stream to a cached dependency.
  * @param  {String} id - id (unique identifier) of the cached tarball.
  * @return {ReadStream} - Read Stream
  */
-export function read (id) {
-	const filename = path.join(config.cacheDir, id)
-	return fs.createReadStream(filename)
-}
+export const read = id =>
+	fs.createReadStream(path.join(config.cacheDir, id))
 
 /**
  * extract a dependency from the cache.

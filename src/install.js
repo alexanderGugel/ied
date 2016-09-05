@@ -64,8 +64,8 @@ export const strategies = [
 
 export const findStrategy = (name, version) =>
 	concatStatic(
-		local.resolve(name, version),
-		registry.resolve(name, version)
+		local.resolve(name, version)
+		// registry.resolve(name, version)
 	)
 	::first()
 
@@ -199,50 +199,30 @@ export function resolveFromGit (nodeModules, parentTarget, parsedSpec) {
 		})
 }
 
-/**
- * resolve an individual sub-dependency based on the parent's target and the
- * current working directory.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{String} parentTarget - target path used for determining the sub-
- * dependency's path.
- * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
- * @return {Obserable} - observable sequence of `package.json` root documents
- * wrapped into dependency objects representing the resolved sub-dependency.
- */
-export function resolve (nodeModules, parentTarget, isExplicit) {
+function resolve (nodeModules, parentTarget, isExplicit) {
 	return this::mergeMap(([name, version]) => {
 		progress.add()
 		progress.report(`resolving ${name}@${version}`)
-		log(`resolving ${name}@${version}`)
 
-		return local.resolve(nodeModules, parentTarget, name, version, isExplicit)
-			::_catch((error) => {
-				if (error.name !== 'LocalConflictError' && error.code !== 'ENOENT') {
-					throw error
-				}
-				log(`failed to resolve ${name}@${version} from local ${parentTarget} via ${nodeModules}`)
-				return resolveRemote(nodeModules, parentTarget, name, version, isExplicit)
-			})
+		return concatStatic(
+			local.resolve(nodeModules, parentTarget, name),
+			resolveRemote(nodeModules, parentTarget, name, version, isExplicit)
+		)
+			::first()
 			::_finally(progress.complete)
 	})
 }
 
-/**
- * resolve all dependencies starting at the current working directory.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{Object} [targets=Object.create(null)] - resolved / active targets.
- * @param	{Boolean} isExplicit - whether the install command asks for an explicit install.
- * @return {Observable} - an observable sequence of resolved dependencies.
- */
 export function resolveAll (nodeModules) {
 	const targets = Object.create(null)
+	const entryTarget = '..'
 
 	return this::expand(result => {
 		if (targets[result.target]) {
 			return EmptyObservable.create()
 		}
 		targets[result.target] = true
-		const isEntry = result.target === '..' && !result.isProd
+		const isEntry = result.target === entryTarget && !result.isProd
 		const fields = isEntry ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
 		return ArrayObservable.create(parseDependencies(result.pkgJson, fields))
 			::resolve(nodeModules, result.target, result.isExplicit)
@@ -361,5 +341,5 @@ export function fetch (nodeModules) {
 export function fetchAll (nodeModules) {
 	return this
 		::distinctKey('target')
-		::map(dep => dep.fetch(nodeModules))
+		::mergeMap(dep => dep.fetch(nodeModules))
 }
