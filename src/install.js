@@ -2,18 +2,12 @@ import crypto from 'crypto'
 import path from 'path'
 import url from 'url'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
-import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {Observable} from 'rxjs/Observable'
-import {_finally} from 'rxjs/operator/finally'
-import {_do} from 'rxjs/operator/do'
 import {concatStatic} from 'rxjs/operator/concat'
 import {first} from 'rxjs/operator/first'
-import {distinctKey} from 'rxjs/operator/distinctKey'
-import {expand} from 'rxjs/operator/expand'
 import {map} from 'rxjs/operator/map'
 import {_catch} from 'rxjs/operator/catch'
 import {mergeMap} from 'rxjs/operator/mergeMap'
-import {retry} from 'rxjs/operator/retry'
 import {skip} from 'rxjs/operator/skip'
 import needle from 'needle'
 import assert from 'assert'
@@ -26,8 +20,7 @@ import * as registry from './registry'
 import * as local from './local'
 import * as git from './git'
 import * as util from './util'
-import * as progress from './progress'
-import {normalizeBin, parseDependencies} from './pkg_json'
+import {normalizeBin} from './pkg_json'
 
 import debuglog from './debuglog'
 
@@ -43,17 +36,6 @@ const cachedNpa = memoize(npa)
 export const ENTRY_DEPENDENCY_FIELDS = [
 	'dependencies',
 	'devDependencies',
-	'optionalDependencies'
-]
-
-/**
- * properties of `package.json` of sub-dependencies that will be checked for
- * dependences.
- * @type {Array.<String>}
- * @readonly
- */
-export const DEPENDENCY_FIELDS = [
-	'dependencies',
 	'optionalDependencies'
 ]
 
@@ -199,69 +181,6 @@ export function resolveFromGit (nodeModules, parentTarget, parsedSpec) {
 		})
 }
 
-function resolve (nodeModules, parentTarget, isExplicit) {
-	return this::mergeMap(([name, version]) => {
-		progress.add()
-		progress.report(`resolving ${name}@${version}`)
-
-		return concatStatic(
-			local.resolve(nodeModules, parentTarget, name),
-			resolveRemote(nodeModules, parentTarget, name, version, isExplicit)
-		)
-			::first()
-			::_finally(progress.complete)
-	})
-}
-
-export function resolveAll (nodeModules) {
-	const targets = Object.create(null)
-	const entryTarget = '..'
-
-	return this::expand(result => {
-		if (targets[result.target]) {
-			return EmptyObservable.create()
-		}
-		targets[result.target] = true
-		const isEntry = result.target === entryTarget && !result.isProd
-		const fields = isEntry ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
-		return ArrayObservable.create(parseDependencies(result.pkgJson, fields))
-			::resolve(nodeModules, result.target, result.isExplicit)
-	})
-}
-
-function resolveSymlink (src, dst) {
-	const relSrc = path.relative(path.dirname(dst), src)
-	return [relSrc, dst]
-}
-
-function getBinLinks (dep) {
-	const {pkgJson, parentTarget, target} = dep
-	const binLinks = []
-	const bin = normalizeBin(pkgJson)
-	const names = Object.keys(bin)
-	for (let i = 0; i < names.length; i++) {
-		const name = names[i]
-		const src = path.join('node_modules', target, 'package', bin[name])
-		const dst = path.join('node_modules', parentTarget, 'node_modules', '.bin', name)
-		binLinks.push([src, dst])
-	}
-	return binLinks
-}
-
-function getDirectLink (dep) {
-	const {parentTarget, target, name} = dep
-	const src = path.join('node_modules', target, 'package')
-	const dst = path.join('node_modules', parentTarget, 'node_modules', name)
-	return [src, dst]
-}
-
-export function linkAll () {
-	return this
-		::mergeMap((dep) => [getDirectLink(dep), ...getBinLinks(dep)])
-		::map(([src, dst]) => resolveSymlink(src, dst))
-		::mergeMap(([src, dst]) => util.forceSymlink(src, dst))
-}
-
 export const checkShasum = (shasum, expected, tarball) =>
 	void assert.equal(shasum, expected,
 		`shasum mismatch for ${tarball}: ${shasum} <-> ${expected}`)
@@ -336,10 +255,4 @@ export function fetch (nodeModules) {
 		const fixedPermissions = fixPermissions(where, normalizeBin({name, bin}))
 		return concatStatic(extracted, fixedPermissions)
 	})
-}
-
-export function fetchAll (nodeModules) {
-	return this
-		::distinctKey('target')
-		::mergeMap(dep => dep.fetch(nodeModules))
 }

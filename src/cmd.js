@@ -68,7 +68,7 @@ let cacheCmd
 	switch (subCommand) {
 		case 'i':
 		case 'install':
-			installCmd = require('./install_cmd').default
+			installCmd = require('./install_cmd').default(config)
 			installCmd(cwd, argv).subscribe()
 			break
 		case 'sh':

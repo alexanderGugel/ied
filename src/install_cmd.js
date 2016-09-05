@@ -1,13 +1,15 @@
 import path from 'path'
 import {concatStatic} from 'rxjs/operator/concat'
-import {publishReplay} from 'rxjs/operator/publishReplay'
-import {skip} from 'rxjs/operator/skip'
 import {map} from 'rxjs/operator/map'
 import {mergeStatic} from 'rxjs/operator/merge'
+import {publishReplay} from 'rxjs/operator/publishReplay'
+import {skip} from 'rxjs/operator/skip'
 
-import {resolveAll, fetchAll, linkAll} from './install'
-import {init as initCache} from './cache'
+import fetchAll from './fetch_all'
+import linkAll from './link_all'
+import resolveAll from './resolve_all'
 import {fromArgv, fromFs} from './pkg_json'
+import {init as initCache} from './cache'
 
 function installAll (dir) {
 	return mergeStatic(
@@ -21,11 +23,10 @@ const parseArgv = ({_, production}) => ({
 	isProd: production
 })
 
-const target = '..'
-
-export default (cwd, argv) => {
+export default config => (cwd, argv) => {
 	const {isExplicit, isProd} = parseArgv(argv)
 	const dir = path.join(cwd, 'node_modules')
+	const target = '..'
 
 	// generate the "source" package.json file from which dependencies are being
 	// parsed and installed.
@@ -38,7 +39,7 @@ export default (cwd, argv) => {
 			isProd,
 			isExplicit
 		}))
-		::resolveAll(dir)
+		::resolveAll(dir, config)
 		::skip(1)
 		::publishReplay().refCount()
 		::installAll(dir)
