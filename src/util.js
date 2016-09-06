@@ -83,7 +83,7 @@ export const mkdirp = createObservableFactory(_mkdirp)
  * @return {Observable} - observable sequence of pairs.
  */
 export function entries () {
-	return this::mergeMap((object) => {
+	return this::mergeMap(object => {
 		const results = []
 		const keys = Object.keys(object)
 		for (let i = 0; i < keys.length; i++) {
@@ -113,15 +113,21 @@ export const setTitle = title =>
 	)
 
 /**
+ * file permissions for executable bin files.
+ * @type {Number}
+ */
+const execMode = 0o777 & (~process.umask())
+
+/**
  * fix the permissions of a downloaded dependencies.
  * @param  {String]} target - target directory to resolve from.
  * @param  {Object} bin - `package.json` bin object.
  * @return {Observable} - empty observable sequence.
  */
 export const fixPermissions = (target, bin) => {
-	const execMode = 0o777 & (~process.umask())
 	const paths = []
 	const names = Object.keys(bin)
+
 	for (let i = 0; i < names.length; i++) {
 		const name = names[i]
 		paths.push(path.resolve(target, bin[name]))

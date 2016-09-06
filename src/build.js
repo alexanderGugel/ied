@@ -2,17 +2,15 @@ import path from 'path'
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {Observable} from 'rxjs/Observable'
 import {_do} from 'rxjs/operator/do'
-import {map} from 'rxjs/operator/map'
 import {concatMap} from 'rxjs/operator/concatMap'
-import {mergeMap} from 'rxjs/operator/mergeMap'
-import {filter} from 'rxjs/operator/filter'
 import {every} from 'rxjs/operator/every'
+import {filter} from 'rxjs/operator/filter'
+import {inherits} from 'util'
+import {map} from 'rxjs/operator/map'
+import {mergeMap} from 'rxjs/operator/mergeMap'
 import {spawn} from 'child_process'
 
 import * as config from './config'
-
-import debuglog from './debuglog'
-const log = debuglog('build')
 
 // names of lifecycle scripts that should be run as part of the installation
 // process of a specific package (= properties of `scripts` object in
@@ -23,13 +21,14 @@ export const LIFECYCLE_SCRIPTS = [
 	'postinstall'
 ]
 
+
 // error class used for representing an error that occurs due to a lifecycle
 // script that exits with a non-zero status code.
-export class FailedBuildError extends Error {
-	constructor () {
-		super('failed to build one or more dependencies that exited with != 0')
-		this.name = FailedBuildError
-	}
+inherits(FailedBuildError, Error)
+export function FailedBuildError () {
+	Error.captureStackTrace(this, this.constructor)
+	this.name = 'FailedBuildError'
+	this.message = 'failed to build dependencies'
 }
 
 /**
@@ -42,7 +41,6 @@ export class FailedBuildError extends Error {
  */
 export const build = nodeModules => dep => {
 	const {target, script} = dep
-	log(`executing "${script}" from ${target}`)
 
 	return Observable.create((observer) => {
 		// some packages do expect a defined `npm_execpath` env
@@ -97,8 +95,10 @@ export function parseLifecycleScripts ({target, pkgJson: {scripts = {}}}) {
 export const buildAll = nodeModules => o =>
 	o
 		::map(parseLifecycleScripts)
-		::mergeMap((scripts) => ArrayObservable.create(scripts))
+		::mergeMap(scripts => ArrayObservable.create(scripts))
 		::concatMap(build(nodeModules))
-		::every((code) => code === 0)
-		::filter((ok) => !ok)
-		::_do(() => { throw new FailedBuildError() })
+		::every(code => code === 0)
+		::filter(ok => !ok)
+		::_do(() => {
+			throw new FailedBuildError()
+		})

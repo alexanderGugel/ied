@@ -1,10 +1,8 @@
-import sinon from 'sinon'
-import url from 'url'
-import assert from 'assert'
-import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import * as registry from '../../src/registry'
+import assert from 'assert'
+import sinon from 'sinon'
 
-describe('registry', () => {
+describe.only('registry', () => {
 	const sandbox = sinon.sandbox.create()
 
 	afterEach(() => sandbox.restore())

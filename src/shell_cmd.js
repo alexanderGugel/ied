@@ -14,8 +14,12 @@ export default config => cwd => {
 		...process.env,
 		PATH: [binPath, process.env.PATH].join(path.delimiter)
 	}
+	const options = {
+		stdio: 'inherit',
+		env
+	}
 
 	return readdir(binPath)
 		::_do(cmds => console.log('added: \n\t', cmds.join('\n\t')))
-		::map(() => spawn(config.sh, [], {stdio: 'inherit', env}))
+		::map(() => spawn(config.sh, [], options))
 }
