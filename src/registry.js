@@ -1,11 +1,11 @@
+import fetch from './fetch'
 import url from 'url'
-import {map} from 'rxjs/operator/map'
 import {_do} from 'rxjs/operator/do'
-import {publishReplay} from 'rxjs/operator/publishReplay'
 import {httpGet} from './util'
-import {maxSatisfying} from 'semver'
 import {inherits} from 'util'
-import {fetch} from './install'
+import {map} from 'rxjs/operator/map'
+import {maxSatisfying} from 'semver'
+import {publishReplay} from 'rxjs/operator/publishReplay'
 
 // default registry to be used.
 export const REGISTRY = 'https://registry.npmjs.org/'
