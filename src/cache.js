@@ -67,11 +67,11 @@ export function extract (dest, id) {
 			.on('finish', completeHandler)
 	})
 		::mergeMap(tmpDest => util.rename(tmpDest, dest)
-			::retryWhen(errors => errors::mergeMap(error => {
-				if (error.code !== 'ENOENT') {
-					throw error
+			::retryWhen(errors => errors::mergeMap(err => {
+				switch (err.code) {
+					case 'ENOENT': return util.mkdirp(path.dirname(dest))
+					default: throw err
 				}
-				return util.mkdirp(path.dirname(dest))
 			}))
 		)
 }
