@@ -1,9 +1,9 @@
+import path from 'path'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
-import {map} from 'rxjs/operator/map'
 import {_catch} from 'rxjs/operator/catch'
 import {forkJoin} from 'rxjs/observable/forkJoin'
+import {map} from 'rxjs/operator/map'
 import {readlink, readFile} from './util'
-import path from 'path'
 
 const getLinkname = (dir, parentTarget, name) =>
 	path.join(dir, parentTarget, 'node_modules', name)

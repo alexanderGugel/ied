@@ -38,7 +38,7 @@ let debugEnv
  * @return {Function} - the logging function.
  * @see https://nodejs.org/api/util.html#util_util_debuglog_section
  */
-function debuglog (set) {
+export default set => {
 	if (debugEnv === undefined) {
 		debugEnv = process.env.NODE_DEBUG || ''
 	}
@@ -56,5 +56,3 @@ function debuglog (set) {
 	}
 	return debugs[upperSet]
 }
-
-export default debuglog

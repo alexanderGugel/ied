@@ -50,8 +50,8 @@ export const getJson = (uri, options = {}) => {
 
 // The package root url is the base URL where a client can get top-level
 // information about a package and all of the versions known to the registry.
-// A valid “package root url” response MUST be returned when the client requests
-// {registry root url}/{package name}.
+// A valid “package root url” response MUST be returned when the client
+// requests {registry root url}/{package name}.
 // Ideally we would use the package version url, but npm's caching policy seems
 // a bit buggy in that regard.
 // Source: http://wiki.commonjs.org/wiki/Packages/Registry#package_root_url

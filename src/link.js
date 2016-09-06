@@ -23,7 +23,7 @@ export const getSymlinks = (cwd, pkgJson) => {
 		path.join(config.globalNodeModules, pkgJson.name, bin[name]),
 		path.join(config.globalBin, name)
 	]))
-	return [libSymlink].concat(binSymlinks)
+	return [libSymlink, ...binSymlinks]
 }
 
 /*
@@ -60,8 +60,9 @@ export const linkFromGlobal = (cwd, name) => {
 export const unlinkToGlobal = cwd => {
 	const pkg = require(path.join(cwd, 'package.json'))
 	const symlinks = getSymlinks(cwd, pkg)
+
 	return ArrayObservable.create(symlinks)
-		::mergeMap(([src, dst]) => unlink(dst))
+		::mergeMap(link => unlink(link[1]))
 }
 
 /**

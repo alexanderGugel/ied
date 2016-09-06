@@ -11,4 +11,4 @@ import {readFileJSON} from './util'
 export default () =>
 	readFileJSON(path.join(__dirname, '../package.json'))
 		::map(({version}) => version)
-		::_do((version) => console.log(`ied version ${version}`))
+		::_do(version => console.log(`ied version ${version}`))
