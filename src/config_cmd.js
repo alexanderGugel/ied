@@ -1,13 +1,14 @@
-import * as config from './config'
 import Table from 'easy-table'
 
 /**
  * print the used configuration object as an ASCII table.
  */
-export default function configCmd () {
+export default config => () => {
 	const table = new Table()
 	const keys = Object.keys(config)
-	for (const key of keys) {
+
+	for (let i = 0; i < keys.length; i++) {
+		const key = keys[i]
 		const value = config[key]
 		table.cell('key', key)
 		table.cell('value', value)

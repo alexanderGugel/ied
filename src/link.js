@@ -11,7 +11,7 @@ import {mergeMap} from 'rxjs/operator/mergeMap'
  * @return {Array.<String>} - an array of tuples representing symbolic links to be
  * created.
  */
-export function getSymlinks (cwd, pkgJson) {
+export const getSymlinks = (cwd, pkgJson) => {
 	const libSymlink = [cwd, path.join(config.globalNodeModules, pkgJson.name)]
 	let bin = pkgJson.bin
 	if (typeof bin === 'string') {
@@ -19,7 +19,7 @@ export function getSymlinks (cwd, pkgJson) {
 		bin[pkgJson.name] = pkgJson.bin
 	}
 	bin = bin || {}
-	const binSymlinks = Object.keys(bin).map((name) => ([
+	const binSymlinks = Object.keys(bin).map(name => ([
 		path.join(config.globalNodeModules, pkgJson.name, bin[name]),
 		path.join(config.globalBin, name)
 	]))
@@ -31,11 +31,10 @@ export function getSymlinks (cwd, pkgJson) {
  * @param {String} cwd - current working directory.
  * @return {Observable} - observable sequence.
  */
-export function linkToGlobal (cwd) {
-	return readFileJSON(path.join(cwd, 'package.json'))
+export const linkToGlobal = cwd =>
+	readFileJSON(path.join(cwd, 'package.json'))
 		::mergeMap((pkgJson) => getSymlinks(cwd, pkgJson))
 		::mergeMap(([src, dst]) => forceSymlink(src, dst))
-}
 
 /**
  * links a globally linked package into the package present in the current
@@ -46,7 +45,7 @@ export function linkToGlobal (cwd) {
  * @param {String} name - name of the dependency to be linked.
  * @return {Observable} - observable sequence.
  */
-export function linkFromGlobal (cwd, name) {
+export const linkFromGlobal = (cwd, name) => {
 	const dst = path.join(cwd, 'node_modules', name)
 	const src = path.join(config.globalNodeModules, name)
 	return forceSymlink(src, dst)
@@ -58,7 +57,7 @@ export function linkFromGlobal (cwd, name) {
  * @param {String} cwd - current working directory.
  * @return {Observable} - observable sequence.
  */
-export function unlinkToGlobal (cwd) {
+export const unlinkToGlobal = cwd => {
 	const pkg = require(path.join(cwd, 'package.json'))
 	const symlinks = getSymlinks(cwd, pkg)
 	return ArrayObservable.create(symlinks)
@@ -74,7 +73,7 @@ export function unlinkToGlobal (cwd) {
  * project's `node_modules`.
  * @return {Observable} - observable sequence.
  */
-export function unlinkFromGlobal (cwd, name) {
+export const unlinkFromGlobal = (cwd, name) => {
 	const dst = path.join(cwd, 'node_modules', name)
 	return unlink(dst)
 }

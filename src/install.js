@@ -28,30 +28,6 @@ const log = debuglog('install')
 const cachedNpa = memoize(npa)
 
 /**
- * properties of project-level `package.json` files that will be checked for
- * dependencies.
- * @type {Array.<String>}
- * @readonly
- */
-export const ENTRY_DEPENDENCY_FIELDS = [
-	'dependencies',
-	'devDependencies',
-	'optionalDependencies'
-]
-
-export const strategies = [
-	local,
-	registry
-]
-
-export const findStrategy = (name, version) =>
-	concatStatic(
-		local.resolve(name, version)
-		// registry.resolve(name, version)
-	)
-	::first()
-
-/**
  * resolve a dependency's `package.json` file from a remote registry.
  * @param	{String} nodeModules - `node_modules` base directory.
  * @param	{String} parentTarget - relative parent's node_modules path.

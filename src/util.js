@@ -33,8 +33,8 @@ export const createObservableFactory = (fn, thisArg) =>
  * arguments to [`needle`](https://www.npmjs.com/package/needle).
  * @return {Observable} - observable sequence of a single response object.
  */
-export function httpGet (...args) {
-	return Observable.create(observer => {
+export const httpGet = (...args) =>
+	Observable.create(observer => {
 		needle.get(...args, (error, response) => {
 			if (error) observer.error(error)
 			else {
@@ -43,7 +43,6 @@ export function httpGet (...args) {
 			}
 		})
 	})
-}
 
 /** @type {Function} Observable wrapper function around `fs.readFile`. */
 export const readFile = createObservableFactory(fs.readFile, fs)
@@ -85,7 +84,8 @@ export function entries () {
 	return this::mergeMap((object) => {
 		const results = []
 		const keys = Object.keys(object)
-		for (const key of keys) {
+		for (let i = 0; i < keys.length; i++) {
+			const key = keys[i]
 			results.push([key, object[key]])
 		}
 		return results
@@ -98,16 +98,14 @@ export function entries () {
  * @return {Observable} - observable sequence of a single object representing
  * the read JSON file.
  */
-export function readFileJSON (file) {
-	return readFile(file, 'utf8')::map(JSON.parse)
-}
+export const readFileJSON = file =>
+	readFile(file, 'utf8')::map(JSON.parse)
 
 /**
  * set the terminal title using the required ANSI escape codes.
  * @param {String} title - title to be set.
  */
-export function setTitle (title) {
+export const setTitle = title =>
 	process.stdout.write(
 		`${String.fromCharCode(27)}]0;${title}${String.fromCharCode(7)}`
 	)
-}

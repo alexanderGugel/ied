@@ -2,6 +2,7 @@
 
 import minimist from 'minimist'
 import * as config from './config'
+
 if (['development', 'test'].indexOf(process.env.NODE_ENV) !== -1) {
 	require('source-map-support').install()
 }
@@ -73,7 +74,7 @@ let cacheCmd
 			break
 		case 'sh':
 		case 'shell':
-			shellCmd = require('./shell_cmd').default
+			shellCmd = require('./shell_cmd').default(config)
 			shellCmd(cwd).subscribe()
 			break
 		case 'r':
@@ -91,20 +92,20 @@ let cacheCmd
 			runCmd(cwd, {...argv, _: ['run'].concat(argv._)}).subscribe()
 			break
 		case 'ping':
-			pingCmd = require('./ping_cmd').default
-			pingCmd()
+			pingCmd = require('./ping_cmd').default(config)
+			pingCmd().subscribe()
 			break
 		case 'conf':
 		case 'config':
-			configCmd = require('./config_cmd').default
+			configCmd = require('./config_cmd').default(config)
 			configCmd()
 			break
 		case 'init':
-			initCmd = require('./init_cmd').default
-			initCmd(cwd, argv)
+			initCmd = require('./init_cmd').default(config)
+			initCmd(cwd, argv).subscribe()
 			break
 		case 'link':
-			linkCmd = require('./link_cmd').default
+			linkCmd = require('./link_cmd').default(config)
 			linkCmd(cwd, argv).subscribe()
 			break
 		case 'unlink':
@@ -112,7 +113,7 @@ let cacheCmd
 			unlinkCmd(cwd, argv).subscribe()
 			break
 		case 'cache':
-			cacheCmd = require('./cache_cmd').default
+			cacheCmd = require('./cache_cmd').default(config)
 			cacheCmd(cwd, argv)
 			break
 		case 'version':

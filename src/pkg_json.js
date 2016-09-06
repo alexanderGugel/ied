@@ -1,9 +1,9 @@
+import fromPairs from 'lodash.frompairs'
 import path from 'path'
 import {ScalarObservable} from 'rxjs/observable/ScalarObservable'
-import fromPairs from 'lodash.frompairs'
+import {_catch} from 'rxjs/operator/catch'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
-import {_catch} from 'rxjs/operator/catch'
 
 import * as util from './util'
 
@@ -15,7 +15,7 @@ import * as util from './util'
  * together.
  * @return {Object} - merged dependencies.
  */
-export function mergeDependencies (pkgJson, fields) {
+export const mergeDependencies = (pkgJson, fields) => {
 	const allDependencies = {}
 	for (let i = 0; i < fields.length; i++) {
 		const field = fields[i]
@@ -37,12 +37,10 @@ export function mergeDependencies (pkgJson, fields) {
  * `package.json` file.
  * @return {Array.<String>} - array of bundled dependency names.
  */
-export function parseBundleDependencies (pkgJson) {
-	const bundleDependencies = []
+export const parseBundleDependencies = pkgJson =>
+	[]
 		.concat(pkgJson.bundleDependencies || [])
 		.concat(pkgJson.bundledDependencies || [])
-	return bundleDependencies
-}
 
 /**
  * extract specified dependencies from a specific `package.json`.
@@ -51,7 +49,7 @@ export function parseBundleDependencies (pkgJson) {
  * @param  {Array.<String>} fields - array of dependency fields to be followed.
  * @return {Array} - array of dependency pairs.
  */
-export function parseDependencies (pkgJson, fields) {
+export const parseDependencies = (pkgJson, fields) => {
 	// bundleDependencies and bundledDependencies are optional. we need to
 	// exclude those form the final [name, version] pairs that we're
 	// generating.
@@ -75,7 +73,7 @@ export function parseDependencies (pkgJson, fields) {
  * `package.json` file.
  * @return {Object} - normalized `bin` property.
  */
-export function normalizeBin (pkgJson) {
+export const normalizeBin = pkgJson => {
 	switch (typeof pkgJson.bin) {
 		case 'string': return ({[pkgJson.name]: pkgJson.bin})
 		case 'object': return pkgJson.bin
@@ -88,12 +86,12 @@ export function normalizeBin (pkgJson) {
  * @param  {String} baseDir - base directory of the project.
  * @return {Observabel} - an observable sequence of an `EntryDep`.
  */
-export function fromFs (baseDir) {
+export const fromFs = baseDir => {
 	const filename = path.join(baseDir, 'package.json')
 	return util.readFileJSON(filename)
 }
 
-export function updatePkgJson (pkgJson, diff) {
+export const updatePkgJson = (pkgJson, diff) => {
 	const updatedPkgJson = {...pkgJson}
 	const fields = Object.keys(diff)
 	for (const field of fields) {
@@ -109,12 +107,36 @@ export function save (baseDir) {
 	const filename = path.join(baseDir, 'package.json')
 
 	return this
-		::mergeMap((diff) => fromFs(baseDir)
+		::mergeMap(diff => fromFs(baseDir)
 			::_catch(() => ScalarObservable.create({}))
-			::map((pkgJson) => updatePkgJson(pkgJson, diff))
+			::map(pkgJson => updatePkgJson(pkgJson, diff))
 		)
-		::map((pkgJson) => JSON.stringify(pkgJson, null, '\t'))
-		::mergeMap((pkgJson) => util.writeFile(filename, pkgJson, 'utf8'))
+		::map(pkgJson => JSON.stringify(pkgJson, null, '\t'))
+		::mergeMap(pkgJson => util.writeFile(filename, pkgJson, 'utf8'))
+}
+
+const argvRegExp = /^(@?.+?)(?:@(.+)?)?$/
+
+/**
+ * parse the command line arguments and create the dependency field of a
+ * `package.json` file from it.
+ * @param  {Array} argv - command line arguments.
+ * @return {NullPkgJSON} - package.json created from explicit dependencies
+ * supplied via command line arguments.
+ */
+export const parseArgv = argv => {
+	const names = argv._.slice(1)
+
+	const nameVersionPairs = fromPairs(names.map((target) => {
+		const nameVersion = argvRegExp.exec(target)
+		return [nameVersion[1], nameVersion[2] || '*']
+	}))
+
+	const field = argv['save-dev'] ? 'devDependencies'
+		: argv['save-optional'] ? 'optionalDependencies'
+		: 'dependencies'
+
+	return {[field]: nameVersionPairs}
 }
 
 /**
@@ -124,29 +146,7 @@ export function save (baseDir) {
  * @param  {Array} argv - command line arguments.
  * @return {Observabel} - an observable sequence of an `EntryDep`.
  */
-export function fromArgv (baseDir, argv) {
+export const fromArgv = (baseDir, argv) => {
 	const pkgJson = parseArgv(argv)
 	return ScalarObservable.create(pkgJson)
-}
-
-/**
- * parse the command line arguments and create the dependency field of a
- * `package.json` file from it.
- * @param  {Array} argv - command line arguments.
- * @return {NullPkgJSON} - package.json created from explicit dependencies
- * supplied via command line arguments.
- */
-export function parseArgv (argv) {
-	const names = argv._.slice(1)
-
-	const nameVersionPairs = fromPairs(names.map((target) => {
-		const nameVersion = /^(@?.+?)(?:@(.+)?)?$/.exec(target)
-		return [nameVersion[1], nameVersion[2] || '*']
-	}))
-
-	const field = argv['save-dev'] ? 'devDependencies'
-		: argv['save-optional'] ? 'optionalDependencies'
-		: 'dependencies'
-
-	return {[field]: nameVersionPairs}
 }

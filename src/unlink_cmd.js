@@ -10,7 +10,7 @@ import {unlinkFromGlobal, unlinkToGlobal} from './link'
  * @param  {Object} argv - parsed command line arguments.
  * @return {Observable} - observable sequence.
  */
-export default function unlinkCmd (cwd, argv) {
+export default (cwd, argv) => {
 	const names = argv._.slice(1)
 
 	return names.length

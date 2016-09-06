@@ -14,27 +14,18 @@ import * as config from './config'
 import debuglog from './debuglog'
 const log = debuglog('build')
 
-/**
- * names of lifecycle scripts that should be run as part of the installation
- * process of a specific package (= properties of `scripts` object in
- * `package.json`).
- * @type {Array.<String>}
- * @readonly
- */
+// names of lifecycle scripts that should be run as part of the installation
+// process of a specific package (= properties of `scripts` object in
+// `package.json`).
 export const LIFECYCLE_SCRIPTS = [
 	'preinstall',
 	'install',
 	'postinstall'
 ]
 
-/**
- * error class used for representing an error that occurs due to a lifecycle
- * script that exits with a non-zero status code.
- */
+// error class used for representing an error that occurs due to a lifecycle
+// script that exits with a non-zero status code.
 export class FailedBuildError extends Error {
-	/**
-	 * create instance.
-	 */
 	constructor () {
 		super('failed to build one or more dependencies that exited with != 0')
 		this.name = FailedBuildError

@@ -17,7 +17,9 @@ export const requests = Object.create(null)
 // clear the internal cache used for pending and completed HTTP requests.
 export const reset = () => {
 	const uris = Object.keys(requests)
-	uris.forEach(uri => delete requests[uri])
+	for (let i = 0; i < uris.length; i++) {
+		delete requests[uris[i]]
+	}
 }
 
 // scoped npm modules, such as @alexanderGugel/some-package, are "@"-prefixed.

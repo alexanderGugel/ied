@@ -1,10 +1,9 @@
-import * as config from './config'
-import {mkdirp} from './util'
-import {linkFromGlobal, linkToGlobal} from './link'
-import {concatStatic} from 'rxjs/operator/concat'
-import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
-import {mergeMap} from 'rxjs/operator/mergeMap'
 import path from 'path'
+import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
+import {concatStatic} from 'rxjs/operator/concat'
+import {linkFromGlobal, linkToGlobal} from './link'
+import {mergeMap} from 'rxjs/operator/mergeMap'
+import {mkdirp} from './util'
 
 /**
  * can be used in two ways:
@@ -24,14 +23,14 @@ import path from 'path'
  * @param  {Object} argv - parsed command line arguments.
  * @return {Observable} - observable sequence.
  */
-export default function linkCmd (cwd, argv) {
+export default config => (cwd, argv) => {
 	const names = argv._.slice(1)
 
 	if (names.length) {
 		const localNodeModules = path.join(cwd, 'node_modules')
 		const init = mkdirp(localNodeModules)
 		return concatStatic(init, ArrayObservable.create(names)
-			::mergeMap((name) => linkFromGlobal(cwd, name)))
+			::mergeMap(name => linkFromGlobal(cwd, name)))
 	}
 
 	const init = concatStatic(

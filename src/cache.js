@@ -1,14 +1,14 @@
+import * as config from './config'
+import * as util from './util'
+import fs from 'fs'
+import gunzip from 'gunzip-maybe'
+import path from 'path'
+import tar from 'tar-fs'
+import uuid from 'node-uuid'
 import {Observable} from 'rxjs/Observable'
+import {ignoreElements} from 'rxjs/operator/ignoreElements'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import {retryWhen} from 'rxjs/operator/retryWhen'
-import {ignoreElements} from 'rxjs/operator/ignoreElements'
-import gunzip from 'gunzip-maybe'
-import tar from 'tar-fs'
-import fs from 'fs'
-import path from 'path'
-import uuid from 'node-uuid'
-import * as util from './util'
-import * as config from './config'
 
 /**
  * initialize the cache.
@@ -59,15 +59,15 @@ export function extract (dest, id) {
 			observer.next(tmpDest)
 			observer.complete()
 		}
-		const errorHandler = (err) => observer.error(err)
+		const errorHandler = err => observer.error(err)
 
 		this.read(id).on('error', errorHandler)
 			.pipe(gunzip()).on('error', errorHandler)
 			.pipe(untar).on('error', errorHandler)
 			.on('finish', completeHandler)
 	})
-		::mergeMap((tmpDest) => util.rename(tmpDest, dest)
-			::retryWhen((errors) => errors::mergeMap((error) => {
+		::mergeMap(tmpDest => util.rename(tmpDest, dest)
+			::retryWhen(errors => errors::mergeMap(error => {
 				if (error.code !== 'ENOENT') {
 					throw error
 				}
