@@ -2,6 +2,8 @@ import _forceSymlink from 'force-symlink'
 import _mkdirp from 'mkdirp'
 import fs from 'fs'
 import needle from 'needle'
+import path from 'path'
+import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {Observable} from 'rxjs/Observable'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
@@ -109,3 +111,21 @@ export const setTitle = title =>
 	process.stdout.write(
 		`${String.fromCharCode(27)}]0;${title}${String.fromCharCode(7)}`
 	)
+
+/**
+ * fix the permissions of a downloaded dependencies.
+ * @param  {String]} target - target directory to resolve from.
+ * @param  {Object} bin - `package.json` bin object.
+ * @return {Observable} - empty observable sequence.
+ */
+export const fixPermissions = (target, bin) => {
+	const execMode = 0o777 & (~process.umask())
+	const paths = []
+	const names = Object.keys(bin)
+	for (let i = 0; i < names.length; i++) {
+		const name = names[i]
+		paths.push(path.resolve(target, bin[name]))
+	}
+	return ArrayObservable.create(paths)
+		::mergeMap(filepath => chmod(filepath, execMode))
+}

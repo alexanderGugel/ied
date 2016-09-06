@@ -1,6 +1,5 @@
 import crypto from 'crypto'
 import path from 'path'
-import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {Observable} from 'rxjs/Observable'
 import {concatStatic} from 'rxjs/operator/concat'
 import {_catch} from 'rxjs/operator/catch'
@@ -50,18 +49,6 @@ const download = (tarball, expected, type) =>
 		return util.rename(tmpPath, newPath)
 	})
 
-const fixPermissions = (target, bin) => {
-	const execMode = 0o777 & (~process.umask())
-	const paths = []
-	const names = Object.keys(bin)
-	for (let i = 0; i < names.length; i++) {
-		const name = names[i]
-		paths.push(path.resolve(target, bin[name]))
-	}
-	return ArrayObservable.create(paths)
-		::mergeMap(filepath => util.chmod(filepath, execMode))
-}
-
 export default function fetch (nodeModules) {
 	const {target, type, pkgJson: {name, bin, dist: {tarball, shasum}}} = this
 	const where = path.join(nodeModules, target, 'package')
@@ -81,7 +68,7 @@ export default function fetch (nodeModules) {
 		})
 		return concatStatic(
 			extracted,
-			fixPermissions(where, normalizeBin({name, bin}))
+			util.fixPermissions(where, normalizeBin({name, bin}))
 		)
 	})
 }
