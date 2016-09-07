@@ -2,7 +2,7 @@ import * as registry from '../../src/registry'
 import assert from 'assert'
 import sinon from 'sinon'
 
-describe.only('registry', () => {
+describe('registry', () => {
 	const sandbox = sinon.sandbox.create()
 
 	afterEach(() => sandbox.restore())

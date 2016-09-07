@@ -1,14 +1,13 @@
 import path from 'path'
+import {forceSymlink} from './util'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
-import {forceSymlink} from './util'
 import {normalizeBin} from './pkg_json'
 
 const resolveSymlink = (src, dst) =>
 	[path.relative(path.dirname(dst), src), dst]
 
-const getBinLinks = dep => {
-	const {pkgJson, parentTarget, target} = dep
+const getBinLinks = ({pkgJson, parentTarget, target}) => {
 	const binLinks = []
 	const bin = normalizeBin(pkgJson)
 	const names = Object.keys(bin)
@@ -21,8 +20,7 @@ const getBinLinks = dep => {
 	return binLinks
 }
 
-const getDirectLink = dep => {
-	const {parentTarget, target, name} = dep
+const getDirectLink = ({parentTarget, target, name}) => {
 	const src = path.join('node_modules', target, 'package')
 	const dst = path.join('node_modules', parentTarget, 'node_modules', name)
 	return [src, dst]
@@ -30,7 +28,7 @@ const getDirectLink = dep => {
 
 export default function linkAll () {
 	return this
-		::mergeMap((dep) => [getDirectLink(dep), ...getBinLinks(dep)])
+		::mergeMap(dep => [getDirectLink(dep), ...getBinLinks(dep)])
 		::map(([src, dst]) => resolveSymlink(src, dst))
 		::mergeMap(([src, dst]) => forceSymlink(src, dst))
 }

@@ -42,6 +42,10 @@ export const write = () =>
 export const read = id =>
 	fs.createReadStream(path.join(config.cacheDir, id))
 
+const extractOptions = {
+	strip: 1
+}
+
 /**
  * extract a dependency from the cache.
  * @param {String} dest - pathname into which the cached dependency should be
@@ -50,28 +54,28 @@ export const read = id =>
  * @return {Observable} - observable sequence that will be completed once
  * the cached dependency has been fetched.
  */
-export function extract (dest, id) {
-	return Observable.create((observer) => {
+export const extract = (dest, id) =>
+	Observable.create(observer => {
 		const tmpDest = getTmp()
-		const untar = tar.extract(tmpDest, {strip: 1})
+		const untar = tar.extract(tmpDest, extractOptions)
 
-		const completeHandler = () => {
+		const finishHandler = () => {
 			observer.next(tmpDest)
 			observer.complete()
 		}
 		const errorHandler = err => observer.error(err)
 
-		this.read(id).on('error', errorHandler)
+		read(id).on('error', errorHandler)
 			.pipe(gunzip()).on('error', errorHandler)
 			.pipe(untar).on('error', errorHandler)
-			.on('finish', completeHandler)
+			.on('finish', finishHandler)
 	})
-		::mergeMap(tmpDest => util.rename(tmpDest, dest)
-			::retryWhen(errors => errors::mergeMap(err => {
-				switch (err.code) {
-					case 'ENOENT': return util.mkdirp(path.dirname(dest))
-					default: throw err
-				}
-			}))
-		)
-}
+		::mergeMap(tmpDest =>
+			util.rename(tmpDest, dest)
+				::retryWhen(errors => errors::mergeMap(err => {
+					switch (err.code) {
+						case 'ENOENT': return util.mkdirp(path.dirname(dest))
+						default: throw err
+					}
+				}))
+			)
