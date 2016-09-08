@@ -21,7 +21,6 @@ export const LIFECYCLE_SCRIPTS = [
 	'postinstall'
 ]
 
-
 // error class used for representing an error that occurs due to a lifecycle
 // script that exits with a non-zero status code.
 inherits(FailedBuildError, Error)
@@ -39,12 +38,10 @@ export function FailedBuildError () {
  * @param  {String} dep.script - script to be executed (usually using `sh`).
  * @return {Observable} - observable sequence of the returned exit code.
  */
-export const build = nodeModules => dep => {
-	const {target, script} = dep
-
-	return Observable.create((observer) => {
-		// some packages do expect a defined `npm_execpath` env
-		// eg. https://github.com/chrisa/node-dtrace-provider/blob/v0.6.0/scripts/install.js#L19
+export const build = nodeModules => ({target, script}) =>
+	Observable.create(observer => {
+		// some packages do expect a defined `npm_execpath` env, e.g.
+		// https://github.com/chrisa/node-dtrace-provider/blob/v0.6.0/scripts/install.js#L19
 		const env = {npm_execpath: '', ...process.env}
 
 		env.PATH = [
@@ -57,7 +54,6 @@ export const build = nodeModules => dep => {
 			cwd: path.join(nodeModules, target, 'package'),
 			env,
 			stdio: 'inherit'
-			// shell: true // does break `dtrace-provider@0.6.0` build
 		})
 		childProcess.on('error', (error) => {
 			observer.error(error)
@@ -67,14 +63,13 @@ export const build = nodeModules => dep => {
 			observer.complete()
 		})
 	})
-}
 
 /**
  * extract lifecycle scripts from supplied dependency.
  * @param {Dep} dep - dependency to be parsed.
  * @return {Array.<Object>} - array of script targets to be executed.
  */
-export function parseLifecycleScripts ({target, pkgJson: {scripts = {}}}) {
+export const parseLifecycleScripts = ({target, pkgJson: {scripts = {}}}) => {
 	const results = []
 	for (let i = 0; i < LIFECYCLE_SCRIPTS.length; i++) {
 		const name = LIFECYCLE_SCRIPTS[i]
@@ -92,13 +87,15 @@ export function parseLifecycleScripts ({target, pkgJson: {scripts = {}}}) {
  * @return {Observable} - empty observable sequence that will be completed once
  * all lifecycle scripts have been executed.
  */
-export const buildAll = nodeModules => o =>
-	o
+export default function buildAll (nodeModules) {
+	return this
 		::map(parseLifecycleScripts)
 		::mergeMap(scripts => ArrayObservable.create(scripts))
+		// build dependencies sequentially.
 		::concatMap(build(nodeModules))
 		::every(code => code === 0)
 		::filter(ok => !ok)
 		::_do(() => {
 			throw new FailedBuildError()
 		})
+}

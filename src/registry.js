@@ -28,7 +28,7 @@ const isScoped = name =>
 
 // escape the given package name, which can then be used as part of the package
 // root URL.
-const escapeName = name => (
+export const escapeName = name => (
 	isScoped(name)
 		? `@${encodeURIComponent(name.substr(1))}`
 		: encodeURIComponent(name)

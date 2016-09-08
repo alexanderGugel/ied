@@ -28,14 +28,14 @@ describe('registry', () => {
 			it('should throw an error', () => {
 				const response = {statusCode: 400, body: {error: 'Some error'}}
 				assert.throws(() => {
-					registry.checkStatus('http://example.com', response)
+					registry.checkStatus('name', 'version')(response)
 				})
 			})
 		})
 		context('when statusCode is 200', () => {
 			it('should not throw an error', () => {
 				const response = {statusCode: 200, body: {}}
-				registry.checkStatus('http://example.com', response)
+				registry.checkStatus('name', 'version')(response)
 			})
 		})
 	})

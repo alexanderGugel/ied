@@ -1,4 +1,3 @@
-import assert from 'assert'
 import path from 'path'
 import {Observable} from 'rxjs'
 import {_do} from 'rxjs/operator/do'
@@ -8,7 +7,6 @@ import {filter} from 'rxjs/operator/filter'
 import {fromFs} from './pkg_json'
 import {map} from 'rxjs/operator/map'
 import {reduce} from 'rxjs/operator/reduce'
-import {sh, shFlag} from './config'
 import {spawn} from 'child_process'
 
 const logCode = ([code, name, script]) => {
@@ -32,8 +30,8 @@ const logAvailable = ({scripts = {}}) => {
 	}
 }
 
-export const run = (script, options = {}) =>
-	Observable.create((observer) => {
+export const run = (sh, shFlag, script, options = {}) =>
+	Observable.create(observer => {
 		const args = [shFlag, script]
 		const childProcess = spawn(sh, args, options)
 		childProcess.on('close', (code) => {
@@ -47,11 +45,8 @@ export const run = (script, options = {}) =>
 
 /**
  * run a `package.json` script and the related pre- and postscript.
- * @param {String} cwd - current working directory.
- * @param  {Object} argv - command line arguments.
- * @return {Observable} - observable sequence.
  */
-export default (cwd, argv) => {
+export default ({sh, shFlag}) => (cwd, argv) => {
 	const scriptNames = argv._.slice(1)
 	const pkgJson = fromFs(cwd)
 
@@ -72,10 +67,9 @@ export default (cwd, argv) => {
 		::entries()
 		::filter(([name]) => ~scriptNames.indexOf(name))
 		::concatMap(([name, script]) =>
-				run(script, runOptions)
+				run(sh, shFlag, script, runOptions)
 					::map(code => ([code, name, script]))
 		)
 		::_do(logCode)
 		::reduce((codes, [code]) => codes + code, 0)
-		::_do(code => assert.equal(code, 0, 'exit status != 0'))
 }

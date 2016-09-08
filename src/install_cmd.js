@@ -7,16 +7,22 @@ import {mergeStatic} from 'rxjs/operator/merge'
 import {publishReplay} from 'rxjs/operator/publishReplay'
 import {skip} from 'rxjs/operator/skip'
 
+import buildAll from './build_all'
 import fetchAll from './fetch_all'
 import linkAll from './link_all'
 import resolveAll from './resolve_all'
 import {fromArgv, fromFs, save} from './pkg_json'
 import {init as initCache} from './cache'
 
-function installAll (dir) {
-	return mergeStatic(
-		this::linkAll(),
-		this::fetchAll(dir)
+function installAll (dir, shouldBuild) {
+	return concatStatic(
+		mergeStatic(
+			this::linkAll(),
+			this::fetchAll(dir)
+		),
+		shouldBuild
+			? this::buildAll(dir)
+			: EmptyObservable.create()
 	)
 }
 
@@ -26,7 +32,10 @@ const parseArgv = ({_, production}) => ({
 })
 
 const shouldSave = argv =>
-	!!(argv.save || argv['save-dev'] || argv['save-optional'])
+	argv.save || argv['save-dev'] || argv['save-optional']
+
+const shouldBuild = argv =>
+	argv.build
 
 export default config => (cwd, argv) => {
 	const {isExplicit, isProd} = parseArgv(argv)
@@ -53,7 +62,7 @@ export default config => (cwd, argv) => {
 		::resolveAll(dir, config)
 		::skip(1)
 		::publishReplay().refCount()
-		::installAll(dir)
+		::installAll(dir, shouldBuild(argv))
 
 	return concatStatic(
 		initCache(),

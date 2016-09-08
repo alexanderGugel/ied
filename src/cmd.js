@@ -78,16 +78,19 @@ if (argv.help) {
 		case 'run':
 		case 'run-script':
 			runCmd = require('./run_cmd').default
-			runCmd(cwd, argv).subscribe()
+			runCmd(config)(cwd, argv)
+				.subscribe(process.exit)
 			break
 
 		case 't':
 		case 'test':
 		case 'start':
+		case 'lint':
 		case 'build':
 		case 'stop':
 			runCmd = require('./run_cmd').default
-			runCmd(cwd, {...argv, _: ['run'].concat(argv._)}).subscribe()
+			runCmd(config)(cwd, {...argv, _: ['run', ...argv._]})
+				.subscribe(process.exit)
 			break
 
 		case 'ping':
