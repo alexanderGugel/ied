@@ -1,0 +1,78 @@
+#!/bin/bash
+
+err ()
+{
+  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
+}
+
+comment ()
+{
+  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@"
+}
+
+# Clear global .ied_cache directory
+clear_cache ()
+{
+  rm -rf $HOME/.ied_cache;
+  return $?
+}
+
+# Create a dir and cd into it
+mkcdir ()
+{
+  mkdir -p "$1" && cd "$_"
+  return $?
+}
+
+verify_require ()
+{
+  node -e "require('assert')(require(\"${package}\"))";
+  return $?
+}
+
+# Test a package installation
+test_package ()
+{
+  local sandbox_dir="sandbox/install_${package}"
+
+  rm -rf $sandbox_dir
+  mkcdir $sandbox_dir &&
+	ied install ${package} &&
+  verify_require ${package} &&
+  cd ../..
+
+  return $?
+}
+
+# Run the test suite
+main ()
+{
+  local error_count=0
+  local success_count=0
+
+  while read package; do
+    comment "testing ${package}"
+    clear_cache
+    test_package $package;
+
+    # install from cache
+    test_package $package;
+
+    if [ $? -eq 0 ]; then
+      comment "SUCCESS"
+      ((success_count++))
+    else
+      err "ERROR"
+      ((error_count++))
+    fi
+    echo
+  done <test/packages.txt
+
+  echo "--------------------------------------------------------------------------------"
+  comment "SUCCESS: ${success_count}"
+  comment "ERROR:   ${error_count}"
+
+  exit ${error_count}
+}
+
+main "$@"
