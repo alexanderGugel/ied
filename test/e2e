@@ -1,47 +1,31 @@
 #!/bin/bash
 
-err ()
-{
-  echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
-}
-
 comment ()
 {
   echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@"
 }
 
-# Clear global .ied_cache directory
-clear_cache ()
+clear_global_cache ()
 {
-  rm -rf $HOME/.ied_cache;
+  rm -rf $HOME/.ied_cache
   return $?
 }
 
-# Create a dir and cd into it
-mkcdir ()
-{
-  mkdir -p "$1" && cd "$_"
-  return $?
-}
-
-verify_require ()
+require_package ()
 {
   node -e "require('assert')(require(\"${package}\"))";
   return $?
 }
 
-# Test a package installation
-test_package ()
+install_package ()
 {
   local sandbox_dir="sandbox/install_${package}"
 
   rm -rf $sandbox_dir
-  mkcdir $sandbox_dir &&
-	ied install ${package} &&
-  verify_require ${package} &&
-  cd ../..
+  mkdir -p $sandbox_dir
+  cd $sandbox_dir
 
-  return $?
+  ied install ${package}
 }
 
 # Run the test suite
@@ -50,22 +34,24 @@ main ()
   local error_count=0
   local success_count=0
 
+  local main_dir=$(pwd)
+
   while read package; do
     comment "testing ${package}"
-    clear_cache
-    test_package $package;
-
-    # install from cache
-    test_package $package;
+    clear_global_cache
+    install_package $package
+    require_package ${package}
 
     if [ $? -eq 0 ]; then
       comment "SUCCESS"
       ((success_count++))
     else
-      err "ERROR"
+      comment "ERROR"
       ((error_count++))
     fi
     echo
+
+    cd $main_dir
   done <test/packages.txt
 
   echo "--------------------------------------------------------------------------------"
