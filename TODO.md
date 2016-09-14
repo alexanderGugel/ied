@@ -1,0 +1,7 @@
+- [ ] Rename parentTarget -> pId
+- [ ] Rename target -> id
+- [ ] `tarball` resolver
+- [ ] `git` resolver
+- [ ] `local` resolver
+- [ ] `ied sign` command
+- [ ] `ied license`

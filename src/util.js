@@ -120,7 +120,7 @@ const execMode = 0o777 & (~process.umask())
 
 /**
  * fix the permissions of a downloaded dependencies.
- * @param  {String]} target - target directory to resolve from.
+ * @param  {String} target - target directory to resolve from.
  * @param  {Object} bin - `package.json` bin object.
  * @return {Observable} - empty observable sequence.
  */
