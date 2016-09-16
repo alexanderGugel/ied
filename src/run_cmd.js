@@ -44,9 +44,15 @@ export const run = (sh, shFlag, script, options = {}) =>
 	})
 
 /**
- * run a `package.json` script and the related pre- and postscript.
+ * Runs a `package.json` script and the related pre- and postscript.
+ * @param  {Object} config - Config object.
+ * @param  {Object} config.sh - Command used for spawning new sub-shell session.
+ * @param  {Object} config.shFlag - Command line flags to be passed to the new
+ *     sub-shell command.
+ * @return {Function} Actual command function.
  */
-export default ({sh, shFlag}) => (cwd, argv) => {
+export default config => (cwd, argv) => {
+	const {sh, shFlag} = config
 	const scriptNames = argv._.slice(1)
 	const pkgJson = fromFs(cwd)
 

@@ -12,7 +12,7 @@ import {resolve as resolveFromLocal} from './local'
 import {resolve as resolveFromRegistry} from './registry'
 
 /**
- * properties of project-level `package.json` files that will be checked for
+ * Properties of project-level `package.json` files that will be checked for
  * dependencies.
  * @type {Array.<String>}
  * @readonly
@@ -24,7 +24,7 @@ export const ENTRY_DEPENDENCY_FIELDS = [
 ]
 
 /**
- * properties of `package.json` of sub-dependencies that will be checked for
+ * Properties of `package.json` of sub-dependencies that will be checked for
  * dependencies.
  * @type {Array.<String>}
  * @readonly
@@ -34,7 +34,7 @@ export const DEPENDENCY_FIELDS = [
 	'optionalDependencies'
 ]
 
-function resolve (nodeModules, parentTarget, config) {
+function resolve (nodeModules, parentTarget, options) {
 	return this::mergeMap(([name, version]) => {
 		add()
 		report(`resolving ${name}@${version}`)
@@ -42,8 +42,8 @@ function resolve (nodeModules, parentTarget, config) {
 		return concatStatic(
 			resolveFromLocal(nodeModules, parentTarget, name),
 			resolveFromRegistry(nodeModules, parentTarget, name, version, {
-				...config.httpOptions,
-				registry: config.registry
+				...options.httpOptions,
+				registry: options.registry
 			})
 		)
 			::first()
@@ -51,7 +51,7 @@ function resolve (nodeModules, parentTarget, config) {
 	})
 }
 
-export default function resolveAll (nodeModules, config) {
+export default function resolveAll (nodeModules, options) {
 	const targets = Object.create(null)
 	const entryTarget = '..'
 
@@ -63,6 +63,6 @@ export default function resolveAll (nodeModules, config) {
 		const isEntry = result.target === entryTarget && !result.isProd
 		const fields = isEntry ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
 		return ArrayObservable.create(parseDependencies(result.pkgJson, fields))
-			::resolve(nodeModules, result.target, config)
+			::resolve(nodeModules, result.target, options)
 	})
 }

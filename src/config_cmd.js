@@ -1,7 +1,7 @@
 import Table from 'easy-table'
 
 /**
- * print the used configuration object as an ASCII table.
+ * Prints the used configuration object as an ASCII table.
  */
 export default config => () => {
 	const table = new Table()

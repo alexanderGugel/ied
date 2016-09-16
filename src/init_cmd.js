@@ -3,7 +3,7 @@ import path from 'path'
 import {Observable} from 'rxjs/Observable'
 
 /**
- * initialize a new `package.json` file.
+ * Initializes a new `package.json` file.
  * @see https://www.npmjs.com/package/init-package-json
  */
 export default ({home}) => cwd =>

@@ -4,9 +4,9 @@ import {map} from 'rxjs/operator/map'
 import {readFileJSON} from './util'
 
 /**
- * display the version number.
- * @return {Subscription} - a subscription that logs the versio number to the
- * console.
+ * Logs the version number.
+ * @return {Observable} An observable that logs the version number to the
+ *     console.
  */
 export default () =>
 	readFileJSON(path.join(__dirname, '../package.json'))

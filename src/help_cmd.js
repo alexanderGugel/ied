@@ -3,9 +3,9 @@ import {_do} from 'rxjs/operator/do'
 import {readFile} from './util'
 
 /**
- * print the `USAGE` document. can be invoked using `ied help` or implicitly as
+ * Prints the `USAGE` document. can be invoked using `ied help` or implicitly as
  * a fall back.
- * @return {Observable} - observable sequence of `USAGE`.
+ * @return {Observable} Observable sequence of `USAGE` document.
  */
 export default () => {
 	const filename = path.join(__dirname, '../USAGE.txt')

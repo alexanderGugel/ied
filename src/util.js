@@ -9,13 +9,13 @@ import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 
 /**
- * given an arbitrary asynchronous function that accepts a callback function,
- * wrap the outer asynchronous function into an observable sequence factory.
- * invoking the returned generated function is going to return a new **cold**
+ * Given an arbitrary asynchronous function that accepts a callback function,
+ * wraps the outer asynchronous function into an observable sequence factory.
+ * Invoking the returned generated function is going to return a new **cold**
  * observable sequence.
- * @param  {Function} fn - function to be wrapped.
- * @param  {thisArg} [thisArg] - optional context.
- * @return {Function} - cold observable sequence factory.
+ * @param  {Function} fn - The function to be wrapped.
+ * @param  {thisArg} [thisArg] - Optional context.
+ * @return {Function} A cold observable sequence factory.
  */
 export const createObservableFactory = (fn, thisArg) =>
 	(...args) =>
@@ -31,7 +31,7 @@ export const createObservableFactory = (fn, thisArg) =>
 		})
 
 /**
- * send a GET request to the given HTTP endpoint by passing the supplied
+ * Sends a GET request to the given HTTP endpoint by passing the supplied
  * arguments to [`needle`](https://www.npmjs.com/package/needle).
  * @return {Observable} - observable sequence of a single response object.
  */
@@ -79,8 +79,8 @@ export const forceSymlink = createObservableFactory(_forceSymlink)
 export const mkdirp = createObservableFactory(_mkdirp)
 
 /**
- * equivalent to `Map#entries` for observables, but operates on objects.
- * @return {Observable} - observable sequence of pairs.
+ * Equivalent to `Map#entries` for observables, but operates on objects.
+ * @return {Observable} Observable sequence of pairs.
  */
 export function entries () {
 	return this::mergeMap(object => {
@@ -95,34 +95,35 @@ export function entries () {
 }
 
 /**
- * read a UTF8 encoded JSON file from disk.
+ * Reads an UTF8 encoded JSON file from disk.
  * @param  {String} file - filename to be used.
- * @return {Observable} - observable sequence of a single object representing
+ * @return {Observable} Observable sequence of a single object representing
  * the read JSON file.
  */
 export const readFileJSON = file =>
 	readFile(file, 'utf8')::map(JSON.parse)
 
 /**
- * set the terminal title using the required ANSI escape codes.
- * @param {String} title - title to be set.
+ * Sets the terminal title using the required ANSI escape codes.
+ * @param {String} title - Title to be set.
  */
-export const setTitle = title =>
-	process.stdout.write(
-		`${String.fromCharCode(27)}]0;${title}${String.fromCharCode(7)}`
-	)
+export const setTitle = title => {
+	const out = `${String.fromCharCode(27)}]0;${title}${String.fromCharCode(7)}`
+	process.stdout.write(out)
+}
 
 /**
- * file permissions for executable bin files.
+ * File permissions for executable bin files.
  * @type {Number}
+ * @private
  */
 const execMode = 0o777 & (~process.umask())
 
 /**
- * fix the permissions of a downloaded dependencies.
- * @param  {String} target - target directory to resolve from.
+ * Fixes the permissions of a downloaded dependencies.
+ * @param  {String} target - Target directory to resolve from.
  * @param  {Object} bin - `package.json` bin object.
- * @return {Observable} - empty observable sequence.
+ * @return {Observable} Empty observable sequence.
  */
 export const fixPermissions = (target, bin) => {
 	const paths = []

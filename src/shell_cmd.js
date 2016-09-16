@@ -5,8 +5,11 @@ import {readdir} from './util'
 import {spawn} from 'child_process'
 
 /**
- * enter a new session that has access to the CLIs exposed by the installed
+ * Enters a new session that has access to the CLIs exposed by the installed
  * packages by using an amended `PATH`.
+ * @param  {Object} config - Config object.
+ * @param  {Object} config.sh - Command used for spawning new sub-shell session.
+ * @return {Function} Actual command function.
  */
 export default config => cwd => {
 	const binPath = path.join(cwd, 'node_modules/.bin')

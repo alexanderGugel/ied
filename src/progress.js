@@ -14,7 +14,7 @@ let status = ''
 spinner.start()
 
 /**
- * log the progress by updating the status message, percentage and spinner.
+ * Logs the progress by updating the status message, percentage and spinner.
  * @param  {String} [_status] - optional (updated) status message. defaults to
  * the previous status message.
  * @see https://www.npmjs.org/package/ora
@@ -26,7 +26,7 @@ export const report = (_status = status) => {
 }
 
 /**
- * add one or more scheduled tasks.
+ * Adds one or more scheduled tasks.
  * @param {Number} [n=1] - number of scheduled tasks.
  */
 export const add = (n = 1) => {
@@ -35,7 +35,7 @@ export const add = (n = 1) => {
 }
 
 /**
- * complete a previously scheduled task. stop the spinner when there are no
+ * Completes a previously scheduled task. Stops the spinner when there are no
  * outstanding tasks.
  * @param  {Number} [n=1] - number of tasks that have been completed.
  */
