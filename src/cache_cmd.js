@@ -2,8 +2,8 @@ import path from 'path'
 import rimraf from 'rimraf'
 
 /**
- * print help if invoked without any further sub-command, empty the cache
- * directory (delete it) if invoked via `ied cache clean`.
+ * Prints help if invoked without any further sub-command, empties the cache
+ * directory (deletes it) if invoked via `ied cache clean`.
  */
 export default ({cacheDir}) => (cwd, argv) => {
 	switch (argv._[1]) {

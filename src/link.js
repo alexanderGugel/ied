@@ -41,8 +41,8 @@ export const linkToGlobal = cwd =>
  * working directory (used for `ied link some-package`).
  * The package can be `require`d afterwards.
  * `node_modules/.bin` stays untouched.
- * @param {String} cwd - Current working directory.
- * @param {String} name - Name of the dependency to be linked.
+ * @param {string} cwd - Current working directory.
+ * @param {string} name - Name of the dependency to be linked.
  * @return {Observable} Observable sequence.
  */
 export const linkFromGlobal = (cwd, name) => {
@@ -54,7 +54,7 @@ export const linkFromGlobal = (cwd, name) => {
 /**
  * Reverts the effects of `ied link` by removing the previously created
  * symbolic links (used for `ied unlink`).
- * @param {String} cwd - Current working directory.
+ * @param {string} cwd - Current working directory.
  * @return {Observable} Observable sequence.
  */
 export const unlinkToGlobal = cwd => {
@@ -69,8 +69,8 @@ export const unlinkToGlobal = cwd => {
  * Reverts the effects of `ied link some-package` by removing the previously
  * created symbolic links from the project's `node_modules` directory (used for
  * `ied unlink some-package`).
- * @param {String} cwd - Current working directory.
- * @param {String} name - Name of the dependency to be unlinked from the
+ * @param {string} cwd - Current working directory.
+ * @param {string} name - Name of the dependency to be unlinked from the
  * project's `node_modules`.
  * @return {Observable} Observable sequence.
  */

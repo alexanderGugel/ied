@@ -31,9 +31,24 @@ const parseArgv = ({_, production}) => ({
 	isProd: production
 })
 
+/**
+ * Check if the updated `package.json` file should be persisted. Useful since
+ * `--save`, `--save-dev` and `--save-optional` imply that the updated file
+ * should be saved.
+ * @param  {Object} argv - Parsed command line arguments.
+ * @return {boolean} If the updated `package.json` file should be persisted.
+ */
 const shouldSave = argv =>
 	argv.save || argv['save-dev'] || argv['save-optional']
 
+/**
+ * Check if the dependencies should be built. lifecycle scripts are not being
+ * executed by default, but require the usage of `--build` for security and
+ * performance reasons.
+ * @param  {Object} argv - Parsed command line arguments.
+ * @return {boolean} If the respective `npm` lifecycle scripts should be
+ *     executed.
+ */
 const shouldBuild = argv =>
 	argv.build
 
@@ -42,7 +57,7 @@ export default config => (cwd, argv) => {
 	const dir = path.join(cwd, 'node_modules')
 	const target = '..'
 
-	// generate the "source" package.json file from which dependencies are being
+	// Generates the "source" package.json file from which dependencies are being
 	// parsed and installed.
 	const srcPkgJson = isExplicit
 		? fromArgv(cwd, argv)

@@ -96,7 +96,7 @@ export function entries () {
 
 /**
  * Reads an UTF8 encoded JSON file from disk.
- * @param  {String} file - filename to be used.
+ * @param  {string} file - filename to be used.
  * @return {Observable} Observable sequence of a single object representing
  * the read JSON file.
  */
@@ -105,7 +105,7 @@ export const readFileJSON = file =>
 
 /**
  * Sets the terminal title using the required ANSI escape codes.
- * @param {String} title - Title to be set.
+ * @param {string} title - Title to be set.
  */
 export const setTitle = title => {
 	const out = `${String.fromCharCode(27)}]0;${title}${String.fromCharCode(7)}`
@@ -121,7 +121,7 @@ const execMode = 0o777 & (~process.umask())
 
 /**
  * Fixes the permissions of a downloaded dependencies.
- * @param  {String} target - Target directory to resolve from.
+ * @param  {string} target - Target directory to resolve from.
  * @param  {Object} bin - `package.json` bin object.
  * @return {Observable} Empty observable sequence.
  */

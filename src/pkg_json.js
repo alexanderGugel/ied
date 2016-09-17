@@ -83,7 +83,7 @@ export const normalizeBin = pkgJson => {
 
 /**
  * Create an instance by reading a `package.json` from disk.
- * @param  {String} baseDir - Base directory of the project.
+ * @param  {string} baseDir - Base directory of the project.
  * @return {Observable} Observable sequence of an `EntryDep`.
  */
 export const fromFs = baseDir => {
@@ -142,7 +142,7 @@ export const parseArgv = argv => {
 /**
  * Creates an instance by parsing the explicit dependencies supplied via
  * command line arguments.
- * @param  {String} baseDir - Base directory of the project.
+ * @param  {string} baseDir - Base directory of the project.
  * @param  {Array} argv - Command line arguments.
  * @return {Observable} Observable sequence of an `EntryDep`.
  */

@@ -29,10 +29,10 @@ const cachedNpa = memoize(npa)
 
 /**
  * resolve a dependency's `package.json` file from a remote registry.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{String} parentTarget - relative parent's node_modules path.
- * @param	{String} name - name of the dependency.
- * @param	{String} version - version of the dependency.
+ * @param	{string} nodeModules - `node_modules` base directory.
+ * @param	{string} parentTarget - relative parent's node_modules path.
+ * @param	{string} name - name of the dependency.
+ * @param	{string} version - version of the dependency.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
 
@@ -63,8 +63,8 @@ export function resolveRemote (nodeModules, parentTarget, name, version) {
 
 /**
  * resolve a dependency's `package.json` file from an url tarball.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{String} parentTarget - relative parent's node_modules path.
+ * @param	{string} nodeModules - `node_modules` base directory.
+ * @param	{string} parentTarget - relative parent's node_modules path.
  * @param	{Object} parsedSpec - parsed package name and specifier.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
@@ -85,8 +85,8 @@ export function resolveFromTarball (nodeModules, parentTarget, parsedSpec) {
 
 /**
  * resolve a dependency's `package.json` file from an hosted GitHub-like registry.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{String} parentTarget - relative parent's node_modules path.
+ * @param	{string} nodeModules - `node_modules` base directory.
+ * @param	{string} parentTarget - relative parent's node_modules path.
  * @param	{Object} parsedSpec - parsed package name and specifier.
  * @return {Observable} - observable sequence of `package.json` objects.
  */
@@ -126,8 +126,8 @@ export function resolveFromHosted (nodeModules, parentTarget, parsedSpec) {
 
 /**
  * resolve a dependency's `package.json` file from a git endpoint.
- * @param	{String} nodeModules - `node_modules` base directory.
- * @param	{String} parentTarget - relative parent's node_modules path.
+ * @param	{string} nodeModules - `node_modules` base directory.
+ * @param	{string} parentTarget - relative parent's node_modules path.
  * @param	{Object} parsedSpec - parsed package name and specifier.
  * @return {Observable} - observable sequence of `package.json` objects.
  */

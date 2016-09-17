@@ -7,8 +7,8 @@ import {mkdirp} from './util'
 
 /**
  * Can be used in two ways:
- * 1. in order to globally _expose_ the current package (`ied link`).
- * 2. in order to use a previously globally _exposed_ package (`ied link tap`).
+ * 1. In order to globally _expose_ the current package (`ied link`).
+ * 2. In order to use a previously globally _exposed_ package (`ied link tap`).
  *
  * Useful for local development when you want to use a dependency in a
  * different project without publishing to the npm registry / installing from

@@ -12,9 +12,12 @@ import {spawn} from 'child_process'
 
 import * as config from './config'
 
-// names of lifecycle scripts that should be run as part of the installation
-// process of a specific package (= properties of `scripts` object in
-// `package.json`).
+/**
+ * Names of lifecycle scripts that should be run as part of the installation
+ * process of a specific package (= properties of `scripts` object in
+ * `package.json`).
+ * @type {Array.<string>}
+ */
 export const LIFECYCLE_SCRIPTS = [
 	'preinstall',
 	'install',
@@ -31,12 +34,12 @@ export function FailedBuildError () {
 }
 
 /**
- * build a dependency by executing the given lifecycle script.
- * @param  {String} nodeModules - absolute path of the `node_modules` directory.
- * @param  {Object} dep - dependency to be built.
- * @param  {String} dep.target - relative location of the target directory.
- * @param  {String} dep.script - script to be executed (usually using `sh`).
- * @return {Observable} - observable sequence of the returned exit code.
+ * Builds a dependency by executing the given lifecycle script.
+ * @param  {string} nodeModules - Absolute path of the `node_modules` directory.
+ * @param  {Object} dep - Dependency to be built.
+ * @param  {string} dep.target - Relative location of the target directory.
+ * @param  {string} dep.script - Script to be executed (usually using `sh`).
+ * @return {Observable} Observable sequence of the returned exit code.
  */
 export const build = nodeModules => ({target, script}) =>
 	Observable.create(observer => {
@@ -65,9 +68,9 @@ export const build = nodeModules => ({target, script}) =>
 	})
 
 /**
- * extract lifecycle scripts from supplied dependency.
- * @param {Dep} dep - dependency to be parsed.
- * @return {Array.<Object>} - array of script targets to be executed.
+ * Extracts lifecycle scripts from supplied dependency.
+ * @param {Dep} dep - Dependency to be parsed.
+ * @return {Array.<Object>} Array of script targets to be executed.
  */
 export const parseLifecycleScripts = ({target, pkgJson: {scripts = {}}}) => {
 	const results = []
@@ -80,12 +83,12 @@ export const parseLifecycleScripts = ({target, pkgJson: {scripts = {}}}) => {
 }
 
 /**
- * run all lifecycle scripts upon completion of the installation process.
- * ensures that all scripts exit with 0 (success), otherwise an error will be
+ * Runs all lifecycle scripts upon completion of the installation process.
+ * Ensures that all scripts exit with 0 (success), otherwise an error will be
  * thrown.
- * @param  {String} nodeModules - `node_modules` base directory.
- * @return {Observable} - empty observable sequence that will be completed once
- * all lifecycle scripts have been executed.
+ * @param  {string} nodeModules - `node_modules` base directory.
+ * @return {Observable} - Empty observable sequence that will be completed once
+ *     all lifecycle scripts have been executed.
  */
 export default function buildAll (nodeModules) {
 	return this

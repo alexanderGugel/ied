@@ -15,7 +15,7 @@ spinner.start()
 
 /**
  * Logs the progress by updating the status message, percentage and spinner.
- * @param  {String} [_status] - optional (updated) status message. defaults to
+ * @param  {string} [_status] - optional (updated) status message. defaults to
  * the previous status message.
  * @see https://www.npmjs.org/package/ora
  */

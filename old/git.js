@@ -24,8 +24,8 @@ function spawnGit (args) {
 
 /**
  * clone a git repository.
- * @param {String} repo - git repository to clone.
- * @param {String} ref - git reference to checkout.
+ * @param {string} repo - git repository to clone.
+ * @param {string} ref - git reference to checkout.
  * @return {Observable} - observable sequence that will be completed once
  * the git repository has been cloned.
  */
@@ -50,7 +50,7 @@ export function clone (repo, ref) {
 
 /**
  * extract a cloned git repository to destination.
- * @param {String} dest - pathname into which the cloned repository should be
+ * @param {string} dest - pathname into which the cloned repository should be
  * extracted.
  * @return {Observable} - observable sequence that will be completed once
  * the cloned repository has been extracted.
