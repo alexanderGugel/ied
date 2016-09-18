@@ -19,11 +19,12 @@ import {mkdirp} from './util'
  * create a symlink in `current-project/node_modules/tap` pointing to a
  * globally installed tap version).
  *
+ * @param  {Object} config - Config object.
  * @param  {string} cwd - Current working directory.
  * @param  {Object} argv - Parsed command line arguments.
  * @return {Observable} Observable sequence.
  */
-export default config => (cwd, argv) => {
+export default (config, cwd, argv) => {
 	const names = argv._.slice(1)
 
 	if (names.length) {

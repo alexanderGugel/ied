@@ -52,7 +52,7 @@ const shouldSave = argv =>
 const shouldBuild = argv =>
 	argv.build
 
-export default config => (cwd, argv) => {
+export default (config, cwd, argv) => {
 	const {isExplicit, isProd} = parseArgv(argv)
 	const dir = path.join(cwd, 'node_modules')
 	const target = '..'

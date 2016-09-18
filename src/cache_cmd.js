@@ -5,7 +5,7 @@ import rimraf from 'rimraf'
  * Prints help if invoked without any further sub-command, empties the cache
  * directory (deletes it) if invoked via `ied cache clean`.
  */
-export default ({cacheDir}) => (cwd, argv) => {
+export default ({cacheDir}, cwd, argv) => {
 	switch (argv._[1]) {
 		// `ied cache clean`
 		case 'clean':

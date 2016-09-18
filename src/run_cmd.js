@@ -49,9 +49,12 @@ export const run = (sh, shFlag, script, options = {}) =>
  * @param  {Object} config.sh - Command used for spawning new sub-shell session.
  * @param  {Object} config.shFlag - Command line flags to be passed to the new
  *     sub-shell command.
- * @return {Function} Actual command function.
+ * @param  {string} cwd - Current working directory.
+ * @param  {Object} argv - Parsed command line arguments.
+ * @return {Observable} Observable sequence representing used for indicating
+ *     the success / failure of the executed npm command.
  */
-export default config => (cwd, argv) => {
+export default (config, cwd, argv) => {
 	const {sh, shFlag} = config
 	const scriptNames = argv._.slice(1)
 	const pkgJson = fromFs(cwd)

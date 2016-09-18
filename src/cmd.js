@@ -64,22 +64,21 @@ if (argv.help) {
 	switch (subCommand) {
 		case 'i':
 		case 'install':
-			installCmd = require('./install_cmd').default(config)
-			installCmd(cwd, argv).subscribe()
+			installCmd = require('./install_cmd').default
+			installCmd(config, cwd, argv).subscribe()
 			break
 
 		case 'sh':
 		case 'shell':
-			shellCmd = require('./shell_cmd').default(config)
-			shellCmd(cwd).subscribe()
+			shellCmd = require('./shell_cmd').default
+			shellCmd(config, cwd).subscribe()
 			break
 
 		case 'r':
 		case 'run':
 		case 'run-script':
 			runCmd = require('./run_cmd').default
-			runCmd(config)(cwd, argv)
-				.subscribe(process.exit)
+			runCmd(config, cwd, argv).subscribe(process.exit)
 			break
 
 		case 't':
@@ -89,39 +88,39 @@ if (argv.help) {
 		case 'build':
 		case 'stop':
 			runCmd = require('./run_cmd').default
-			runCmd(config)(cwd, {...argv, _: ['run', ...argv._]})
+			runCmd(config, cwd, {...argv, _: ['run', ...argv._]})
 				.subscribe(process.exit)
 			break
 
 		case 'ping':
-			pingCmd = require('./ping_cmd').default(config)
-			pingCmd().subscribe()
+			pingCmd = require('./ping_cmd').default
+			pingCmd(config).subscribe()
 			break
 
 		case 'conf':
 		case 'config':
-			configCmd = require('./config_cmd').default(config)
-			configCmd()
+			configCmd = require('./config_cmd').default
+			configCmd(config)
 			break
 
 		case 'init':
-			initCmd = require('./init_cmd').default(config)
-			initCmd(cwd, argv).subscribe()
+			initCmd = require('./init_cmd').default
+			initCmd(config, cwd, argv).subscribe()
 			break
 
 		case 'link':
-			linkCmd = require('./link_cmd').default(config)
-			linkCmd(cwd, argv).subscribe()
+			linkCmd = require('./link_cmd').default
+			linkCmd(config, cwd, argv).subscribe()
 			break
 
 		case 'unlink':
 			unlinkCmd = require('./unlink_cmd').default
-			unlinkCmd(cwd, argv).subscribe()
+			unlinkCmd(config, cwd, argv).subscribe()
 			break
 
 		case 'cache':
-			cacheCmd = require('./cache_cmd').default(config)
-			cacheCmd(cwd, argv)
+			cacheCmd = require('./cache_cmd').default
+			cacheCmd(config, cwd, argv)
 			break
 
 		case 'version':

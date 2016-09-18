@@ -9,9 +9,11 @@ import {spawn} from 'child_process'
  * packages by using an amended `PATH`.
  * @param  {Object} config - Config object.
  * @param  {Object} config.sh - Command used for spawning new sub-shell session.
- * @return {Function} Actual command function.
+ * @param  {string} cwd - Current working directory.
+ * @return {Observable} Observable sequence wrapping the result of the output of
+ *     the spawned child process.
  */
-export default config => cwd => {
+export default (config, cwd) => {
 	const binPath = path.join(cwd, 'node_modules/.bin')
 	const env = {
 		...process.env,
