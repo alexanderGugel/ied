@@ -1,9 +1,11 @@
+import {_do} from 'rxjs/operator/do'
 import {ping} from './ping'
 
 /**
- * ping the registry and print the received response.
- * @return {Subscription} - subscription to the {@link ping} command.
+ * Pings the registry and print the received response.
+ * @param  {Object} config - Config object.
+ * @param  {Object} config.registry - CommonJS registry to be pinged.
+ * @return {Observable} Observable sequence of the registry's response.
  */
-export default function pingCmd () {
-	return ping().subscribe(console.log)
-}
+export default ({registry}) =>
+	ping(registry)::_do(console.log)

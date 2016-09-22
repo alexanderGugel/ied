@@ -1,12 +1,13 @@
 import url from 'url'
-import {registry} from './config'
-import {httpGetJSON} from './util'
+import {httpGet} from './util'
+import {map} from 'rxjs/operator/map'
 
 /**
- * ping the pre-configured npm registry by hitting `/-/ping?write=true`.
- * @return {Observable} - observable sequence of the returned JSON object.
+ * Pings the pre-configured npm registry by hitting `/-/ping?write=true`.
+ * @param {string} registry - Root registry url to ping.
+ * @return {Observable} Observable sequence of the returned JSON object.
  */
-export function ping () {
+export const ping = registry => {
 	const uri = url.resolve(registry, '-/ping?write=true')
-	return httpGetJSON(uri)
+	return httpGet(uri)::map(({body}) => body)
 }

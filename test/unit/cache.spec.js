@@ -72,14 +72,14 @@ describe('cache', () => {
 		context('when cache.read read stream emits an error', () => {
 			it('should throw an error', () => {
 				const readStream = new stream.Readable()
-				sandbox.stub(cache, 'read').returns(readStream)
+				sandbox.stub(fs, 'createReadStream').returns(readStream)
 				const expectedError = new Error()
 
 				const next = sandbox.stub()
 				const error = sandbox.stub()
 				const complete = sandbox.stub()
 
-				cache.extract().subscribe(next, error, complete)
+				cache.extract('/dest', 'id').subscribe(next, error, complete)
 				readStream.emit('error', expectedError)
 
 				sinon.assert.notCalled(next)
@@ -92,7 +92,7 @@ describe('cache', () => {
 		context('when tar.extract read stream emits an error', () => {
 			it('should thorw an error', () => {
 				const readStream = new stream.Readable()
-				sandbox.stub(cache, 'read').returns(new stream.Readable())
+				sandbox.stub(fs, 'createReadStream').returns(readStream)
 				sandbox.stub(tar, 'extract').returns(readStream)
 
 				const expectedError = new Error()
@@ -101,7 +101,7 @@ describe('cache', () => {
 				const error = sandbox.stub()
 				const complete = sandbox.stub()
 
-				cache.extract().subscribe(next, error, complete)
+				cache.extract('/dest', 'id').subscribe(next, error, complete)
 				readStream.emit('error', expectedError)
 
 				sinon.assert.notCalled(next)

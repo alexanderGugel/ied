@@ -47,11 +47,11 @@
     "sinon": "^1.17.4"
   },
   "scripts": {
-    "start": "npm run test:spec -- --watch",
-    "test": "npm run test:spec && npm run test:e2e",
-    "test:e2e": "rimraf .tmp/test/*; cross-env NODE_ENV=test mocha test/e2e",
-    "test:spec": "cross-env NODE_ENV=test mocha test/spec",
-    "test:coverage": "nyc --reporter=lcov npm run test:spec -- --reporter dot && nyc report",
+    "start": "npm run test:unit -- --watch",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:e2e": "./test/e2e",
+    "test:unit": "cross-env NODE_ENV=test mocha test/unit",
+    "test:coverage": "nyc --reporter=lcov npm run test:unit -- --reporter dot && nyc report",
     "compile": "rimraf lib/*; cross-env NODE_ENV=production babel src/ -d lib/",
     "compile:watch": "npm run compile -- -w",
     "dev": "rimraf lib/*; cross-env NODE_ENV=development babel src/ -d lib/ -s",

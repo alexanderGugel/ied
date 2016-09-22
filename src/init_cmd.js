@@ -1,22 +1,23 @@
 import init from 'init-package-json'
 import path from 'path'
-import * as config from './config'
+import {Observable} from 'rxjs/Observable'
 
 /**
- * initialize a new `package.json` file.
- * @param  {String} cwd - current working directory.
+ * Initializes a new `package.json` file.
+ * @param  {Object} config - Config object.
+ * @param  {string} cwd - Current working directory.
+ * @return {Observable} Empty observable sequence.
  * @see https://www.npmjs.com/package/init-package-json
  */
-export default function initCmd (cwd) {
-	const initFile = path.resolve(config.home, '.ied-init')
+export default ({home}, cwd) =>
+	Observable.create(observer => {
+		const initFile = path.resolve(home, '.ied-init')
 
-	init(cwd, initFile, (err) => {
-		if (err) {
-			if (err.message === 'canceled') {
-				console.log('init canceled!')
-				return
+		init(cwd, initFile, (err) => {
+			if (err && err.message !== 'canceled') {
+				observer.error(err)
+			} else {
+				observer.complete()
 			}
-			throw err
-		}
+		})
 	})
-}

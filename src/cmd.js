@@ -2,9 +2,6 @@
 
 import minimist from 'minimist'
 import * as config from './config'
-if (['development', 'test'].indexOf(process.env.NODE_ENV) !== -1) {
-	require('source-map-support').install()
-}
 
 const alias = {
 	h: 'help',
@@ -32,7 +29,12 @@ const boolean = [
 ]
 
 const cwd = process.cwd()
-const argv = minimist(process.argv.slice(2), {alias, string, boolean})
+
+const argv = minimist(process.argv.slice(2), {
+	alias,
+	string,
+	boolean
+})
 
 if (argv.registry) {
 	config.registry = argv.registry
@@ -50,77 +52,85 @@ let helpCmd
 let versionCmd
 let cacheCmd
 
-(() => {
-	if (argv.help) {
-		helpCmd = require('./help_cmd').default
-		helpCmd().subscribe()
-		return
-	}
-
-	if (argv.version) {
-		versionCmd = require('./version_cmd').default
-		versionCmd().subscribe()
-		return
-	}
-
+if (argv.help) {
+	helpCmd = require('./help_cmd').default
+	helpCmd().subscribe()
+} else if (argv.version) {
+	versionCmd = require('./version_cmd').default
+	versionCmd().subscribe()
+} else {
 	const [subCommand] = argv._
 
 	switch (subCommand) {
 		case 'i':
 		case 'install':
 			installCmd = require('./install_cmd').default
-			installCmd(cwd, argv).subscribe()
+			installCmd(config, cwd, argv).subscribe()
 			break
+
 		case 'sh':
 		case 'shell':
 			shellCmd = require('./shell_cmd').default
-			shellCmd(cwd).subscribe()
+			shellCmd(config, cwd).subscribe()
 			break
+
 		case 'r':
 		case 'run':
 		case 'run-script':
 			runCmd = require('./run_cmd').default
-			runCmd(cwd, argv).subscribe()
+			runCmd(config, cwd, argv).subscribe(process.exit)
 			break
+
 		case 't':
 		case 'test':
 		case 'start':
+		case 'lint':
 		case 'build':
 		case 'stop':
 			runCmd = require('./run_cmd').default
-			runCmd(cwd, {...argv, _: ['run'].concat(argv._)}).subscribe()
+			runCmd(config, cwd, {...argv, _: ['run', ...argv._]})
+				.subscribe(process.exit)
 			break
+
 		case 'ping':
 			pingCmd = require('./ping_cmd').default
-			pingCmd()
+			pingCmd(config).subscribe()
 			break
+
 		case 'conf':
 		case 'config':
 			configCmd = require('./config_cmd').default
-			configCmd()
+			configCmd(config)
 			break
+
 		case 'init':
 			initCmd = require('./init_cmd').default
-			initCmd(cwd, argv)
+			initCmd(config, cwd, argv).subscribe()
 			break
+
 		case 'link':
 			linkCmd = require('./link_cmd').default
-			linkCmd(cwd, argv).subscribe()
+			linkCmd(config, cwd, argv).subscribe()
 			break
+
 		case 'unlink':
 			unlinkCmd = require('./unlink_cmd').default
-			unlinkCmd(cwd, argv).subscribe()
+			unlinkCmd(config, cwd, argv).subscribe()
 			break
+
 		case 'cache':
 			cacheCmd = require('./cache_cmd').default
-			cacheCmd(cwd, argv)
+			cacheCmd(config, cwd, argv)
 			break
+
 		case 'version':
 			versionCmd = require('./version_cmd').default
 			versionCmd().subscribe()
 			break
+
 		default:
 			helpCmd = require('./help_cmd').default
 			helpCmd().subscribe()
 	}
-})()
+}
+

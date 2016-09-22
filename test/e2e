@@ -1,0 +1,215 @@
+#!/bin/bash
+
+################################################################################
+# This script runs the `ied install <pkg>` tests.                              #
+# As part of the test, it verifies that `ied` can successfully install the top #
+# ~ 100 npm packages (most dependent upon).                                    #
+# This test is meant to be run on a regular basis, e.g. overnight, since it    #
+# can potentially take up to a couple of hours.                                #
+# The test output is being formatted according to a strict subset of the TAP   #
+# 13 specification: https://testanything.org/tap-version-13-specification.html #
+################################################################################
+
+# List of packages to install.
+packages=(
+  "lodash"
+  "request"
+  "async"
+  "underscore"
+  "express"
+  "commander"
+  "bluebird"
+  "chalk"
+  "debug"
+  "moment"
+  "mkdirp"
+  "colors"
+  "q"
+  "through2"
+  "react"
+  "yeoman-generator"
+  "glob"
+  "minimist"
+  "gulp-util"
+  "coffee-script"
+  "body-parser"
+  "jquery"
+  "fs-extra"
+  "cheerio"
+  "node-uuid"
+  "optimist"
+  "yargs"
+  "babel-runtime"
+  "react-dom"
+  "gulp"
+  "winston"
+  "yosay"
+  "socket.io"
+  "semver"
+  "object-assign"
+  "redis"
+  "rimraf"
+  "jade"
+  "superagent"
+  "ember-cli-babel"
+  "handlebars"
+  "mongoose"
+  "mongodb"
+  "extend"
+  "mocha"
+  "aws-sdk"
+  "co"
+  "shelljs"
+  "inquirer"
+  "xml2js"
+  "babel-preset-es2015"
+  "js-yaml"
+  "ejs"
+  "uglify-js"
+  "babel-core"
+  "mime"
+  "underscore.string"
+  "uuid"
+  "chai"
+  "marked"
+  "xtend"
+  "browserify"
+  "grunt"
+  "morgan"
+  "joi"
+  "through"
+  "cookie-parser"
+  "es6-promise"
+  "mysql"
+  "promise"
+  "ws"
+  "webpack"
+  "nan"
+  "connect"
+  "prompt"
+  "path"
+  "minimatch"
+  "bunyan"
+  "less"
+  "babel-polyfill"
+  "gulp-rename"
+  "angular"
+  "immutable"
+  "ramda"
+  "postcss"
+  "request-promise"
+  "meow"
+  "qs"
+  "inherits"
+  "redux"
+  "chokidar"
+  "readable-stream"
+  "event-stream"
+  "passport"
+  "jsdom"
+  "socket.io-client"
+  "validator"
+  "express-session"
+  "eslint"
+  "babel-preset-react"
+  "babel-loader"
+  "nodemailer"
+  "ember-cli-htmlbars"
+  "concat-stream"
+  "when"
+  "open"
+  "del"
+  "compression"
+  "babel"
+  "gulp-uglify"
+  "esprima"
+  "pg"
+  "boom"
+  "npm"
+  "d3"
+  "update-notifier"
+  "jsonwebtoken"
+  "fs"
+  "serve-favicon"
+  "hoek"
+  "mustache"
+  "node-sass"
+  "bootstrap"
+  "react-redux"
+  "backbone"
+  "clone"
+  "react-router"
+  "rxjs"
+  "stylus"
+  "merge"
+  "nconf"
+  "cli-color"
+  "loader-utils"
+  "gulp-concat"
+  "css-loader"
+  "cli-table"
+  "resolve"
+  "cors"
+  "ncp"
+  "iconv-lite"
+  "style-loader"
+  "log4js"
+  "progress"
+  "config"
+)
+
+# Check if a package can be resolved from the current working directory.
+require_package ()
+{
+  node -e "require('assert')(require(\"${package}\"))";
+  return $?
+}
+
+# Install a package in a local sandbox directory.
+install_package ()
+{
+  local sandbox_dir="sandbox/install_${package}"
+
+  rm -rf $sandbox_dir &&
+  mkdir -p $sandbox_dir &&
+  cd $sandbox_dir &&
+  ied install ${package}
+
+  return $?
+}
+
+# Run the test suite.
+main ()
+{
+  local not_ok_count=0
+  local ok_count=0
+
+  local main_dir=$(pwd)
+
+  echo "TAP version 13"
+  echo "1..${#packages[@]}"
+
+  for i in "${!packages[@]}"
+  do
+    local package=${packages[$i]}
+    local test_number=$((i + 1))
+
+    rm -rf $HOME/.ied_cache &&
+    install_package $package &&
+    require_package ${package}
+
+    if [ $? -eq 0 ]; then
+      echo "ok ${test_number} - ied install ${package}"
+      ((ok_count++))
+    else
+      echo "not ok ${test_number} - ied install ${package}"
+      ((not_ok_count++))
+    fi
+
+    cd $main_dir
+  done
+
+  exit ${not_ok_count}
+}
+
+main "$@"

@@ -1,37 +1,37 @@
-import * as config from './config'
-import {mkdirp} from './util'
-import {linkFromGlobal, linkToGlobal} from './link'
-import {concatStatic} from 'rxjs/operator/concat'
-import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
-import {mergeMap} from 'rxjs/operator/mergeMap'
 import path from 'path'
+import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
+import {concatStatic} from 'rxjs/operator/concat'
+import {linkFromGlobal, linkToGlobal} from './link'
+import {mergeMap} from 'rxjs/operator/mergeMap'
+import {mkdirp} from './util'
 
 /**
- * can be used in two ways:
- * 1. in order to globally _expose_ the current package (`ied link`).
- * 2. in order to use a previously globally _exposed_ package (`ied link tap`).
+ * Can be used in two ways:
+ * 1. In order to globally _expose_ the current package (`ied link`).
+ * 2. In order to use a previously globally _exposed_ package (`ied link tap`).
  *
- * useful for local development when you want to use a dependency in a
+ * Useful for local development when you want to use a dependency in a
  * different project without publishing to the npm registry / installing from
  * local FS.
  *
- * create a symlink either in the global `node_modules` directory (`ied link`)
+ * Creates a symlink either in the global `node_modules` directory (`ied link`)
  * or in the project's `node_modules` directory (e.g. `ied link tap` would
  * create a symlink in `current-project/node_modules/tap` pointing to a
  * globally installed tap version).
  *
- * @param  {String} cwd - current working directory.
- * @param  {Object} argv - parsed command line arguments.
- * @return {Observable} - observable sequence.
+ * @param  {Object} config - Config object.
+ * @param  {string} cwd - Current working directory.
+ * @param  {Object} argv - Parsed command line arguments.
+ * @return {Observable} Observable sequence.
  */
-export default function linkCmd (cwd, argv) {
+export default (config, cwd, argv) => {
 	const names = argv._.slice(1)
 
 	if (names.length) {
 		const localNodeModules = path.join(cwd, 'node_modules')
 		const init = mkdirp(localNodeModules)
 		return concatStatic(init, ArrayObservable.create(names)
-			::mergeMap((name) => linkFromGlobal(cwd, name)))
+			::mergeMap(name => linkFromGlobal(cwd, name)))
 	}
 
 	const init = concatStatic(

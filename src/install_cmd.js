@@ -1,48 +1,102 @@
 import path from 'path'
+
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {concatStatic} from 'rxjs/operator/concat'
-import {publishReplay} from 'rxjs/operator/publishReplay'
-import {skip} from 'rxjs/operator/skip'
 import {map} from 'rxjs/operator/map'
 import {mergeStatic} from 'rxjs/operator/merge'
-import {ignoreElements} from 'rxjs/operator/ignoreElements'
+import {publishReplay} from 'rxjs/operator/publishReplay'
+import {skip} from 'rxjs/operator/skip'
 
-import {resolveAll, fetchAll, linkAll} from './install'
-import {init as initCache} from './cache'
+import buildAll from './build_all'
+import fetchAll from './fetch_all'
+import linkAll from './link_all'
+import resolveAll from './resolve_all'
 import {fromArgv, fromFs, save} from './pkg_json'
-import {buildAll} from './build'
+import {init as initCache} from './cache'
 
 /**
- * run the installation command.
- * @param  {String} cwd - current working directory (absolute path).
- * @param  {Object} argv - parsed command line arguments.
- * @return {Observable} - an observable sequence that will be completed once
- * the installation is complete.
+ * Installs all the dependencies and optionally tuns the individual (build)
+ * lifecycle scripts.
+ * @param  {string} dir - Directory in which `ied` is running.
+ * @param  {boolean} shouldBuild - If the dependencies should be build.
+ * @return {Observable} Empty observable sequence.
  */
-export default function installCmd (cwd, argv) {
-	const isExplicit = argv._.length - 1
-	const updatedPkgJSONs = isExplicit ? fromArgv(cwd, argv) : fromFs(cwd)
-	const isProd = argv.production
+function installAll (dir, shouldBuild) {
+	return concatStatic(
+		mergeStatic(
+			this::linkAll(),
+			this::fetchAll(dir)
+		),
+		shouldBuild
+			? this::buildAll(dir)
+			: EmptyObservable.create()
+	)
+}
 
-	const nodeModules = path.join(cwd, 'node_modules')
+/**
+ * Parse the command line arguments.
+ * @param  {Array.<string>} options._ - List of dependencies to be installed,
+ *     e.g. `express browserify`,
+ * @param  {boolean} options.production - If ied is running in `--production`
+ *     mode.
+ * @return {Object} Parsed `argv`.
+ */
+const parseArgv = ({_, production}) => ({
+	isExplicit: !!(_.length - 1),
+	isProd: production
+})
 
-	const resolvedAll = updatedPkgJSONs
-		::map((pkgJson) => ({pkgJson, target: '..', isProd}))
-		::resolveAll(nodeModules, undefined, isExplicit)::skip(1)
+/**
+ * Check if the updated `package.json` file should be persisted. Useful since
+ * `--save`, `--save-dev` and `--save-optional` imply that the updated file
+ * should be saved.
+ * @param  {Object} argv - Parsed command line arguments.
+ * @return {boolean} If the updated `package.json` file should be persisted.
+ */
+const shouldSave = argv =>
+	argv.save || argv['save-dev'] || argv['save-optional']
+
+/**
+ * Check if the dependencies should be built. lifecycle scripts are not being
+ * executed by default, but require the usage of `--build` for security and
+ * performance reasons.
+ * @param  {Object} argv - Parsed command line arguments.
+ * @return {boolean} If the respective `npm` lifecycle scripts should be
+ *     executed.
+ */
+const shouldBuild = argv =>
+	argv.build
+
+export default (config, cwd, argv) => {
+	const {isExplicit, isProd} = parseArgv(argv)
+	const dir = path.join(cwd, 'node_modules')
+	const target = '..'
+
+	// Generates the "source" package.json file from which dependencies are being
+	// parsed and installed.
+	const srcPkgJson = isExplicit
+		? fromArgv(cwd, argv)
+		: fromFs(cwd)
+
+	const savedPkgJson = shouldSave(argv)
+		? srcPkgJson::save(cwd)
+		: EmptyObservable.create()
+
+	const installedAll = srcPkgJson
+		::map(pkgJson => ({
+			pkgJson,
+			target,
+			isProd,
+			isExplicit
+		}))
+		::resolveAll(dir, config)
+		::skip(1)
 		::publishReplay().refCount()
+		::installAll(dir, shouldBuild(argv))
 
-	const initialized = initCache()::ignoreElements()
-	const linkedAll = resolvedAll::linkAll()
-	const fetchedAll = resolvedAll::fetchAll(nodeModules)
-	const installedAll = mergeStatic(linkedAll, fetchedAll)
-
-	const builtAll = argv.build
-		? resolvedAll::buildAll(nodeModules)
-		: EmptyObservable.create()
-
-	const saved = (argv.save || argv['save-dev'] || argv['save-optional'])
-		? updatedPkgJSONs::save(cwd)
-		: EmptyObservable.create()
-
-	return concatStatic(initialized, installedAll, saved, builtAll)
+	return concatStatic(
+		initCache(),
+		installedAll,
+		savedPkgJson
+	)
 }
