@@ -13,11 +13,12 @@ import * as config from './config'
 import * as util from './util'
 import {normalizeBin} from './pkg_json'
 
-export const checkShasum = (shasum, expected, tarball) =>
-	void assert.equal(shasum, expected,
+export const checkShasum = (shasum, expected, tarball) => {
+	assert.equal(shasum, expected,
 		`shasum mismatch for ${tarball}: ${shasum} <-> ${expected}`)
+}
 
-const download = (tarball, expected, type) =>
+const download = (tarball, expected) =>
 	Observable.create(observer => {
 		const shasum = crypto.createHash('sha1')
 		const response = needle.get(tarball, config.httpOptions)
@@ -26,11 +27,10 @@ const download = (tarball, expected, type) =>
 		const errorHandler = error => observer.error(error)
 		const dataHandler = chunk => shasum.update(chunk)
 		const finishHandler = () => {
-			const actualShasum = shasum.digest('hex')
-			// only actually check shasum integrity for npm tarballs
-			const expectedShasum = ['range', 'version', 'tag'].indexOf(type) !== -1 ?
-				actualShasum : expected
-			observer.next({tmpPath: cached.path, shasum: expectedShasum})
+			observer.next({
+				tmpPath: cached.path,
+				shasum: shasum.digest('hex')
+			})
 			observer.complete()
 		}
 
@@ -41,14 +41,16 @@ const download = (tarball, expected, type) =>
 		cached.on('finish', finishHandler)
 	})
 	::mergeMap(({tmpPath, shasum}) => {
-		if (expected) checkShasum(shasum, expected, tarball)
+		if (expected) {
+			checkShasum(shasum, expected, tarball)
+		}
 
 		const newPath = path.join(config.cacheDir, shasum)
 		return util.rename(tmpPath, newPath)
 	})
 
 export default function fetch (nodeModules) {
-	const {target, type, pkgJson: {name, bin, dist: {tarball, shasum}}} = this
+	const {target, pkgJson: {name, bin, dist: {tarball, shasum}}} = this
 	const packageDir = path.join(nodeModules, target, 'package')
 
 	return util.stat(packageDir)
@@ -59,7 +61,7 @@ export default function fetch (nodeModules) {
 		::_catch(err => {
 			if (err.code !== 'ENOENT') throw err
 			return concatStatic(
-				download(tarball, shasum, type),
+				download(tarball, shasum),
 				cache.extract(packageDir, shasum),
 				util.fixPermissions(packageDir, normalizeBin({name, bin}))
 			)
