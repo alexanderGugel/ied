@@ -14,6 +14,13 @@ import resolveAll from './resolve_all'
 import {fromArgv, fromFs, save} from './pkg_json'
 import {init as initCache} from './cache'
 
+/**
+ * Installs all the dependencies and optionally tuns the individual (build)
+ * lifecycle scripts.
+ * @param  {string} dir - Directory in which `ied` is running.
+ * @param  {boolean} shouldBuild - If the dependencies should be build.
+ * @return {Observable} Empty observable sequence.
+ */
 function installAll (dir, shouldBuild) {
 	return concatStatic(
 		mergeStatic(
@@ -26,6 +33,14 @@ function installAll (dir, shouldBuild) {
 	)
 }
 
+/**
+ * Parse the command line arguments.
+ * @param  {Array.<string>} options._ - List of dependencies to be installed,
+ *     e.g. `express browserify`,
+ * @param  {boolean} options.production - If ied is running in `--production`
+ *     mode.
+ * @return {Object} Parsed `argv`.
+ */
 const parseArgv = ({_, production}) => ({
 	isExplicit: !!(_.length - 1),
 	isProd: production
