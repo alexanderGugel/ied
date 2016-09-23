@@ -58,7 +58,7 @@ export function clone (repo, ref) {
 export function extract (dest) {
 	const {pkgJson, target} = this
 	const tmpDest = pkgJson.dist.path
-	const where = path.join(dest, '..', config.storageDir, target, 'package')
+	const where = path.join(dest, target, 'package')
 	return util.rename(tmpDest, where)
 		::retryWhen((errors) => errors::mergeMap((error) => {
 			if (error.code !== 'ENOENT') {
