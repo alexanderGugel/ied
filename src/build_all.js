@@ -45,7 +45,10 @@ export const build = nodeModules => ({target, script}) =>
 	Observable.create(observer => {
 		// some packages do expect a defined `npm_execpath` env, e.g.
 		// https://github.com/chrisa/node-dtrace-provider/blob/v0.6.0/scripts/install.js#L19
-		const env = {npm_execpath: '', ...process.env}
+		const env = {
+			npm_execpath: '',
+			...process.env
+		}
 
 		env.PATH = [
 			path.join(nodeModules, target, 'node_modules', '.bin'),

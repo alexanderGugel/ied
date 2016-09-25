@@ -1,6 +1,7 @@
 import {ArrayObservable} from 'rxjs/observable/ArrayObservable'
 import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {_finally} from 'rxjs/operator/finally'
+import {_do} from 'rxjs/operator/do'
 import {concatStatic} from 'rxjs/operator/concat'
 import {expand} from 'rxjs/operator/expand'
 import {first} from 'rxjs/operator/first'
@@ -8,8 +9,8 @@ import {mergeMap} from 'rxjs/operator/mergeMap'
 
 import {add, complete, report} from './progress'
 import {parseDependencies} from './pkg_json'
-import {resolve as resolveFromLocal} from './local'
-import {resolve as resolveFromRegistry} from './registry'
+import resolveFromLocal from './local'
+import resolveFromRegistry from './registry'
 
 /**
  * Properties of project-level `package.json` files that will be checked for
@@ -34,35 +35,76 @@ export const DEPENDENCY_FIELDS = [
 	'optionalDependencies'
 ]
 
-function resolve (nodeModules, parentTarget, options) {
-	return this::mergeMap(([name, version]) => {
-		add()
-		report(`resolving ${name}@${version}`)
+const logStartResolve = ([name, version]) => {
+	add()
+	report(`resolving ${name}@${version}`)
+}
 
-		return concatStatic(
-			resolveFromLocal(nodeModules, parentTarget, name),
-			resolveFromRegistry(nodeModules, parentTarget, name, version, {
-				...options.httpOptions,
-				registry: options.registry
-			})
-		)
+function resolve (nodeModules, parentTarget, options) {
+	return this
+		::_do(logStartResolve)
+		::mergeMap(([name, version]) =>
+			concatStatic(
+				resolveFromLocal(nodeModules, parentTarget, name),
+				resolveFromRegistry(nodeModules, parentTarget, name, version, {
+					...options.httpOptions,
+					registry: options.registry
+				})
+			)
 			::first()
 			::_finally(complete)
-	})
+		)
+}
+
+/**
+ * Helper class used for implementing a fast, mutable set using a plain
+ * JavaScript object. Using Set is unsupported on older Node versions and
+ * significantly slower — especially when exclusively using stringified values.
+ */
+class MutableSet {
+	/**
+	 * Creates an instance.
+	 * @constructor
+	 */
+	constructor () {
+		this.keys = Object.create(null)
+	}
+
+	/**
+	 * Adds a value to the set. This is slightly different from `Set#add` in the
+	 * sense that it doesn't allow chained operations and only handles string
+	 * values (hence `keys`).
+	 * @param {string} key - Value to be added to the set
+	 * @return {boolean} True if the value was add newly added to the set, false
+	 *     if the value was already contained in the set.
+	 */
+	add (key) {
+		if (this.keys[key]) return false
+		return (this.keys[key] = true)
+	}
+}
+
+const getFields = ({target, isProd}) => (
+	(target === '..' && !isProd)
+		? ENTRY_DEPENDENCY_FIELDS
+		: DEPENDENCY_FIELDS
+)
+
+const resolveAllInner = (nodeModules, options) => result => {
+	const fields = getFields(result)
+	const dependencies = parseDependencies(result.pkgJson, fields)
+
+	return ArrayObservable.create(dependencies)
+		::resolve(nodeModules, result.target, options)
 }
 
 export default function resolveAll (nodeModules, options) {
-	const targets = Object.create(null)
-	const entryTarget = '..'
+	const targets = new MutableSet()
+	const boundResolveAllInner = resolveAllInner(nodeModules, options)
 
-	return this::expand(result => {
-		if (targets[result.target]) {
-			return EmptyObservable.create()
-		}
-		targets[result.target] = true
-		const isEntry = result.target === entryTarget && !result.isProd
-		const fields = isEntry ? ENTRY_DEPENDENCY_FIELDS : DEPENDENCY_FIELDS
-		return ArrayObservable.create(parseDependencies(result.pkgJson, fields))
-			::resolve(nodeModules, result.target, options)
-	})
+	return this::expand(result => (
+		targets.add(result.target)
+			? boundResolveAllInner(result)
+			: EmptyObservable.create()
+	))
 }

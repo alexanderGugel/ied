@@ -35,7 +35,7 @@ const readTargetPkgJson = (dir, parentTarget, name) => {
 	)
 }
 
-export const resolve = (dir, parentTarget, name) =>
+export default (dir, parentTarget, name) =>
 	readTargetPkgJson(dir, parentTarget, name)
 		::map(([target, pkgJson]) => ({
 			target,

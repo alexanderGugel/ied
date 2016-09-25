@@ -190,7 +190,7 @@ export const match = (name, version, {
 		::map(extractBody)
 		::map(findVersion(name, version))
 
-export const resolve = (nodeModules, parentTarget, name, version, options) =>
+export default (nodeModules, parentTarget, name, version, options) =>
 	match(name, version, options)::map(pkgJson => ({
 		parentTarget,
 		pkgJson,

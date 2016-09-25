@@ -17,18 +17,18 @@ import {mergeMap} from 'rxjs/operator/mergeMap'
  * @param  {thisArg} [thisArg] - Optional context.
  * @return {Function} A cold observable sequence factory.
  */
-export const createObservableFactory = (fn, thisArg) =>
-	(...args) =>
-		Observable.create(observer => {
-			fn.apply(thisArg, [...args, (error, ...results) => {
-				if (error) {
-					observer.error(error)
-				} else {
-					results.forEach(result => observer.next(result))
-					observer.complete()
+export const createObservableFactory = (fn, thisArg) => (...args) =>
+	Observable.create(observer => {
+		fn.apply(thisArg, [...args, (error, ...results) => {
+			if (error) observer.error(error)
+			else {
+				for (let i = 0; i < results.length; i++) {
+					observer.next(results[i])
 				}
-			}])
-		})
+				observer.complete()
+			}
+		}])
+	})
 
 /**
  * Sends a GET request to the given HTTP endpoint by passing the supplied
@@ -78,20 +78,22 @@ export const forceSymlink = createObservableFactory(_forceSymlink)
 [`mkdirp`](https://www.npmjs.com/package/mkdirp). */
 export const mkdirp = createObservableFactory(_mkdirp)
 
+const entriesIterator = object => {
+	const results = []
+	const keys = Object.keys(object)
+	for (let i = 0; i < keys.length; i++) {
+		const key = keys[i]
+		results.push([key, object[key]])
+	}
+	return results
+}
+
 /**
  * Equivalent to `Map#entries` for observables, but operates on objects.
  * @return {Observable} Observable sequence of pairs.
  */
 export function entries () {
-	return this::mergeMap(object => {
-		const results = []
-		const keys = Object.keys(object)
-		for (let i = 0; i < keys.length; i++) {
-			const key = keys[i]
-			results.push([key, object[key]])
-		}
-		return results
-	})
+	return this::mergeMap(entriesIterator)
 }
 
 /**
