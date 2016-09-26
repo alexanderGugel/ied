@@ -1,4 +1,16 @@
-v2.3.1 / 2016-07-29
+v2.3.3 / 2016-09-26
+===================
+
+  * config.storageDir is no longer present
+
+v2.3.2 / 2016-08-14
+===================
+
+  * Fix broken install for package using caret version
+  * Fix linting issues
+  * Add proxy guide
+
+2.3.1 / 2016-07-29
 ==================
 
 This release reverts the `.cas` change, which broke the resolve function used
