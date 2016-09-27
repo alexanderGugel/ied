@@ -10,8 +10,15 @@ import {ignoreElements} from 'rxjs/operator/ignoreElements'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 
 import * as cache from './cache'
-import * as config from './config'
-import * as util from './util'
+import {
+	httpOptions,
+	cacheDir
+} from './config'
+import {
+	rename,
+	stat,
+	fixPermissions
+} from './util'
 import {normalizeBin} from './pkg_json'
 
 import debuglog from './debuglog'
@@ -27,7 +34,7 @@ export const download = (tarball) =>
 	Observable.create(observer => {
 		debug('downloading %s', tarball)
 		const shasum = crypto.createHash('sha1')
-		const response = needle.get(tarball, config.httpOptions)
+		const response = needle.get(tarball, httpOptions)
 		const cached = response.pipe(cache.write())
 
 		const errorHandler = error => observer.error(error)
@@ -54,8 +61,8 @@ function verifyDownload (tarball, expected) {
 
 function indexDownload () {
 	return this::mergeMap(([shasum, tmpPath]) => {
-		const newPath = path.join(config.cacheDir, shasum)
-		return util.rename(tmpPath, newPath)
+		const newPath = path.join(cacheDir, shasum)
+		return rename(tmpPath, newPath)
 	})
 }
 
@@ -63,7 +70,7 @@ export default function (nodeModules) {
 	const {id, pkgJson: {name, bin, dist: {tarball, shasum}}} = this
 	const packageDir = path.join(nodeModules, id, 'package')
 
-	return util.stat(packageDir)
+	return stat(packageDir)
 		::_catch(err => {
 			if (err.code !== 'ENOENT') {
 				throw err
@@ -79,7 +86,7 @@ export default function (nodeModules) {
 					::verifyDownload(tarball, shasum)
 					::indexDownload(),
 				cache.extract(packageDir, shasum),
-				util.fixPermissions(packageDir, normalizeBin({name, bin}))
+				fixPermissions(packageDir, normalizeBin({name, bin}))
 			)
 		})
 		::ignoreElements()
