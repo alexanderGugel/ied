@@ -5,8 +5,8 @@ import {forkJoin} from 'rxjs/observable/forkJoin'
 import {map} from 'rxjs/operator/map'
 import {readlink, readFile} from './util'
 
-const getLinkname = (dir, parentTarget, name) =>
-	path.join(dir, parentTarget, 'node_modules', name)
+const getLinkname = (dir, pId, name) =>
+	path.join(dir, pId, 'node_modules', name)
 
 const getDir = dst =>
 	path.basename(path.dirname(dst))
@@ -25,8 +25,8 @@ const empty = () =>
 // EmptyObservable.create.
 const fetch = empty
 
-const readTargetPkgJson = (dir, parentTarget, name) => {
-	const linkname = getLinkname(dir, parentTarget, name)
+const readTargetPkgJson = (dir, pId, name) => {
+	const linkname = getLinkname(dir, pId, name)
 	const filename = path.join(linkname, 'package.json')
 
 	return forkJoin(
@@ -35,12 +35,12 @@ const readTargetPkgJson = (dir, parentTarget, name) => {
 	)
 }
 
-export default (dir, parentTarget, name) =>
-	readTargetPkgJson(dir, parentTarget, name)
-		::map(([target, pkgJson]) => ({
-			target,
+export default (dir, pId, name) =>
+	readTargetPkgJson(dir, pId, name)
+		::map(([id, pkgJson]) => ({
+			id,
 			pkgJson,
-			parentTarget,
+			pId,
 			name,
 			fetch
 		}))

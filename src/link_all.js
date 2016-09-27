@@ -7,22 +7,22 @@ import {normalizeBin} from './pkg_json'
 const resolveSymlink = ([src, dst]) =>
 	[path.relative(path.dirname(dst), src), dst]
 
-const getBinLinks = ({pkgJson, parentTarget, target}) => {
+const getBinLinks = ({pkgJson, pId, id}) => {
 	const binLinks = []
 	const bin = normalizeBin(pkgJson)
 	const names = Object.keys(bin)
 	for (let i = 0; i < names.length; i++) {
 		const name = names[i]
-		const src = path.join('node_modules', target, 'package', bin[name])
-		const dst = path.join('node_modules', parentTarget, 'node_modules', '.bin', name)
+		const src = path.join('node_modules', id, 'package', bin[name])
+		const dst = path.join('node_modules', pId, 'node_modules', '.bin', name)
 		binLinks.push([src, dst])
 	}
 	return binLinks
 }
 
-const getDirectLink = ({parentTarget, target, name}) => {
-	const src = path.join('node_modules', target, 'package')
-	const dst = path.join('node_modules', parentTarget, 'node_modules', name)
+const getDirectLink = ({pId, id, name}) => {
+	const src = path.join('node_modules', id, 'package')
+	const dst = path.join('node_modules', pId, 'node_modules', name)
 	return [src, dst]
 }
 

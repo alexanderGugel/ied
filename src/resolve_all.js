@@ -11,6 +11,7 @@ import {add, complete, report} from './progress'
 import {parseDependencies} from './pkg_json'
 import resolveFromLocal from './local'
 import resolveFromRegistry from './registry'
+import resolveFromTarball from './tarball'
 
 /**
  * Properties of project-level `package.json` files that will be checked for
@@ -40,16 +41,31 @@ const logStartResolve = ([name, version]) => {
 	report(`resolving ${name}@${version}`)
 }
 
-function resolve (nodeModules, parentTarget, options) {
+function resolve (nodeModules, pId, options) {
 	return this
 		::_do(logStartResolve)
 		::mergeMap(([name, version]) =>
 			concatStatic(
-				resolveFromLocal(nodeModules, parentTarget, name),
-				resolveFromRegistry(nodeModules, parentTarget, name, version, {
-					...options.httpOptions,
-					registry: options.registry
-				})
+				// Chain of responsibility
+				// resolveFromTarball(
+				// 	nodeModules,
+				// 	pId,
+				// 	name,
+				// 	version,
+				// 	options
+				// ),
+				resolveFromLocal(
+					nodeModules,
+					pId,
+					name
+				),
+				resolveFromRegistry(
+					nodeModules,
+					pId,
+					name,
+					version,
+					options
+				)
 			)
 			::first()
 			::_finally(complete)
@@ -84,8 +100,8 @@ class MutableSet {
 	}
 }
 
-const getFields = ({target, isProd}) => (
-	(target === '..' && !isProd)
+const getFields = ({id, isProd}) => (
+	(id === '..' && !isProd)
 		? ENTRY_DEPENDENCY_FIELDS
 		: DEPENDENCY_FIELDS
 )
@@ -95,15 +111,19 @@ const resolveAllInner = (nodeModules, options) => result => {
 	const dependencies = parseDependencies(result.pkgJson, fields)
 
 	return ArrayObservable.create(dependencies)
-		::resolve(nodeModules, result.target, options)
+		::resolve(nodeModules, result.id, options)
 }
 
-export default function resolveAll (nodeModules, options) {
-	const targets = new MutableSet()
+export default function resolveAll (nodeModules, config) {
+	const ids = new MutableSet()
+	const options = {
+		...config.httpOptions,
+		registry: config.registry
+	}
 	const boundResolveAllInner = resolveAllInner(nodeModules, options)
 
 	return this::expand(result => (
-		targets.add(result.target)
+		ids.add(result.id)
 			? boundResolveAllInner(result)
 			: EmptyObservable.create()
 	))

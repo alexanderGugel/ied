@@ -190,11 +190,11 @@ export const match = (name, version, {
 		::map(extractBody)
 		::map(findVersion(name, version))
 
-export default (nodeModules, parentTarget, name, version, options) =>
+export default (nodeModules, pId, name, version, options) =>
 	match(name, version, options)::map(pkgJson => ({
-		parentTarget,
+		pId,
 		pkgJson,
-		target: pkgJson.dist.shasum,
+		id: pkgJson.dist.shasum,
 		name,
 		fetch
 	}))

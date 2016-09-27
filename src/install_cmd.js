@@ -70,7 +70,7 @@ const shouldBuild = argv =>
 export default (config, cwd, argv) => {
 	const {isExplicit, isProd} = parseArgv(argv)
 	const dir = path.join(cwd, 'node_modules')
-	const target = '..'
+	const id = '..'
 
 	// Generates the "source" package.json file from which dependencies are being
 	// parsed and installed.
@@ -85,7 +85,7 @@ export default (config, cwd, argv) => {
 	const installedAll = srcPkgJson
 		::map(pkgJson => ({
 			pkgJson,
-			target,
+			id,
 			isProd,
 			isExplicit
 		}))

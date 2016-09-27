@@ -123,17 +123,17 @@ const execMode = 0o777 & (~process.umask())
 
 /**
  * Fixes the permissions of a downloaded dependencies.
- * @param  {string} target - Target directory to resolve from.
+ * @param  {string} id - Target directory to resolve from.
  * @param  {Object} bin - `package.json` bin object.
  * @return {Observable} Empty observable sequence.
  */
-export const fixPermissions = (target, bin) => {
+export const fixPermissions = (id, bin) => {
 	const paths = []
 	const names = Object.keys(bin)
 
 	for (let i = 0; i < names.length; i++) {
 		const name = names[i]
-		paths.push(path.resolve(target, bin[name]))
+		paths.push(path.resolve(id, bin[name]))
 	}
 	return ArrayObservable.create(paths)
 		::mergeMap(filepath => chmod(filepath, execMode))

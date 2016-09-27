@@ -3,6 +3,6 @@ import {mergeMap} from 'rxjs/operator/mergeMap'
 
 export default function fetchAll (nodeModules) {
 	return this
-		::distinctKey('target')
+		::distinctKey('id')
 		::mergeMap(dep => dep.fetch(nodeModules))
 }

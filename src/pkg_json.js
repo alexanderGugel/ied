@@ -127,8 +127,8 @@ const argvRegExp = /^(@?.+?)(?:@(.+)?)?$/
 export const parseArgv = argv => {
 	const names = argv._.slice(1)
 
-	const nameVersionPairs = fromPairs(names.map((target) => {
-		const nameVersion = argvRegExp.exec(target)
+	const nameVersionPairs = fromPairs(names.map((id) => {
+		const nameVersion = argvRegExp.exec(id)
 		return [nameVersion[1], nameVersion[2] || '*']
 	}))
 

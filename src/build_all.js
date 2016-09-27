@@ -37,11 +37,11 @@ export function FailedBuildError () {
  * Builds a dependency by executing the given lifecycle script.
  * @param  {string} nodeModules - Absolute path of the `node_modules` directory.
  * @param  {Object} dep - Dependency to be built.
- * @param  {string} dep.target - Relative location of the target directory.
+ * @param  {string} dep.id - Relative location of the id directory.
  * @param  {string} dep.script - Script to be executed (usually using `sh`).
  * @return {Observable} Observable sequence of the returned exit code.
  */
-export const build = nodeModules => ({target, script}) =>
+export const build = nodeModules => ({id, script}) =>
 	Observable.create(observer => {
 		// some packages do expect a defined `npm_execpath` env, e.g.
 		// https://github.com/chrisa/node-dtrace-provider/blob/v0.6.0/scripts/install.js#L19
@@ -51,13 +51,13 @@ export const build = nodeModules => ({target, script}) =>
 		}
 
 		env.PATH = [
-			path.join(nodeModules, target, 'node_modules', '.bin'),
+			path.join(nodeModules, id, 'node_modules', '.bin'),
 			path.resolve(__dirname, '..', 'node_modules', '.bin'),
 			process.env.PATH
 		].join(path.delimiter)
 
 		const childProcess = spawn(config.sh, [config.shFlag, script], {
-			cwd: path.join(nodeModules, target, 'package'),
+			cwd: path.join(nodeModules, id, 'package'),
 			env,
 			stdio: 'inherit'
 		})
@@ -73,14 +73,14 @@ export const build = nodeModules => ({target, script}) =>
 /**
  * Extracts lifecycle scripts from supplied dependency.
  * @param {Dep} dep - Dependency to be parsed.
- * @return {Array.<Object>} Array of script targets to be executed.
+ * @return {Array.<Object>} Array of script ids to be executed.
  */
-export const parseLifecycleScripts = ({target, pkgJson: {scripts = {}}}) => {
+export const parseLifecycleScripts = ({id, pkgJson: {scripts = {}}}) => {
 	const results = []
 	for (let i = 0; i < LIFECYCLE_SCRIPTS.length; i++) {
 		const name = LIFECYCLE_SCRIPTS[i]
 		const script = scripts[name]
-		if (script) results.push({target, script})
+		if (script) results.push({id, script})
 	}
 	return results
 }
