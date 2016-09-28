@@ -179,7 +179,7 @@ const extractBody = ({body}) => body
  * @return {Observable} An observable sequence representing the asynchronously
  *     resolved `package.json` document representing the dependency.
  */
-export const match = (name, version, {
+const match = (name, version, {
 	registry = REGISTRY,
 	retryCount = RETRY_COUNT,
 	...options
@@ -190,7 +190,7 @@ export const match = (name, version, {
 		::map(extractBody)
 		::map(findVersion(name, version))
 
-export default (nodeModules, pId, name, version, options) =>
+export default (nodeModules, pId, name, version = '*', options) =>
 	match(name, version, options)::map(pkgJson => ({
 		pId,
 		pkgJson,

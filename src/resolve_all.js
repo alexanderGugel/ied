@@ -38,7 +38,7 @@ export const DEPENDENCY_FIELDS = [
 
 const logStartResolve = ([name, version]) => {
 	add()
-	report(`resolving ${name}@${version}`)
+	report(`resolving ${name}@${version || '[no version]'}`)
 }
 
 function resolve (nodeModules, pId, options) {

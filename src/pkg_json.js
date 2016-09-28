@@ -129,14 +129,18 @@ export const parseArgv = argv => {
 
 	const nameVersionPairs = fromPairs(names.map((id) => {
 		const nameVersion = argvRegExp.exec(id)
-		return [nameVersion[1], nameVersion[2] || '*']
+		return [nameVersion[1], nameVersion[2]]
 	}))
 
-	const field = argv['save-dev'] ? 'devDependencies'
-		: argv['save-optional'] ? 'optionalDependencies'
-		: 'dependencies'
+	if (argv['save-dev']) {
+		return {devDependencies: nameVersionPairs}
+	}
 
-	return {[field]: nameVersionPairs}
+	if (argv['save-optional']) {
+		return {optionalDependencies: nameVersionPairs}
+	}
+
+	return {dependencies: nameVersionPairs}
 }
 
 /**
