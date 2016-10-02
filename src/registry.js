@@ -170,16 +170,7 @@ export const checkStatus = (name, version) => ({
 
 const extractBody = ({body}) => body
 
-/**
- * Resolves a package defined via an ambiguous semantic version string to a
- * specific `package.json` file.
- * @param  {string} name Package name to be matched.
- * @param  {string} version Package version to be matched.
- * @param  {object} [options] HTTP and custom options.
- * @return {Observable} An observable sequence representing the asynchronously
- *     resolved `package.json` document representing the dependency.
- */
-const match = (name, version, {
+export default (nodeModules, pId, name, version = '*', {
 	registry = REGISTRY,
 	retryCount = RETRY_COUNT,
 	...options
@@ -189,12 +180,10 @@ const match = (name, version, {
 		::_do(checkStatus(name, version))
 		::map(extractBody)
 		::map(findVersion(name, version))
-
-export default (nodeModules, pId, name, version = '*', options) =>
-	match(name, version, options)::map(pkgJson => ({
-		pId,
-		pkgJson,
-		id: pkgJson.dist.shasum,
-		name,
-		fetch
-	}))
+		::map(pkgJson => ({
+			pId,
+			pkgJson,
+			id: pkgJson.dist.shasum,
+			name,
+			fetch
+		}))
