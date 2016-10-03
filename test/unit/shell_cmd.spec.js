@@ -21,7 +21,7 @@ describe('shellCmd', () => {
 
 	it('should spawn child process', () => {
 		util.readdir.returns(ScalarObservable.create([]))
-		shellCmd(config)('/cwd').subscribe()
+		shellCmd(config, '/cwd').subscribe()
 
 		sinon.assert.calledOnce(childProcess.spawn)
 		sinon.assert.calledWith(childProcess.spawn, config.sh, [], {
@@ -35,7 +35,7 @@ describe('shellCmd', () => {
 
 	it('should add node_modules/.bin to PATH', () => {
 		util.readdir.returns(ScalarObservable.create([]))
-		shellCmd(config)('/cwd').subscribe()
+		shellCmd(config, '/cwd').subscribe()
 
 		const {env: {PATH}} = childProcess.spawn.getCall(0).args[2]
 		assert.equal(PATH.indexOf('/cwd/node_modules/.bin:'), 0)
@@ -44,7 +44,7 @@ describe('shellCmd', () => {
 	it('should log available commands', () => {
 		const cmds = ['browserify', 'tape', 'npm']
 		util.readdir.returns(ScalarObservable.create(cmds))
-		shellCmd(config)('/cwd').subscribe()
+		shellCmd(config, '/cwd').subscribe()
 		const out = console.log.getCall(0).args.join(' ')
 		for (const cmd of cmds) {
 			assert.notEqual(out.indexOf(cmd), -1, `should log ${cmd}`)
