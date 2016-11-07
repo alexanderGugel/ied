@@ -1,3 +1,15 @@
+v2.3.4 / 2016-11-07
+===================
+
+  * Use fixed version of RxJS
+
+v2.3.3 / 2016-09-26
+===================
+
+  * 2.3.3
+  * Merge pull request #173 from alindeman/storage-dir
+  * config.storageDir is no longer present
+
 v2.3.3 / 2016-09-26
 ===================
 
