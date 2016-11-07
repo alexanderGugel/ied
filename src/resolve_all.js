@@ -36,39 +36,30 @@ export const DEPENDENCY_FIELDS = [
 	'optionalDependencies'
 ]
 
-const logStartResolve = ([name, version]) => {
+const logStartResolve = ([name, version = '[no version]']) => {
 	add()
-	report(`resolving ${name}@${version || '[no version]'}`)
+	report(`resolving ${name}@${version}`)
 }
+
+const compose = fns => (...args) =>
+	// TODO Consider using a for-loop here, since V8 doesn't seem to be able to
+	// optimize this.
+	fns.map(fn => fn(...args))
+
+// Chain of responsibility
+const resolveAny = compose([
+	resolveFromLocal,
+	resolveFromTarball,
+	resolveFromRegistry
+])
 
 function resolve (nodeModules, pId, options) {
 	return this
 		::_do(logStartResolve)
 		::mergeMap(([name, version]) =>
-			concatStatic(
-				// Chain of responsibility
-				// resolveFromTarball(
-				// 	nodeModules,
-				// 	pId,
-				// 	name,
-				// 	version,
-				// 	options
-				// ),
-				resolveFromLocal(
-					nodeModules,
-					pId,
-					name
-				),
-				resolveFromRegistry(
-					nodeModules,
-					pId,
-					name,
-					version,
-					options
-				)
-			)
-			::first()
-			::_finally(complete)
+			concatStatic(...resolveAny(nodeModules, pId, name, version, options))
+				::first()
+				::_finally(complete)
 		)
 }
 
@@ -107,11 +98,12 @@ const getFields = ({id, isProd}) => (
 )
 
 const resolveAllInner = (nodeModules, options) => result => {
+	const {pkgJson, id} = result
 	const fields = getFields(result)
-	const dependencies = parseDependencies(result.pkgJson, fields)
+	const dependencies = parseDependencies(pkgJson, fields)
 
 	return ArrayObservable.create(dependencies)
-		::resolve(nodeModules, result.id, options)
+		::resolve(nodeModules, id, options)
 }
 
 export default function resolveAll (nodeModules, config) {
