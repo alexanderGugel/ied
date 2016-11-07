@@ -1,3 +1,8 @@
+2.3.5 / 2016-11-07
+===================
+
+  * Remove ::distinctKey usage
+
 v2.3.4 / 2016-11-07
 ===================
 
@@ -6,7 +11,6 @@ v2.3.4 / 2016-11-07
 v2.3.3 / 2016-09-26
 ===================
 
-  * 2.3.3
   * Merge pull request #173 from alindeman/storage-dir
   * config.storageDir is no longer present
 
