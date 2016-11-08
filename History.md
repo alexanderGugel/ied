@@ -1,3 +1,15 @@
+2.3.6 / 2016-11-08
+===================
+
+  * Merge branch 'distinct-key'
+  * Use distinctKey again
+
+v2.3.5 / 2016-11-07
+===================
+
+  * 2.3.5
+  * Remove ::distinctKey usage
+  * Update History
 2.3.5 / 2016-11-07
 ===================
 
