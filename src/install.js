@@ -6,7 +6,7 @@ import {EmptyObservable} from 'rxjs/observable/EmptyObservable'
 import {Observable} from 'rxjs/Observable'
 import {_finally} from 'rxjs/operator/finally'
 import {concatStatic} from 'rxjs/operator/concat'
-import {distinct} from 'rxjs/operator/distinct'
+import {distinctKey} from 'rxjs/operator/distinctKey'
 import {expand} from 'rxjs/operator/expand'
 import {map} from 'rxjs/operator/map'
 import {_catch} from 'rxjs/operator/catch'
@@ -432,5 +432,5 @@ function fetch (nodeModules) {
 
 export function fetchAll (nodeModules) {
 	const fetchWithRetry = (dep) => dep.fetch(nodeModules)::retry(config.retries)
-	return this::distinct(({target}) => target)::mergeMap(fetchWithRetry)
+	return this::distinctKey('target')::mergeMap(fetchWithRetry)
 }
