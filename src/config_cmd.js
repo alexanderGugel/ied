@@ -7,7 +7,9 @@ import Table from 'easy-table'
 export default function configCmd () {
 	const table = new Table()
 	const keys = Object.keys(config)
-	for (const key of keys) {
+
+	for (let i = 0, len = keys.length; i < len; i++) {
+		const key = keys[i]
 		const value = config[key]
 		table.cell('key', key)
 		table.cell('value', value)

@@ -9,8 +9,9 @@ import {concatStatic} from 'rxjs/operator/concat'
 import {distinctKey} from 'rxjs/operator/distinctKey'
 import {expand} from 'rxjs/operator/expand'
 import {map} from 'rxjs/operator/map'
-import {_catch} from 'rxjs/operator/catch'
 import {mergeMap} from 'rxjs/operator/mergeMap'
+import {_catch} from 'rxjs/operator/catch'
+import {_do} from 'rxjs/operator/do'
 import {retry} from 'rxjs/operator/retry'
 import {skip} from 'rxjs/operator/skip'
 import {satisfies} from 'semver'
@@ -150,11 +151,9 @@ export function resolveFromNpm (nodeModules, parentTarget, parsedSpec) {
 	const {raw, name, type, spec} = parsedSpec
 	log(`resolving ${raw} from npm`)
 	const options = {...config.httpOptions, retries: config.retries}
-	return registry.match(name, spec, options)::map((pkgJson) => {
-		const target = pkgJson.dist.shasum
-		log(`resolved ${raw} to tarball shasum ${target} from npm`)
-		return {parentTarget, pkgJson, target, name, type, fetch}
-	})
+	return registry.match(config.registry, name, spec, options)
+		::_do((pkgJson) => { log(`resolved ${raw} to tarball shasum ${pkgJson.dist.shasum} from npm`) })
+		::map((pkgJson) => ({parentTarget, pkgJson, target: pkgJson.dist.shasum, name, type, fetch}))
 }
 
 /**

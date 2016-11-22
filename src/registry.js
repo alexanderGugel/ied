@@ -7,13 +7,6 @@ import {httpGet} from './util'
 import assert from 'assert'
 
 /**
- * default registry URL to be used. can be overridden via options on relevant
- * functions.
- * @type {String}
- */
-export const DEFAULT_REGISTRY = 'https://registry.npmjs.org/'
-
-/**
  * default number of retries to attempt before failing to resolve to a package
  * @type {Number}
  */
@@ -31,8 +24,8 @@ export const requests = Object.create(null)
  */
 export function reset () {
 	const uris = Object.keys(requests)
-	for (const uri of uris) {
-		delete requests[uri]
+	for (let i = 0, len = uris.length; i < len; i++) {
+		delete requests[uris[i]]
 	}
 }
 
@@ -86,14 +79,14 @@ export function fetch (uri, options = {}) {
 /**
  * resolve a package defined via an ambiguous semantic version string to a
  * specific `package.json` file.
+ * @param {String} registry - registry root URL.
  * @param {String} name - package name.
  * @param {String} version - semantic version string or tag name.
  * @param {Object} options - HTTP request options.
  * @return {Observable} - observable sequence of the `package.json` file.
  */
-export function match (name, version, options = {}) {
+export function match (registry, name, version, options = {}) {
 	const escapedName = escapeName(name)
-	const {registry = DEFAULT_REGISTRY, ...fetchOptions} = options
 	const uri = url.resolve(registry, `${escapedName}/${version}`)
-	return fetch(uri, fetchOptions)::map(({body}) => body)
+	return fetch(uri, options)::map(({body}) => body)
 }
