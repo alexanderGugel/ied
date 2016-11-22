@@ -19,6 +19,7 @@
     "node-uuid": "^1.4.7",
     "npm-package-arg": "^4.2.0",
     "ora": "^0.2.3",
+    "registry-auth-token": "^2.1.0",
     "rimraf": "^2.5.3",
     "rxjs": "5.0.0-rc.1",
     "semver": "^5.2.0",
@@ -41,7 +42,9 @@
     "eslint-config-airbnb-base": "^3.0.1",
     "eslint-plugin-import": "^1.10.2",
     "mocha": "^2.5.3",
+    "nock": "^8.0.0",
     "nyc": "^6.6.1",
+    "proxyquire": "^1.7.10",
     "resolve": "^1.1.7",
     "rimraf": "^2.5.3",
     "sinon": "^1.17.4"

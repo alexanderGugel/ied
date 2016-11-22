@@ -6,6 +6,8 @@ import needle from 'needle'
 import {map} from 'rxjs/operator/map'
 import {mergeMap} from 'rxjs/operator/mergeMap'
 import * as config from './config'
+import getRegistryAuthToken from 'registry-auth-token'
+import semver from 'semver'
 
 /**
  * given an arbitrary asynchronous function that accepts a callback function,
@@ -129,4 +131,43 @@ export function setTitle (title) {
 	process.stdout.write(
 		`${String.fromCharCode(27)}]0;${title}${String.fromCharCode(7)}`
 	)
+}
+
+/**
+ * get authorization headers if the given url is an npm registry url
+ * and authorization tokens are known for it
+ * @param {String} url - URL to return authorization headers for
+ * @return {Object} - object containing the authorization headers
+ */
+export function authHeadersForUrl (url) {
+	const token = getRegistryAuthToken(url, {recursive: true})
+	return token ? {authorization: `Bearer ${token}`} : {}
+}
+
+/**
+ * given a package info response from the npm registry,
+ * find the latest version that satisfies the given range/tag
+ * @param {Object} pkg - package info response from NPM registry
+ * @param {String} requested - requested version range or tag
+ * @return {String} latest version that satisfies given range/tag
+ */
+export function latestSatisfyingVersion (pkg, requested) {
+	const tags = pkg['dist-tags'] || {}
+	if (!semver.validRange(requested)) {
+		return tags[requested]
+	}
+
+	const versions = Object.keys(pkg.versions).sort(semver.rcompare)
+	const latest = tags.latest || versions[0]
+	if (requested === '*') {
+		return latest
+	}
+
+	for (const version of versions) {
+		if (semver.satisfies(version, requested)) {
+			return version
+		}
+	}
+
+	return undefined
 }

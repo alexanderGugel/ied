@@ -18,6 +18,7 @@ import needle from 'needle'
 import assert from 'assert'
 import npa from 'npm-package-arg'
 import memoize from 'lodash.memoize'
+import getRegistryUrl from 'registry-auth-token/registry-url'
 
 import * as cache from './cache'
 import * as config from './config'
@@ -147,9 +148,17 @@ export function resolveRemote (nodeModules, parentTarget, name, version) {
  * @return {Observable} - observable sequence of `package.json` objects.
  */
 export function resolveFromNpm (nodeModules, parentTarget, parsedSpec) {
-	const {raw, name, type, spec} = parsedSpec
+	const {raw, name, type, spec, scope} = parsedSpec
+	const registryUrl = getRegistryUrl(scope)
+	const requestOptions = {
+		headers: util.authHeadersForUrl(registryUrl),
+		retries: config.retries,
+		registry: registryUrl,
+		legacyMode: registryUrl !== registry.DEFAULT_REGISTRY
+	}
+
 	log(`resolving ${raw} from npm`)
-	const options = {...config.httpOptions, retries: config.retries}
+	const options = {...config.httpOptions, ...requestOptions}
 	return registry.match(name, spec, options)::map((pkgJson) => {
 		const target = pkgJson.dist.shasum
 		log(`resolved ${raw} to tarball shasum ${target} from npm`)
@@ -362,7 +371,8 @@ function download (tarball, expected, type) {
 	log(`downloading ${tarball}, expecting ${expected}`)
 	return Observable.create((observer) => {
 		const shasum = crypto.createHash('sha1')
-		const response = needle.get(tarball, config.httpOptions)
+		const headers = util.authHeadersForUrl(tarball)
+		const response = needle.get(tarball, {...config.httpOptions, headers})
 		const cached = response.pipe(cache.write())
 
 		const errorHandler = (error) => observer.error(error)
