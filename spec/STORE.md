@@ -24,9 +24,7 @@ A global store should be located at `~/.store/<version>` by default.
 
 ### Dedicated store
 
-A dedicated store should be at `node_modules/.store`.
-
-> Can we add the reasoning behind this? Unclear to me -Will
+A dedicated store should be at `node_modules/.store`. The reason why it doesn't need a subfolder for different versions is because one node_modules can use only one store (see [the storePath field of .modules.yaml](#storePath)).
 
 ## Store directory structure
 
