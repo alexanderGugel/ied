@@ -1,3 +1,5 @@
+# Store Spec
+
 > draft, store spec version 1
 
 A store is a folder that contains installed packages and information about relationships between them.
@@ -71,9 +73,7 @@ Local dependencies are symlinked in a Windows/MacOS/Linux compatible way, not co
 
 A file that contains the store graph. All keys should be sorted.
 
-> Question: What parts of this file are redundant to the information that could be derived by walking the symlink tree? If the store.yaml and filesystem contain conflicting information, how do we resolve the corruption?
-
-> zkochan: the `dependents` part. I'd say the store.yaml is the single place of truth and if in the filesystem something does not match, we can force-update it.
+The store.yaml is the single place of truth. If something in the filesystem does not match the graph described in the store.yaml, the corrupted/incorrect directories of the store are recreated.
 
 ### `storeSpecVersion`
 
@@ -113,20 +113,18 @@ packages:
 
 ## `.modules.yaml`
 
-In order to disallow the usage of different stores from the same node_modules, the `.modules.yaml` file contains information about the origin of packages. This file is required only in node_modules that are outside of the store and has to be in the root of the node_modules folder.
-
-> Can you explain what you mean? I don't get it
-
-> zkochan: Lets say you have two stores: X and Y. And you have a package - A. You installed the dependencies of A using the X store. Now you don't want to install other dependencies using store Y. You want all the dependencies in A's node_modules to be from the same store.
+A file in the root of node_modules with meta information.
 
 ### `storePath`
 
-Has the absolute path to the store that is used for installing the dependencies.
+The absolute path to the store which is used for installing dependencies in the current node_modules.
 
 ### `packageManager`
 
 Has the name of the package manager that was used for installing the dependencies.
 
-> you mean like 'ied' or 'pnpm'?
+E.g.:
 
-> zkochan: yes, maybe even the version of it, like ied@1.0.1
+```yaml
+packageManager: ied@2.3.6
+```
