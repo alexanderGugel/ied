@@ -5,7 +5,7 @@ import gunzip from 'gunzip-maybe'
 import tar from 'tar-fs'
 import fs from 'fs'
 import path from 'path'
-import uuid from 'node-uuid'
+import uuid from 'uuid'
 import * as util from './util'
 import * as config from './config'
 

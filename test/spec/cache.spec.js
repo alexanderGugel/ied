@@ -4,7 +4,7 @@ import sinon from 'sinon'
 import stream from 'stream'
 import tar from 'tar-fs'
 import path from 'path'
-import uuid from 'node-uuid'
+import uuid from 'uuid'
 import {Observable} from 'rxjs/Observable'
 
 import * as cache from '../../src/cache'

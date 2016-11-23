@@ -16,14 +16,14 @@
     "needle": "1.0.0",
     "node-gyp": "^3.4.0",
     "node-pre-gyp": "^0.6.29",
-    "node-uuid": "^1.4.7",
     "npm-package-arg": "^4.2.0",
     "ora": "^0.2.3",
     "rimraf": "^2.5.3",
     "rxjs": "5.0.0-rc.1",
     "semver": "^5.2.0",
     "source-map-support": "^0.4.1",
-    "tar-fs": "^1.13.0"
+    "tar-fs": "^1.13.0",
+    "uuid": "^3.0.0"
   },
   "devDependencies": {
     "babel-cli": "^6.10.1",
