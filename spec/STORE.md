@@ -128,3 +128,9 @@ E.g.:
 ```yaml
 packageManager: ied@2.3.6
 ```
+
+or
+
+```yaml
+packageManager: pnpm@1.0.0
+```
