@@ -47,17 +47,14 @@ registry.node-modules.io/@wmhilton/log/1.1.0
 ### Packages from git
 
 `<git URL domain>/<git path>/<commit hash>`
-or
-`<git URL domain>/<git path>/<annotated tag>`
-> zkochan: Is it OK to use git tags? Git tags are mutable. Someone can tag a different commit
 
 E.g.: `github.com/alexGugel/ied/b246270b53e43f1dc469df0c9b9ce19bb881e932`
 
-Commits and annotated tags corresponding to a semantic version are both usable.
-
-Lightweight git tags and branches are not, because they are more likely to change.
-Module installers should resolve git package references based on branch names or non-version tag names to
+Module installers should resolve git package references based on branch names or tag names to
 commit hashes prior to loading or retrieving from the store.
+
+When updating dependencies, module installers should check whether there are new commit in the branch or
+whether the git-tag points to a different commit.
 
 ### Tarballs
 
