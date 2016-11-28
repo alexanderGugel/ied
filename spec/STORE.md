@@ -53,7 +53,7 @@ E.g.: `github.com/alexGugel/ied/b246270b53e43f1dc469df0c9b9ce19bb881e932`
 Module installers should resolve git package references based on branch names or tag names to
 commit hashes prior to loading or retrieving from the store.
 
-When updating dependencies, module installers should check whether there are new commit in the branch or
+When updating dependencies, module installers should check whether there are new commits in the branch or
 whether the git-tag points to a different commit.
 
 ### Tarballs
