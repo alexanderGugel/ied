@@ -24,7 +24,7 @@ func main() {
 
 	for _, name := range os.Args[1:] {
 		if err := store.Install(nil, name, "*"); err != nil {
-			log.Println("failed to install %v: %v", name, err)
+			log.Printf("failed to install %v: %v", name, err)
 		}
 	}
 }

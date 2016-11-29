@@ -10,7 +10,7 @@ import (
 
 // LocalPkg represents a package that has already been installed in the specific
 // project. It considers a package to be installed if a corresponding
-// package.json file is present.
+// package.json file exists.
 type LocalPkg struct {
 	Shasum       string
 	Dependencies map[string]string `json:"dependencies"`
@@ -56,8 +56,10 @@ func (l *Local) Resolve(dir, name, version string) (Pkg, error) {
 		return nil, nil
 	}
 
-	pkg := new(LocalPkg)
-	json.Unmarshal(raw, &pkg)
+	pkg := &LocalPkg{}
+	if err := json.Unmarshal(raw, &pkg); err != nil {
+		return nil, err
+	}
 	pkg.Shasum = filepath.Base(filepath.Dir(link))
 
 	return pkg, nil
