@@ -14,9 +14,9 @@ func main() {
 
 	registry := NewRegistry("https://registry.npmjs.com")
 	local := NewLocal()
-	resolvers := []Resolver{local, registry}
+	resolver := NewMultiResolver(local, registry)
 	dir := filepath.Join(wd, "node_modules")
-	store := NewStore(dir, resolvers)
+	store := NewStore(dir, resolver)
 
 	if err := store.Init(); err != nil {
 		log.Fatalf("failed to init store: %v", err)

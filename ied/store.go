@@ -22,18 +22,18 @@ func (e UnresolvedError) Error() string {
 
 // Store keeps track of the currently installed dependencies.
 type Store struct {
-	Pkgs      map[string]Pkg
-	Resolvers []Resolver
-	Dir       string
-	mutex     sync.Mutex
+	Pkgs     map[string]Pkg
+	Resolver Resolver
+	Dir      string
+	mutex    sync.Mutex
 }
 
 // NewStore creates a new store.
-func NewStore(dir string, resolvers []Resolver) *Store {
+func NewStore(dir string, resolver Resolver) *Store {
 	return &Store{
-		Pkgs:      make(map[string]Pkg),
-		Dir:       dir,
-		Resolvers: resolvers,
+		Pkgs:     make(map[string]Pkg),
+		Dir:      dir,
+		Resolver: resolver,
 	}
 }
 
@@ -78,19 +78,10 @@ func (s *Store) Install(from Pkg, name string, version string) error {
 	log.Printf("installing %v@%v", name, version)
 
 	linkPath := getLinkPath(s.Dir, from, name)
-
-	var pkg Pkg
-	for _, resolver := range s.Resolvers {
-		var err error
-		pkg, err = resolver.Resolve(linkPath, name, version)
-		if err != nil {
-			return err
-		}
-		if pkg != nil {
-			break
-		}
+	pkg, err := s.Resolver.Resolve(linkPath, name, version)
+	if err != nil {
+		return err
 	}
-
 	if pkg == nil {
 		return UnresolvedError{pkg, name, version}
 	}
