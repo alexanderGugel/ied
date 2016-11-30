@@ -8,24 +8,25 @@ import (
 type LogEvent struct {
 	Level string `json:"level"`
 
-	// Type specifies what kind of event is being logged, e.g. is it related to
+	// Name specifies what type of event is being logged, e.g. is it related to
 	// resolving the dependency, downloading the package etc.
-	Type    string `json:"type"`
+	Name    string `json:"name"`
 	Message string `json:"message"`
-
-	// Progress int `json:"progress"`
 }
 
-func Log(level string, typ string, message string) {
-	ev := LogEvent{
-		Level:   level,
-		Type:    typ,
-		Message: message,
-	}
+func (ev LogEvent) String() (string, error) {
 	b, err := json.Marshal(ev)
 	if err != nil {
-		// TODO
-		// fmt.Println("error:", err)
+		return "", err
 	}
-	fmt.Println(string(b))
+	return string(b), nil
+}
+
+func Log(level string, name string, message string) {
+	ev := LogEvent{level, name, message}
+	msg, err := ev.String()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(msg)
 }

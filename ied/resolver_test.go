@@ -94,6 +94,6 @@ func TestMultiResolverResolveTwoResolvers(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 	if pkg != nil {
-		t.Error("unexpected pkg result: %v", pkg)
+		t.Errorf("unexpected pkg result: %v", pkg)
 	}
 }

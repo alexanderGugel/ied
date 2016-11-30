@@ -2,11 +2,10 @@ package main
 
 import (
 	"io/ioutil"
-	"reflect"
-	"testing"
-
 	"os"
 	"path/filepath"
+	"reflect"
+	"testing"
 )
 
 func TestLocalPkgDeps(t *testing.T) {
