@@ -102,11 +102,13 @@ func (s *Store) Install(from Pkg, name string, version string) error {
 
 	deps := pkg.Deps()
 
+	install := func(name, version string) {
+		errs <- s.Install(pkg, name, version)
+	}
+
 	// Install sub-dependency.
 	for name, version := range deps {
-		go func(name string, version string) {
-			errs <- s.Install(pkg, name, version)
-		}(name, version)
+		go install(name, version)
 	}
 
 	// Download dependency.
