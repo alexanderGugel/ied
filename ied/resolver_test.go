@@ -5,14 +5,14 @@ import (
 )
 
 type MockResolver struct {
-	Name string
+	Name    string
 	Version string
-	Dir string
-	Pkg Pkg
-	Err error
+	Dir     string
+	Pkg     Pkg
+	Err     error
 }
 
-func (r MockResolver) Resolve (dir, name, version string) (Pkg, error) {
+func (r MockResolver) Resolve(dir, name, version string) (Pkg, error) {
 	if dir == r.Dir && name == r.Name && version == r.Version {
 		return r.Pkg, r.Err
 	}
@@ -37,11 +37,11 @@ func (s StubPkg) DownloadInto(dir string) error {
 
 func TestMultiResolverResolveOneResolver(t *testing.T) {
 	resolverA := MockResolver{
-		Name: "a",
+		Name:    "a",
 		Version: "1",
-		Dir: "/a",
-		Pkg: StubPkg{"a"},
-		Err: nil,
+		Dir:     "/a",
+		Pkg:     StubPkg{"a"},
+		Err:     nil,
 	}
 
 	multiResolver := NewMultiResolver(resolverA)
@@ -57,18 +57,18 @@ func TestMultiResolverResolveOneResolver(t *testing.T) {
 
 func TestMultiResolverResolveTwoResolvers(t *testing.T) {
 	resolverA := MockResolver{
-		Name: "a",
+		Name:    "a",
 		Version: "1",
-		Dir: "/a",
-		Pkg: StubPkg{"a"},
-		Err: nil,
+		Dir:     "/a",
+		Pkg:     StubPkg{"a"},
+		Err:     nil,
 	}
 	resolverB := MockResolver{
-		Name: "b",
+		Name:    "b",
 		Version: "2",
-		Dir: "/b",
-		Pkg: StubPkg{"b"},
-		Err: nil,
+		Dir:     "/b",
+		Pkg:     StubPkg{"b"},
+		Err:     nil,
 	}
 
 	multiResolver := NewMultiResolver(resolverA, resolverB)
