@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
-	// "log"
 	"os"
 	"path/filepath"
 )
