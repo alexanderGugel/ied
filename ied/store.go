@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	log "github.com/Sirupsen/logrus"
 )
 
 // UnresolvedError records an error from a failed package installation.
@@ -74,7 +75,7 @@ func getLinkPath(dir string, from Pkg, name string) string {
 
 // Install recursively installs a package into the store.
 func (s *Store) Install(from Pkg, name string, version string) error {
-	Log("info", "install", "installing %s@%s", name, version)
+	log.Infof("installing %s@%s", name, version)
 
 	linkPath := getLinkPath(s.Dir, from, name)
 	pkg, err := s.Resolver.Resolve(linkPath, name, version)
