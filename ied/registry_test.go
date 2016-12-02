@@ -1,7 +1,7 @@
 package main
 
 import (
-	"reflect"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -13,9 +13,7 @@ func TestRegistryPkgDeps(t *testing.T) {
 		},
 	}
 	deps := pkg.Deps()
-	if !reflect.DeepEqual(deps, pkg.Dependencies) {
-		t.Fatalf("expected %v to deep equal %v", deps, pkg.Dependencies)
-	}
+	assert.Equal(t, deps, pkg.Dependencies)
 }
 
 func TestRegistryPkgID(t *testing.T) {
@@ -29,15 +27,11 @@ func TestRegistryPkgID(t *testing.T) {
 		},
 	}
 	id := pkg.ID()
-	if id != pkg.Dist.Shasum {
-		t.Fatalf("expected %v to equal %v", id, pkg.Dist.Shasum)
-	}
+	assert.Equal(t, id, pkg.Dist.Shasum, "should use shasum as unique id")
 }
 
 func TestNewRegistry(t *testing.T) {
 	rootURL := "http://registry.npmjs.com/"
 	registry := NewRegistry(rootURL)
-	if registry.RootURL != rootURL {
-		t.Fatalf("expected %v to equal %v", registry.RootURL, rootURL)
-	}
+	assert.Equal(t, registry.RootURL, rootURL)
 }

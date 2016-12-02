@@ -74,7 +74,7 @@ func getLinkPath(dir string, from Pkg, name string) string {
 
 // Install recursively installs a package into the store.
 func (s *Store) Install(from Pkg, name string, version string) error {
-	Log("info", "install", fmt.Sprintf("installing %s@%s", name, version))
+	Log("info", "install", "installing %s@%s", name, version)
 
 	linkPath := getLinkPath(s.Dir, from, name)
 	pkg, err := s.Resolver.Resolve(linkPath, name, version)

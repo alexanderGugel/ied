@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -47,12 +48,8 @@ func TestMultiResolverResolveOneResolver(t *testing.T) {
 	multiResolver := NewMultiResolver(resolverA)
 	pkg, err := multiResolver.Resolve("/a", "a", "1")
 
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	if pkg != resolverA.Pkg {
-		t.Errorf("expected %v to equal %v", pkg, resolverA.Pkg)
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, pkg, resolverA.Pkg)
 }
 
 func TestMultiResolverResolveTwoResolvers(t *testing.T) {
@@ -74,26 +71,14 @@ func TestMultiResolverResolveTwoResolvers(t *testing.T) {
 	multiResolver := NewMultiResolver(resolverA, resolverB)
 	pkg, err := multiResolver.Resolve("/a", "a", "1")
 
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	if pkg != resolverA.Pkg {
-		t.Errorf("expected %v to equal %v", pkg, resolverA.Pkg)
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, pkg, resolverA.Pkg)
 
 	pkg, err = multiResolver.Resolve("/b", "b", "2")
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	if pkg != resolverB.Pkg {
-		t.Errorf("expected %v to equal %v", pkg, resolverB.Pkg)
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, pkg, resolverB.Pkg)
 
 	pkg, err = multiResolver.Resolve("/b", "b", "3")
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	if pkg != nil {
-		t.Errorf("unexpected pkg result: %v", pkg)
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, pkg, nil)
 }
