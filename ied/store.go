@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/go-multierror"
 	"os"
 	"path/filepath"
 	"sync"
-	log "github.com/Sirupsen/logrus"
 )
 
 // UnresolvedError records an error from a failed package installation.

@@ -35,3 +35,53 @@ Log Level: warn`)
 		LogFormat: "json",
 	})
 }
+
+func TestConfigValidateValid(t *testing.T) {
+	configs := []Config{
+		Config{
+			Registry:  "https://registry.npmjs.com",
+			LogLevel:  "warn",
+			LogFormat: "json",
+		},
+		Config{
+			Registry:  "https://registry.npmjs.com",
+			LogLevel:  "warn",
+			LogFormat: "text",
+		},
+		Config{
+			Registry:  "https://registry.npmjs.com",
+			LogLevel:  "info",
+			LogFormat: "json",
+		},
+	}
+
+	for _, config := range configs {
+		err := config.Validate()
+		assert.NoError(t, err, "expected %v to be valid", config)
+	}
+}
+
+func TestConfigValidateInvalid(t *testing.T) {
+	configs := []Config{
+		Config{
+			Registry:  "",
+			LogLevel:  "warn",
+			LogFormat: "json",
+		},
+		Config{
+			Registry:  "https://registry.npmjs.com",
+			LogLevel:  "invalid",
+			LogFormat: "json",
+		},
+		Config{
+			Registry:  "https://registry.npmjs.com",
+			LogLevel:  "warn",
+			LogFormat: "invalid",
+		},
+	}
+
+	for _, config := range configs {
+		err := config.Validate()
+		assert.Error(t, err, "expected %v to be invalid", config)
+	}
+}

@@ -1,12 +1,12 @@
 package main
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"path/filepath"
-	log "github.com/Sirupsen/logrus"
 )
 
-func initConfig () *Config {
+func initConfig() *Config {
 	filename, err := configFilename()
 	if err != nil {
 		log.Warnf("failed getting config filename: %v", err)
@@ -24,13 +24,23 @@ func initConfig () *Config {
 	return config
 }
 
+func setLogLevel(config *Config) {
+	level, err := log.ParseLevel(config.LogLevel)
+	if err != nil {
+		log.Warnf("failed to parse log level: %v", err)
+	} else {
+		log.SetLevel(level)
+	}
+}
+
 func main() {
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("failed to get working directory: %v", err)
 	}
 
-	initConfig()
+	config := initConfig()
+	setLogLevel(config)
 
 	registry := NewRegistry("https://registry.npmjs.com")
 	local := NewLocal()
