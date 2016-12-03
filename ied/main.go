@@ -33,6 +33,21 @@ func setLogLevel(config *Config) {
 	}
 }
 
+func initResolver () Resolver {
+	registry := NewRegistry("https://registry.npmjs.com")
+	local := NewLocal()
+	return NewMultiResolver(local, registry)
+}
+
+func initStore (wd string, resolver Resolver) *Store {
+	dir := filepath.Join(wd, "node_modules")
+	store := NewStore(dir, resolver)
+	if err := store.Init(); err != nil {
+		log.Fatalf("failed to init store: %v", err)
+	}
+	return store
+}
+
 func main() {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -42,15 +57,8 @@ func main() {
 	config := initConfig()
 	setLogLevel(config)
 
-	registry := NewRegistry("https://registry.npmjs.com")
-	local := NewLocal()
-	resolver := NewMultiResolver(local, registry)
-	dir := filepath.Join(wd, "node_modules")
-	store := NewStore(dir, resolver)
-
-	if err := store.Init(); err != nil {
-		log.Fatalf("failed to init store: %v", err)
-	}
+	resolver := initResolver()
+	store := initStore(wd, resolver)
 
 	for _, name := range os.Args[1:] {
 		if err := store.Install(nil, name, "*"); err != nil {
