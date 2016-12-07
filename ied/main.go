@@ -33,13 +33,13 @@ func setLogLevel(config *Config) {
 	}
 }
 
-func initResolver () Resolver {
-	registry := NewRegistry("https://registry.npmjs.com")
+func initResolver() Resolver {
+	registry := NewRegistry("http://registry.npmjs.com")
 	local := NewLocal()
 	return NewMultiResolver(local, registry)
 }
 
-func initStore (wd string, resolver Resolver) *Store {
+func initStore(wd string, resolver Resolver) *Store {
 	dir := filepath.Join(wd, "node_modules")
 	store := NewStore(dir, resolver)
 	if err := store.Init(); err != nil {

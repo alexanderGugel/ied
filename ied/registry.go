@@ -71,7 +71,7 @@ func (r *Registry) Resolve(dir, name, version string) (Pkg, error) {
 	}
 	defer res.Body.Close()
 
-	pkg := new(RegistryPkg)
+	pkg := &RegistryPkg{}
 	err = json.NewDecoder(res.Body).Decode(pkg)
 	if err != nil {
 		return nil, err
