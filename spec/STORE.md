@@ -2,16 +2,17 @@
 
 > draft, store spec version 1
 
-A store is a folder that contains installed packages and information about relationships between them.
+A store is a folder that contains packages and information about projects that are using them.
+The store does not include the `node_modules` folder of any of the packages, unless it has
+[bundled dependencies](https://docs.npmjs.com/files/package.json#bundleddependencies).
 
-These store spec tries to satisfy the following requirements:
+This store spec tries to satisfy the following requirements:
 
 1. the store has to be human-friendly, when possible
 2. the store structure should guarantee that two different packages cannot have the same path.
-3. the destination path of a package should be known after the resolve step (before fetch).
-4. it should preserve the original tarball so that the package integrity can be re-evaluated
-5. the store structure should enable indefinite caching
-6. the store structure should be sufficient to act as a storage backend of a registry
+3. it should preserve the original tarball so that the package integrity can be re-evaluated
+4. the store structure should enable indefinite caching
+5. the store structure should be sufficient to act as a storage backend of a registry
 
 Pitfalls to watch out for:
 - Mutable version tags (ie git, 'latest')
@@ -44,9 +45,9 @@ registry.npmjs.org/@cycle/dom/14.1.0
 registry.node-modules.io/@wmhilton/log/1.1.0
 ```
 
-### Packages from git
+### Packages from Git
 
-`<git URL domain>/<git path>/<commit hash>`
+`<Git URL domain>/<Git path>/<commit hash>`
 
 E.g.: `github.com/alexGugel/ied/b246270b53e43f1dc469df0c9b9ce19bb881e932`
 
