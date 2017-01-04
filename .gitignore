@@ -1,8 +1,1 @@
-.nyc_output/
-.tmp/
-coverage/
-docs/
-node_modules/
-lib/
-logs/
-*.log
+ied

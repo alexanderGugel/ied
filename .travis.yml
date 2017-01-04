@@ -1,22 +1,7 @@
-language: node_js
-sudo: false
-node_js:
-- '6'
-- '5'
-- '4'
-- '0.12'
-- '0.11'
-- iojs
-script:
-- time npm run test:spec
-- time npm run test:e2e
-- npm run lint
-- npm run test:coverage
-deploy:
-  provider: npm
-  email: alexander.gugel@gmail.com
-  api_key:
-    secure: W184bMn/asJVqhR5d/ldn5n9c3XIBeBKFvgJWr0vEJawWqp+9cqwD4UJ4eb94WawjZyQ2y/mjSdZH7hdCqBV9wNeXRBvfwKVkR+ctUq6kMLmjBOWj0nWXBrhQ7X0+Ado/rV+WJpkxuXT9ZFGDe5De4f1XZm8dgnfaVw4pqf4YN6MmY9aLcovtyszbygDY1lqMUjbYAuy4IH6OWBZE30RbQTSqTeBCiwHms/gO2Y8lEagPq/XNsu63BJJzHV1O88zFdzv/mePnZoSYTtmo2CMOsCbr74Mq92YiYjFPy4j/v8L+wQiowqaoWyKNNrQ87B+vMWCFdchB1AW93MIcwVAFaBZ1znI+dbkzCjrUt4y0tMaclNdz++SxC+P6MyuqFnOSYrhEHJYvjWNzQS0dgV4G1dAmAfqTyAZ972YhfX38Z6piBabVmE3HRQF6HyvOt7T7rgY07nupfiBn9VRWOW7AzSjYq5lV1uI/AZZ2qFvaEKxhSbvZYTn4R3+qLyuh+zBcTGCgCTXPnyG9H+9jMgo70KGxBRoRrCZ24e0kwA75IIxilzC5EUoJ9XGVYBIz2A4p7iv19+keZSUkMCxchn7CF76HajJ2jLLqW/8hbDAC5ZtswIJ520kVg/jXccQFDWB9WHpXUc1aX5qm1YY2nGYcjmmKwLT2wrp7kDbRArXTTA=
-  on:
-    tags: true
-    repo: alexanderGugel/ied
+language: go
+
+go:
+  - 1.x
+  - 1.6
+  - 1.7.x
+  - master
