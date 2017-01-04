@@ -3,10 +3,9 @@ package main
 import (
 	log "github.com/Sirupsen/logrus"
 	"os"
-	"path/filepath"
 )
 
-func initConfig() *Config {
+func readConfig() *Config {
 	filename, err := configFilename()
 	if err != nil {
 		log.Warnf("failed getting config filename: %v", err)
@@ -33,36 +32,23 @@ func setLogLevel(config *Config) {
 	}
 }
 
-func initResolver() Resolver {
-	registry := NewRegistry("http://registry.npmjs.com")
-	local := NewLocal()
-	return NewMultiResolver(local, registry)
-}
-
-func initStore(wd string, resolver Resolver) *Store {
-	dir := filepath.Join(wd, "node_modules")
-	store := NewStore(dir, resolver)
-	if err := store.Init(); err != nil {
-		log.Fatalf("failed to init store: %v", err)
-	}
-	return store
-}
-
-func main() {
+func getWd() string {
 	wd, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("failed to get working directory: %v", err)
 	}
+	return wd
+}
 
-	config := initConfig()
+func main() {
+	config := readConfig()
 	setLogLevel(config)
+	wd := getWd()
 
-	resolver := initResolver()
-	store := initStore(wd, resolver)
-
-	for _, name := range os.Args[1:] {
-		if err := store.Install(nil, name, "*"); err != nil {
-			log.Printf("failed to install %v: %v", name, err)
-		}
+	switch os.Args[1] {
+	case "i":
+		fallthrough
+	case "install":
+		installCmd(wd, config, os.Args[2:])
 	}
 }

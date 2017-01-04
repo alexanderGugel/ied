@@ -12,4 +12,4 @@ vet:
 	@go vet -v
 
 fmt:
-	@./scripts/fmt
+	@gofmt -w *.go
