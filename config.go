@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/url"
@@ -62,7 +62,7 @@ func (c *Config) Validate() error {
 	if _, err := url.Parse(c.Registry); err != nil {
 		return errors.New("invalid registry url")
 	}
-	if _, err := log.ParseLevel(c.LogLevel); err != nil {
+	if _, err := logrus.ParseLevel(c.LogLevel); err != nil {
 		return errors.New("invalid log level")
 	}
 	if c.LogFormat != "json" &&
