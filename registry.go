@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"path/filepath"
 )
@@ -60,6 +61,19 @@ type Registry struct {
 // NewRegistry creates a new registry.
 func NewRegistry(rootURL string) *Registry {
 	return &Registry{rootURL}
+}
+
+// Ping checks if the registry is available by hitting the /-/ping endpoint.
+func (r *Registry) Ping() error {
+	res, err := http.Get(r.RootURL + "/-/ping")
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+	return nil
 }
 
 // Resolve fetches the package version document of a specified dependency.

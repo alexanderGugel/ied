@@ -32,6 +32,10 @@ func setLogLevel(config *Config) {
 	}
 }
 
+func setLogFormatter() {
+	logrus.SetFormatter(&LogFormatter{})
+}
+
 func getWd() string {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -43,6 +47,7 @@ func getWd() string {
 func main() {
 	config := readConfig()
 	setLogLevel(config)
+	setLogFormatter()
 	wd := getWd()
 
 	if len(os.Args) < 2 {
@@ -55,6 +60,8 @@ func main() {
 		fallthrough
 	case "install":
 		installCmd(wd, config, os.Args[2:])
+	case "ping":
+		pingCmd(config)
 	default:
 		helpCmd()
 	}

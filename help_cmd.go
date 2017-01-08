@@ -10,17 +10,8 @@ var usage = `
 
   Commands:
     install     fetch packages and dependencies
-    run         run a package.json script
-    shell       enter a sub-shell with augmented PATH
     ping        check if the registry is up
     config      print the used config
-    init        initialize a new package
-    link        link the current package or into it
-    unlink      unlink the current package or from it
-    start       runs the start script
-    stop        runs the stop script
-    build       runs the build script
-    test        runs the test script
 
   Example:
     ied install
@@ -36,6 +27,6 @@ var usage = `
   ISSUES:  https://github.com/alexanderGugel/ied/issues
 `
 
-func helpCmd () {
-  logrus.Println(usage)
+func helpCmd() {
+	logrus.Println(usage)
 }

@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 )
 
-func initResolver() Resolver {
-	registry := NewRegistry("http://registry.npmjs.com")
+func initResolver(config *Config) Resolver {
+	registry := NewRegistry(config.Registry)
 	local := NewLocal()
 	return NewMultiResolver(local, registry)
 }
@@ -21,7 +21,7 @@ func initStore(wd string, resolver Resolver) *Store {
 }
 
 func installCmd(wd string, config *Config, args []string) {
-	resolver := initResolver()
+	resolver := initResolver(config)
 	store := initStore(wd, resolver)
 
 	logrus.Println(args)
