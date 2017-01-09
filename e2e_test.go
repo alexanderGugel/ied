@@ -13,7 +13,8 @@ func testPackage(name string, t *testing.T) {
 	assert.NoError(t, err)
 	defer os.RemoveAll(dir)
 
-	resolver := initResolver()
+	config := NewDefaultConfig()
+	resolver := initResolver(config)
 	store := initStore(dir, resolver)
 
 	err = store.Install(nil, name, "*")
