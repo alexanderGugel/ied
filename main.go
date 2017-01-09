@@ -62,6 +62,8 @@ func main() {
 		installCmd(wd, config, os.Args[2:])
 	case "ping":
 		pingCmd(config)
+	case "config":
+		configCmd(config)
 	default:
 		helpCmd()
 	}
