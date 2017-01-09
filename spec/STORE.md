@@ -23,11 +23,17 @@ Pitfalls to watch out for:
 
 ### Global store
 
-A global store should be located at `~/.store/<version>` by default.
+A global store (a.k.a. machine store) should be located at `~/.store/<version>` by default.
 
 ### Dedicated store
 
 A dedicated store should be at `node_modules/.store`. The reason why it doesn't need a subfolder for different versions is because one node_modules can use only one store (see [the storePath field of .modules.yaml](#storepath)).
+
+## Store immutability
+
+A store should be immutable. Execution of modules from the store cannot remove/add/change files in the store. As a consequence:
+* lifecycle events should not happen inside the store directory.
+* programs shouldn't know about the existense of the store, when using modules. Files from the store should be either copied or linked (a.k.a. hard linked). Symlinking is not an option, because Node.js ignores symlinks when resolving dependencies.
 
 ## Store directory structure
 
