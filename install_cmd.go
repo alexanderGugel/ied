@@ -24,8 +24,6 @@ func installCmd(wd string, config *Config, args []string) {
 	resolver := initResolver(config)
 	store := initStore(wd, resolver)
 
-	logrus.Println(args)
-
 	for _, name := range args {
 		if err := store.Install(nil, name, "*"); err != nil {
 			logrus.Printf("failed to install %v: %v", name, err)

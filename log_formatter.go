@@ -1,3 +1,4 @@
+// See https://github.com/sirupsen/logrus/blob/master/text_formatter.go
 package main
 
 import (
@@ -6,6 +7,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"runtime"
 	"sort"
+	"strings"
 )
 
 const (
@@ -17,14 +19,13 @@ const (
 	gray    = 37
 )
 
-var isTerminal bool
+var isColorTerminal bool
 
 func init() {
-	isTerminal = logrus.IsTerminal()
+	isColorTerminal = logrus.IsTerminal() && runtime.GOOS != "windows"
 }
 
-type LogFormatter struct {
-}
+type LogFormatter struct{}
 
 func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	var b *bytes.Buffer
@@ -42,10 +43,7 @@ func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 
 	prefixFieldClashes(entry.Data)
 
-	isColorTerminal := isTerminal && (runtime.GOOS != "windows")
-	isColored := isColorTerminal
-
-	if isColored {
+	if isColorTerminal {
 		f.printColored(b, entry, keys)
 	} else {
 		f.appendKeyValue(b, "level", entry.Level.String())
@@ -61,7 +59,11 @@ func (f *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func (f *LogFormatter) printColored(b *bytes.Buffer, entry *logrus.Entry, keys []string) {
+func (f *LogFormatter) printColored(
+	b *bytes.Buffer,
+	entry *logrus.Entry,
+	keys []string,
+) {
 	var levelColor int
 	switch entry.Level {
 	case logrus.DebugLevel:
@@ -74,7 +76,15 @@ func (f *LogFormatter) printColored(b *bytes.Buffer, entry *logrus.Entry, keys [
 		levelColor = blue
 	}
 
-	fmt.Fprintf(b, entry.Message)
+	levelText := strings.ToUpper(entry.Level.String())[0:4]
+	fmt.Fprintf(
+		b,
+		"\x1b[%dm%s\x1b[0m %-44s ",
+		levelColor,
+		levelText,
+		entry.Message,
+	)
+
 	for _, k := range keys {
 		v := entry.Data[k]
 		fmt.Fprintf(b, " \x1b[%dm%s\x1b[0m=", levelColor, k)
@@ -94,8 +104,11 @@ func needsQuoting(text string) bool {
 	return false
 }
 
-func (f *LogFormatter) appendKeyValue(b *bytes.Buffer, key string, value interface{}) {
-
+func (f *LogFormatter) appendKeyValue(
+	b *bytes.Buffer,
+	key string,
+	value interface{},
+) {
 	b.WriteString(key)
 	b.WriteByte('=')
 	f.appendValue(b, value)
