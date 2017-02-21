@@ -17,6 +17,8 @@ __/\\\\\\\\\\\__/\\\\\\\\\\\\\\\__/\\\\\\\\\\\\____
         _\///////////__\///////////////__\////////////_____
 ```
 
+[![Join the chat at https://gitter.im/alexanderGugel/ied](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/alexanderGugel/ied?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 An alternative package manager for Node.
 
 * **Concurrent Installations** - `ied` installs sub-dependencies in parallel.
